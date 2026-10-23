@@ -1,0 +1,3150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>circular. App</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Local Offline QR Code Generator -->
+    <script src="/qrcode.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            dark: 'var(--brand-dark)',
+                            primary: 'var(--brand-primary)',
+                            light: 'var(--brand-light)',
+                            bg: '#F4F7F4',
+                            grayText: '#4B5563',
+                            border: '#E5E7EB',
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'card': '0 8px 30px rgba(0,0,0,0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --brand-dark: #0A3B2C;
+            --brand-primary: #145743;
+            --brand-light: #D4EBDC;
+        }
+        .theme-biz {
+            --brand-dark: #4A2B0F;
+            --brand-primary: #6B3E16;
+            --brand-light: #E6D5C3;
+        }
+        .theme-rec {
+            --brand-dark: #0B3B59;
+            --brand-primary: #135A84;
+            --brand-light: #CFE4F0;
+        }
+        body { background-color: #e5e5e5; -webkit-tap-highlight-color: transparent; }
+
+        html.dark-mode {
+            filter: invert(0.92) hue-rotate(180deg);
+        }
+        html.dark-mode img, html.dark-mode svg, html.dark-mode iframe {
+            filter: invert(1) hue-rotate(180deg);
+        }
+
+        .app-container {
+            max-width: 420px;
+            margin: 0 auto;
+            background-color: #F4F7F4;
+            height: 100dvh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .view-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 24px;
+        }
+        .view-content::-webkit-scrollbar, .view::-webkit-scrollbar { display: none; }
+        .view-content, .view { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .view { display: none; animation: fadeSlideUp 0.3s ease-out forwards; }
+        .view.active { display: flex; flex-direction: column; height: 100%; overflow-y: auto; }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Auth tab underline */
+        .auth-tab.active-tab {
+            color: var(--brand-dark);
+            border-bottom: 2px solid var(--brand-dark);
+        }
+
+        /* Radio/checkbox styling */
+        .custom-radio:checked + div {
+            border-color: var(--brand-dark);
+            background-color: var(--brand-light);
+        }
+        .toggle-checkbox:checked { right: 0; border-color: var(--brand-dark); }
+        .toggle-checkbox:checked + .toggle-label { background-color: var(--brand-dark); }
+
+        /* Modal */
+        .modal { display: none; opacity: 0; transition: opacity 0.2s ease; }
+        .modal.active { display: flex; opacity: 1; }
+
+        /* Error / success message */
+        .form-msg { font-size: 0.75rem; font-weight: 600; text-align: center; margin-top: 8px; min-height: 18px; }
+    </style>
+</head>
+<body class="text-brand-dark font-sans antialiased" id="body-theme">
+
+<div class="app-container" id="app-root">
+
+    <!-- ==========================================
+         VIEW: AUTH (Login)
+         ========================================== -->
+    <div id="view-auth" class="view active bg-brand-bg overflow-y-auto">
+        <div class="px-6 py-8 my-auto w-full">
+            <!-- Logo -->
+            <div class="mb-6 text-center">
+                <h1 class="text-4xl font-extrabold tracking-tighter text-brand-dark mb-1">circular.</h1>
+                <p class="text-brand-grayText font-medium text-xs">Smarter waste, cleaner cities.</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-brand-border mb-6">
+                <button id="tab-login" class="auth-tab active-tab flex-1 py-2.5 text-sm font-bold text-brand-grayText border-b-2 border-transparent transition-all flex items-center justify-center gap-1.5">
+                    <i class="ph ph-whatsapp-logo text-emerald-600 text-base"></i> Login
+                </button>
+                <button id="tab-register" class="auth-tab flex-1 py-2.5 text-sm font-bold text-brand-grayText border-b-2 border-transparent transition-all flex items-center justify-center gap-1.5" onclick="openRoleSelection()">
+                    <i class="ph ph-user-plus text-base"></i> Register
+                </button>
+            </div>
+
+            <!-- LOGIN (WhatsApp Only) -->
+            <div id="login-form" class="space-y-4">
+                <div class="bg-white border border-brand-border rounded-2xl p-5 shadow-sm space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-brand-dark mb-1 flex items-center gap-1.5">
+                            <i class="ph ph-whatsapp-logo text-emerald-600 text-lg"></i>
+                            <span>WhatsApp Mobile Number</span>
+                        </label>
+                        <p class="text-[11px] text-brand-grayText mb-2.5">Enter your number to receive an instant verification code on WhatsApp.</p>
+                        <div class="flex gap-2">
+                            <span class="bg-brand-bg border border-brand-border rounded-xl px-3 py-3 text-sm font-bold flex items-center text-brand-dark shadow-sm">+91</span>
+                            <input type="tel" id="login-phone" placeholder="98765 43210" maxlength="10"
+                                class="flex-1 min-w-0 bg-brand-bg border border-brand-border rounded-xl px-3.5 py-3 text-sm font-bold focus:outline-none focus:border-brand-dark shadow-sm">
+                            <button type="button" id="btn-login-send-otp" onclick="sendLoginOTP()"
+                                class="shrink-0 bg-emerald-700 text-white font-bold px-4 rounded-xl text-xs active:scale-[0.98] transition-all flex items-center gap-1.5 hover:bg-emerald-800 shadow-sm">
+                                <i class="ph ph-paper-plane-tilt text-base"></i> Send OTP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- OTP Input Section -->
+                    <div id="login-otp-section" class="hidden space-y-3 pt-3 border-t border-brand-border">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                                <i class="ph ph-shield-check"></i> Enter WhatsApp OTP
+                            </label>
+                            <span class="text-[10px] text-emerald-600 font-semibold">Valid for 5 mins</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="login-otp" maxlength="4" placeholder="• • • •"
+                                class="flex-1 bg-brand-bg border border-emerald-300 rounded-xl px-4 py-3 text-center font-bold tracking-[0.4em] text-lg focus:outline-none focus:border-emerald-600 shadow-sm">
+                            <button type="button" id="btn-login-verify-otp" onclick="verifyLoginOTP()"
+                                class="shrink-0 bg-emerald-600 text-white font-bold px-5 py-3 rounded-xl text-xs hover:bg-emerald-700 active:scale-[0.98] transition-all shadow-sm">
+                                Verify &amp; Login
+                            </button>
+                        </div>
+                    </div>
+
+                    <p id="login-otp-msg" class="text-xs font-semibold text-center hidden"></p>
+                </div>
+
+                <div class="text-center pt-2">
+                    <p class="text-xs text-brand-grayText">
+                        Don't have an account? 
+                        <button type="button" onclick="openRoleSelection()" class="font-bold text-brand-dark underline underline-offset-2 hover:opacity-80">
+                            Register now
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: ROLE SELECTION (Create your profile)
+         ========================================== -->
+    <div id="view-role" class="view bg-brand-bg overflow-y-auto">
+        <div class="view-content px-6 pt-12 pb-6">
+            <div class="mb-8">
+                <button type="button" onclick="returnToAuthLogin()" class="w-10 h-10 mb-6 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-brand-light transition-colors">
+                    <i class="ph-bold ph-arrow-left text-lg"></i>
+                </button>
+                <h2 class="text-3xl font-extrabold text-brand-dark mb-2 leading-tight">Create your profile</h2>
+                <p class="text-brand-grayText font-medium text-sm">How are you joining the network?</p>
+            </div>
+
+            <div class="space-y-4">
+                <label class="cursor-pointer block relative">
+                    <input type="radio" name="selected_role" value="Household" class="custom-radio sr-only" checked onchange="previewTheme('hh')">
+                    <div class="border-2 border-transparent bg-white rounded-3xl p-5 transition-all shadow-sm flex items-center gap-4">
+                        <div class="w-14 h-14 bg-brand-bg rounded-2xl flex items-center justify-center text-brand-dark shrink-0">
+                            <i class="ph-fill ph-house text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-brand-dark">Household</h3>
+                        </div>
+                    </div>
+                </label>
+                
+                <label class="cursor-pointer block relative">
+                    <input type="radio" name="selected_role" value="Business" class="custom-radio sr-only" onchange="previewTheme('biz')">
+                    <div class="border-2 border-transparent bg-white rounded-3xl p-5 transition-all shadow-sm flex items-center gap-4">
+                        <div class="w-14 h-14 bg-brand-bg rounded-2xl flex items-center justify-center text-brand-dark shrink-0">
+                            <i class="ph-fill ph-storefront text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-brand-dark">Business</h3>
+                            <p class="text-[11px] text-brand-grayText font-medium mt-1 leading-tight">factories, shops or movable stalls</p>
+                        </div>
+                    </div>
+                </label>
+                
+                <label class="cursor-pointer block relative">
+                    <input type="radio" name="selected_role" value="Recycler" class="custom-radio sr-only" onchange="previewTheme('rec')">
+                    <div class="border-2 border-transparent bg-white rounded-3xl p-5 transition-all shadow-sm flex items-center gap-4">
+                        <div class="w-14 h-14 bg-brand-bg rounded-2xl flex items-center justify-center text-brand-dark shrink-0">
+                            <i class="ph-fill ph-recycle text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-brand-dark">Recycling partner</h3>
+                            <p class="text-[11px] text-brand-grayText font-medium mt-1 leading-tight">recycling units and volunteers</p>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <button type="button" onclick="continueToRegistrationDetails()" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg mt-8 text-base active:scale-[0.98] transition-all hover:opacity-90">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: RECYCLER SUB-ROLE
+         ========================================== -->
+    <div id="view-rec-sub" class="view bg-brand-bg overflow-y-auto">
+        <div class="view-content px-6 pt-12 pb-6">
+            <button type="button" onclick="nav('role')" class="w-10 h-10 mb-6 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-brand-light transition-colors">
+                <i class="ph-bold ph-arrow-left text-lg"></i>
+            </button>
+            <h2 class="text-3xl font-extrabold text-brand-dark mb-2 leading-tight">Select Unit Type</h2>
+            <p class="text-brand-grayText font-medium text-sm mb-6">Choose how you participate in the circular network.</p>
+
+            <div class="space-y-4">
+                <label class="cursor-pointer block relative">
+                    <input type="radio" name="subrole" value="Volunteer" class="custom-radio sr-only" checked>
+                    <div class="border-2 border-transparent bg-white rounded-3xl p-5 transition-all shadow-sm flex items-center gap-4">
+                        <div class="w-14 h-14 bg-brand-bg rounded-2xl flex items-center justify-center text-brand-dark shrink-0">
+                            <i class="ph-fill ph-hand-heart text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-brand-dark">Volunteer Drop-off Point</h3>
+                            <p class="text-[11px] text-brand-grayText font-medium mt-1 leading-tight">Receive organic biodegradable drop-offs in your local area</p>
+                        </div>
+                    </div>
+                </label>
+
+                <label class="cursor-pointer block relative">
+                    <input type="radio" name="subrole" value="Industrial" class="custom-radio sr-only">
+                    <div class="border-2 border-transparent bg-white rounded-3xl p-5 transition-all shadow-sm flex items-center gap-4">
+                        <div class="w-14 h-14 bg-brand-bg rounded-2xl flex items-center justify-center text-brand-dark shrink-0">
+                            <i class="ph-fill ph-factory text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-brand-dark">Commercial Recycling Plant</h3>
+                            <p class="text-[11px] text-brand-grayText font-medium mt-1 leading-tight">Industrial processing unit partnerships and factory operations</p>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <button type="button" onclick="handleRecSubRoleContinue()" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg mt-8 text-base active:scale-[0.98] transition-all hover:opacity-90">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: BASIC DETAILS (Registration Form)
+         ========================================== -->
+    <div id="view-reg-common" class="view bg-brand-bg overflow-y-auto">
+        <div class="view-content px-6 pt-10 pb-8">
+            <div class="flex items-center justify-between mb-6">
+                <button type="button" onclick="nav('role')" class="w-10 h-10 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-brand-light transition-colors">
+                    <i class="ph-bold ph-arrow-left text-lg"></i>
+                </button>
+                <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-brand-light text-brand-dark font-bold text-xs shadow-sm border border-brand-dark/20">
+                    <i class="ph-fill ph-check-circle text-sm"></i>
+                    <span id="reg-role-badge">Household</span>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-3xl font-extrabold text-brand-dark mb-1 leading-tight">Basic Details</h2>
+                <p class="text-brand-grayText font-medium text-xs">Verify your WhatsApp number and set up your profile.</p>
+            </div>
+
+            <form id="register-form" onsubmit="handleRegistration(event)" class="space-y-4">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-brand-border space-y-4">
+                    <!-- WhatsApp Mobile Number -->
+                    <div>
+                        <label class="block text-xs font-bold text-brand-dark mb-1.5 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5">
+                                <i class="ph ph-whatsapp-logo text-emerald-600 text-base"></i>
+                                <span>WhatsApp Mobile Number</span>
+                            </span>
+                            <span class="text-[10px] text-emerald-700 font-bold">Verification Required</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <span class="bg-brand-bg border border-brand-border rounded-xl px-3 py-3 text-sm font-bold flex items-center text-brand-dark shadow-sm">+91</span>
+                            <input type="tel" id="reg-phone" required placeholder="98765 43210" maxlength="10"
+                                class="flex-1 min-w-0 bg-brand-bg border border-brand-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-bold">
+                            <button type="button" id="btn-reg-send-otp" onclick="sendRegisterOTP()"
+                                class="shrink-0 bg-emerald-700 text-white font-bold px-3.5 rounded-xl shadow-sm text-xs active:scale-[0.98] transition-all flex items-center gap-1.5 hover:bg-emerald-800">
+                                <i class="ph ph-paper-plane-tilt text-base"></i> Send OTP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- OTP Input Section -->
+                    <div id="reg-otp-section" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-3 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                                <i class="ph ph-chat-circle-dots"></i> Enter WhatsApp 4-Digit Code
+                            </label>
+                            <span class="text-[10px] text-emerald-600 font-semibold">Valid 5 mins</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="reg-otp" maxlength="4" placeholder="• • • •"
+                                class="flex-1 bg-white border border-emerald-300 rounded-xl px-3 py-2 text-center font-bold tracking-[0.4em] text-base focus:outline-none focus:border-emerald-600 shadow-sm">
+                            <button type="button" id="btn-reg-verify-otp" onclick="verifyRegisterOTP()"
+                                class="bg-emerald-600 text-white font-bold px-4 rounded-xl shadow-sm text-xs hover:bg-emerald-700 active:scale-[0.98] transition-all whitespace-nowrap">
+                                Verify Code
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Verified Badge -->
+                    <div id="reg-verified-badge" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i class="ph ph-check-circle-fill text-emerald-600 text-base"></i>
+                            <span>WhatsApp Verified: <strong id="reg-verified-phone-txt"></strong></span>
+                        </span>
+                        <span class="text-[10px] bg-emerald-200/60 text-emerald-900 px-2 py-0.5 rounded-full font-bold">VERIFIED</span>
+                    </div>
+
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-xs font-semibold text-brand-dark mb-1">Full Name</label>
+                        <input type="text" id="reg-name" required placeholder="e.g. Aman Sharma"
+                            class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium">
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div>
+                        <label class="block text-xs font-semibold text-brand-dark mb-1">Date of Birth</label>
+                        <input type="date" id="reg-dob" required
+                            class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium">
+                    </div>
+
+                    <!-- Complete Address -->
+                    <div>
+                        <label class="block text-xs font-semibold text-brand-dark mb-1">Complete Address</label>
+                        <input type="text" id="reg-address" required placeholder="House / Shop No, Street, Locality"
+                            class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium">
+                    </div>
+
+                    <!-- Pincode -->
+                    <div>
+                        <label class="block text-xs font-semibold text-brand-dark mb-1">Pincode</label>
+                        <input type="text" id="reg-pincode" required placeholder="e.g. 110020"
+                            class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium">
+                    </div>
+                </div>
+
+                <p id="reg-msg" class="form-msg text-red-600"></p>
+                <button type="submit" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg text-sm hover:opacity-90 active:scale-[0.98] transition-all">
+                    Create Account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: ONBOARDING - HOUSEHOLD CODE
+         ========================================== -->
+    <div id="view-onboarding-hh" class="view bg-brand-bg overflow-y-auto">
+        <div class="px-6 py-8 my-auto w-full">
+            <div class="mb-8 text-center">
+                <div class="w-16 h-16 bg-brand-light text-brand-dark rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="ph ph-users text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-brand-dark mb-2">Household Code</h2>
+                <p class="text-brand-grayText text-sm px-4">Join an existing household or create a new one to sync pickups.</p>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-semibold text-brand-dark mb-1">Enter Household Code</label>
+                    <input type="text" id="hh-code-input" placeholder="e.g. HH-1234"
+                        class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark uppercase">
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex-1 h-px bg-brand-border"></div>
+                    <span class="text-xs text-brand-grayText font-semibold">OR</span>
+                    <div class="flex-1 h-px bg-brand-border"></div>
+                </div>
+                <button onclick="generateHHCode()" class="w-full bg-white border-2 border-brand-dark text-brand-dark font-bold py-3.5 rounded-full shadow-sm text-sm hover:bg-brand-light active:scale-[0.98] transition-all">
+                    Generate New Code
+                </button>
+                <button onclick="completeHHOnboarding()" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full shadow-lg text-sm hover:opacity-90 active:scale-[0.98] transition-all mt-4">
+                    Enter Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: REGISTRATION - VOLUNTEER
+         ========================================== -->
+    <div id="view-reg-vol" class="view bg-brand-bg overflow-y-auto">
+        <div class="view-content px-6 pt-10 pb-8">
+            <h2 class="text-3xl font-extrabold text-brand-dark mb-1 leading-tight">Accepted Waste</h2>
+            <p class="text-brand-grayText font-medium text-xs mb-6">What you will receive as a community volunteer.</p>
+
+            <form onsubmit="submitVolReg(event)" class="space-y-4">
+                <div class="bg-white border border-brand-border rounded-2xl p-5 shadow-sm flex items-start gap-4">
+                    <div class="w-12 h-12 bg-brand-light rounded-2xl flex items-center justify-center shrink-0 text-brand-dark">
+                        <i class="ph-fill ph-plant text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-brand-dark mb-1">Biodegradable Organic Waste</h3>
+                        <p class="text-xs text-brand-grayText font-medium leading-relaxed">Neighbours and households in your pincode can drop off segregated wet and compostable kitchen waste at your premises.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-brand-border">
+                    <label class="block text-xs font-bold text-brand-dark mb-1.5 uppercase tracking-wider">About You / Repurposing Method</label>
+                    <textarea id="vol-bio" rows="3" placeholder="Tell us how you repurpose or compost the waste (e.g. Terrace garden composting, biogas, animal feed)..." class="w-full bg-brand-bg border border-brand-border rounded-2xl px-4 py-3 font-medium text-xs focus:outline-none focus:border-brand-dark resize-none"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg text-sm active:scale-[0.98] transition-all hover:opacity-90 mt-4">
+                    Complete Setup &rarr;
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: REGISTRATION - BUSINESS
+         ========================================== -->
+    <div id="view-reg-biz" class="view bg-brand-bg overflow-y-auto">
+        <div class="view-content px-6 pt-10 pb-8">
+            <h2 class="text-3xl font-extrabold text-brand-dark mb-1 leading-tight">Type of Waste</h2>
+            <p class="text-brand-grayText font-medium text-xs mb-6">Select commercial materials your business typically generates.</p>
+
+            <form id="biz-reg-form" onsubmit="submitBizReg(event)" class="space-y-3 pb-6">
+                <label class="flex items-center gap-3 bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                    <input type="checkbox" value="Cardboard" class="biz-reg-main w-5 h-5 accent-brand-dark rounded" checked>
+                    <span class="font-bold text-brand-dark text-sm">Cardboard / Cartons</span>
+                </label>
+                <label class="flex items-center gap-3 bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                    <input type="checkbox" value="Paper" class="biz-reg-main w-5 h-5 accent-brand-dark rounded">
+                    <span class="font-bold text-brand-dark text-sm">Paper / Office Records</span>
+                </label>
+
+                <!-- Metals with Sub -->
+                <div class="bg-white border border-brand-border rounded-2xl shadow-sm overflow-hidden">
+                    <label class="flex items-center gap-3 p-4 cursor-pointer">
+                        <input type="checkbox" value="Metals" onchange="document.getElementById('biz-reg-metal-sub').classList.toggle('hidden', !this.checked)" class="biz-reg-main w-5 h-5 accent-brand-dark rounded">
+                        <span class="font-bold text-brand-dark text-sm">Scrap Metals</span>
+                    </label>
+                    <div id="biz-reg-metal-sub" class="hidden bg-brand-bg border-t border-brand-border p-3 pl-10 space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="Copper" class="biz-reg-sub accent-brand-dark w-4 h-4 rounded"> <span class="font-semibold text-xs text-brand-dark">Copper</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="Iron" class="biz-reg-sub accent-brand-dark w-4 h-4 rounded"> <span class="font-semibold text-xs text-brand-dark">Iron</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="Aluminium" class="biz-reg-sub accent-brand-dark w-4 h-4 rounded"> <span class="font-semibold text-xs text-brand-dark">Aluminium</span></label>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-3 bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                    <input type="checkbox" value="Plastic" class="biz-reg-main w-5 h-5 accent-brand-dark rounded">
+                    <span class="font-bold text-brand-dark text-sm">Industrial / Hard Plastics</span>
+                </label>
+
+                <button type="submit" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg text-sm active:scale-[0.98] transition-all hover:opacity-90 mt-6">
+                    Complete Setup &rarr;
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: RECYCLER EMAIL OUTRO
+         ========================================== -->
+    <div id="view-rec-email" class="view bg-brand-bg overflow-y-auto text-center">
+        <div class="px-6 py-8 my-auto w-full">
+            <div class="w-20 h-20 bg-brand-light text-brand-dark rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="ph ph-envelope-simple text-4xl"></i>
+            </div>
+            <h2 class="text-2xl font-extrabold text-brand-dark mb-4">Partner with us</h2>
+            <p class="text-brand-dark text-sm px-4 leading-relaxed bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
+                Please email us at<br>
+                <a href="mailto:partnership@circular.com" class="font-bold text-lg mt-2 inline-block">partnership@circular.com</a><br><br>
+                for recycling unit partnerships. We will get back to you shortly.
+            </p>
+            <button onclick="handleLogout()" class="mt-8 text-sm font-semibold text-brand-grayText underline">Start over</button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         DASHBOARDS
+         ========================================== -->
+
+    <!-- Household Dash -->
+    <div id="view-home-hh" class="view bg-brand-bg">
+        <div class="view-content px-5 pt-8 pb-28">
+            <!-- Top Bar: Avatar, Greeting, PIN, Settings Gear -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <button onclick="nav('profile')" class="w-11 h-11 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform cursor-pointer" title="View Profile">
+                        <i class="ph ph-user text-xl"></i>
+                    </button>
+                    <div onclick="nav('profile')" class="cursor-pointer" title="View Profile">
+                        <h1 class="text-xl font-black text-brand-dark tracking-tight leading-tight">Hi, <span class="user-first-name"></span></h1>
+                        <div class="inline-flex items-center gap-1 bg-white border border-brand-border px-2.5 py-0.5 rounded-full text-[10px] font-bold text-brand-grayText mt-0.5 shadow-xs">
+                            <i class="ph-fill ph-map-pin text-[11px] text-brand-dark"></i> PIN: <span class="user-pincode-plain">--</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform cursor-pointer" title="Settings">
+                    <i class="ph-bold ph-gear text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Headline & Points Pill -->
+            <div class="flex items-start justify-between mb-5">
+                <h2 class="text-2xl font-extrabold text-brand-dark tracking-tight leading-snug">
+                    Your waste.<br>Better placed.
+                </h2>
+                <div onclick="openPoints()" class="bg-white border border-brand-border px-3 py-1.5 rounded-full text-xs font-bold text-brand-dark shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform" title="Green Points">
+                    <span>⭐</span> <span id="home-pts-display">0 pts</span> <i class="ph-bold ph-caret-right text-xs text-brand-grayText"></i>
+                </div>
+            </div>
+
+            <!-- Dark Green Pickup Card -->
+            <div class="bg-brand-dark rounded-3xl p-6 shadow-card relative overflow-hidden mb-4">
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 text-white font-bold text-base mb-1.5">
+                        <i class="ph-bold ph-calendar text-lg"></i> Ready for a pickup?
+                    </div>
+                    <p class="text-white/80 text-xs mb-5 max-w-[220px] leading-relaxed">We'll connect you with a local collector.</p>
+                    <button onclick="nav('schedule-hh')" class="bg-white text-brand-dark px-5 py-3 rounded-full font-bold text-xs flex items-center gap-2 hover:bg-gray-50 active:scale-95 transition-transform shadow-sm">
+                        Schedule a Pickup <i class="ph-bold ph-arrow-right"></i>
+                    </button>
+                </div>
+                <i class="ph-fill ph-recycle absolute -bottom-6 -right-6 text-9xl text-white/5 pointer-events-none"></i>
+            </div>
+
+            <!-- Segregation Guide Card -->
+            <div onclick="openSegGuide()" class="bg-white rounded-2xl p-4 border border-brand-border shadow-sm flex items-center justify-between cursor-pointer hover:border-brand-dark/30 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-brand-light rounded-xl flex items-center justify-center text-brand-dark shrink-0">
+                        <i class="ph-fill ph-book-open text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">Segregation Guide</p>
+                        <p class="text-[11px] text-brand-grayText font-medium">How to sort wet, dry, e-waste and more</p>
+                    </div>
+                </div>
+                <i class="ph-bold ph-caret-right text-brand-grayText"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Dash -->
+    <div id="view-home-biz" class="view bg-brand-bg">
+        <div class="view-content px-5 pt-8 pb-28">
+            <!-- Top Bar: Avatar, Greeting, PIN, Settings Gear -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <button onclick="nav('profile')" class="w-11 h-11 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Profile">
+                        <i class="ph-fill ph-storefront text-xl"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-xl font-black text-brand-dark tracking-tight leading-tight">Hi, <span class="user-first-name"></span></h1>
+                        <div class="inline-flex items-center gap-1 bg-white border border-brand-border px-2.5 py-0.5 rounded-full text-[10px] font-bold text-brand-grayText mt-0.5 shadow-xs">
+                            <i class="ph-fill ph-map-pin text-[11px] text-brand-dark"></i> PIN: <span class="user-pincode-plain">--</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
+                    <i class="ph-bold ph-gear text-lg"></i>
+                </button>
+            </div>
+
+            <div class="bg-brand-dark rounded-3xl p-6 shadow-card relative overflow-hidden mb-6">
+                <div class="relative z-10">
+                    <h2 class="text-white text-xl font-bold mb-2">Dispose Commercial Waste</h2>
+                    <p class="text-brand-light text-xs mb-6 max-w-[200px] leading-relaxed">Select materials and book a time interval for pickup.</p>
+                    <button onclick="nav('schedule-biz')" class="bg-white text-brand-dark px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-gray-50 active:scale-95 transition-transform shadow-sm">
+                        Schedule Request <i class="ph-bold ph-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volunteer Dash -->
+    <div id="view-home-vol" class="view bg-brand-bg">
+        <div class="view-content px-5 pt-8 pb-28">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <button onclick="nav('profile')" class="w-11 h-11 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Profile">
+                        <i class="ph-fill ph-hand-heart text-xl"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-xl font-black text-brand-dark tracking-tight leading-tight">Hi, <span class="user-first-name"></span></h1>
+                        <div class="inline-flex items-center gap-1 bg-white border border-brand-border px-2.5 py-0.5 rounded-full text-[10px] font-bold text-brand-grayText mt-0.5 shadow-xs">
+                            <i class="ph-fill ph-map-pin text-[11px] text-brand-dark"></i> PIN: <span class="user-pincode-plain">--</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
+                    <i class="ph-bold ph-gear text-lg"></i>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-brand-border text-center">
+                <div class="w-16 h-16 bg-brand-light text-brand-dark rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="ph-fill ph-leaf text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-brand-dark mb-2">Volunteer Hub</h2>
+                <p class="text-xs text-brand-grayText leading-relaxed">You are actively registered to receive organic biodegradable drop-offs in PIN <span class="user-pincode-plain font-bold"></span>.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: SCHEDULE - HOUSEHOLD
+         ========================================== -->
+    <div id="view-schedule-hh" class="view bg-brand-bg relative">
+        <div class="view-content px-5 pt-8 pb-32">
+            <div class="flex items-center gap-3 mb-6">
+                <button onclick="nav('home-hh')" class="w-8 h-8 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border">
+                    <i class="ph ph-arrow-left text-lg"></i>
+                </button>
+                <h1 class="text-lg font-bold text-brand-dark flex-1">Pickup Details</h1>
+                <button type="button" onclick="openSegGuide(null, 'schedule-hh')" class="text-[10px] font-bold bg-brand-light text-brand-dark px-3 py-1.5 rounded-full flex items-center gap-1 uppercase tracking-wide">
+                    <i class="ph-fill ph-info"></i> How to segregate
+                </button>
+            </div>
+
+            <form id="hh-schedule-form" onsubmit="submitHHPickup(event)" class="space-y-5">
+                <!-- Segregation Card & Toggle -->
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-brand-border space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-lg font-extrabold text-brand-dark block">Segregated Waste</span>
+                        <div class="relative inline-block w-12 align-middle select-none">
+                            <input type="checkbox" id="hh-seg-toggle" onchange="updateHHCatState()" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-gray-300 appearance-none cursor-pointer transition-all duration-300 z-10" checked/>
+                            <label for="hh-seg-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                        </div>
+                    </div>
+
+                    <!-- How to segregate button inside top card -->
+                    <button type="button" onclick="openSegGuide(null, 'schedule-hh')" class="w-full bg-[#D6E8DB] text-[#1E3B2B] text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity">
+                        <i class="ph-bold ph-info text-sm"></i> How to segregate?
+                    </button>
+
+                    <!-- Non-segregated fee warning -->
+                    <div id="hh-seg-warning" class="hidden bg-[#FDE8E8] text-[#9B1C1C] text-xs font-semibold p-3 rounded-xl flex items-center gap-2">
+                        <i class="ph-fill ph-warning-circle text-base shrink-0"></i>
+                        <span>Fee will be applicable for non-segregated waste pickup.</span>
+                    </div>
+                </div>
+
+                <!-- Categories Checklist -->
+                <div id="hh-cat-wrap" class="space-y-3">
+                    <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider px-1">Categories</h3>
+                    
+                    <!-- 1. Biodegradable Wet Waste -->
+                    <label class="flex items-center gap-3.5 bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                        <input type="checkbox" id="hh-cat-wet" value="Biodegradable Wet Waste" class="hh-cat w-5 h-5 accent-brand-dark rounded" checked>
+                        <span class="font-bold text-brand-dark text-sm">Biodegradable Wet Waste</span>
+                    </label>
+
+                    <!-- 2. Dry Recyclables -->
+                    <label class="flex items-start gap-3.5 bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                        <input type="checkbox" id="hh-cat-dry" value="Dry Recyclables" class="hh-cat w-5 h-5 accent-brand-dark rounded mt-0.5" checked>
+                        <div>
+                            <span class="font-bold text-brand-dark text-sm block">Dry Recyclables</span>
+                            <span class="text-[11px] text-brand-grayText font-medium block leading-tight mt-0.5">(more than 2kg? get paid for it)</span>
+                            <span class="text-[11px] text-brand-grayText font-medium block leading-tight">(cardboard, paper, metal cans, plastic etc)</span>
+                        </div>
+                    </label>
+
+                    <!-- 3. Other Waste -->
+                    <div class="bg-white border border-brand-border rounded-2xl p-4 shadow-sm space-y-2">
+                        <label class="flex items-center gap-3.5 cursor-pointer">
+                            <input type="checkbox" id="hh-cat-other" value="Other Waste" onchange="document.getElementById('hh-other-input').classList.toggle('hidden', !this.checked)" class="hh-cat w-5 h-5 accent-brand-dark rounded">
+                            <span class="font-bold text-brand-dark text-sm">Other Waste</span>
+                        </label>
+                        <input type="text" id="hh-other-input" placeholder="e.g. Broken glass, ceramic, fabric..."
+                            class="hidden w-full bg-brand-bg border border-brand-border rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-brand-dark mt-2">
+                    </div>
+
+                    <!-- 4. E Waste -->
+                    <label class="flex items-center gap-3.5 bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                        <input type="checkbox" id="hh-cat-ewaste" value="E Waste" class="hh-cat w-5 h-5 accent-brand-dark rounded">
+                        <span class="font-bold text-brand-dark text-sm">E Waste</span>
+                    </label>
+
+                    <!-- 5. Harmful Waste -->
+                    <label class="flex items-center gap-3.5 bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                        <input type="checkbox" id="hh-cat-harmful" value="Harmful Waste" class="hh-cat w-5 h-5 accent-brand-dark rounded">
+                        <span class="font-bold text-brand-dark text-sm">Harmful Waste</span>
+                    </label>
+                </div>
+
+                <!-- Estimated Weight (Optional) -->
+                <div>
+                    <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider px-1 mb-2">Estimated Weight (Optional)</h3>
+                    <input type="text" id="hh-qty" placeholder="e.g. 5 kg or 2 bags"
+                        class="w-full bg-white border border-brand-border rounded-2xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-brand-dark shadow-sm">
+                </div>
+
+                <!-- Time Slot -->
+                <div>
+                    <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider px-1 mb-2.5">Pickup Timing</h3>
+                    <div class="space-y-2">
+                        <label class="cursor-pointer block">
+                            <input type="radio" name="hh-time" value="Immediate Pickup" class="custom-radio sr-only" checked>
+                            <div class="border border-brand-border bg-white rounded-2xl p-3.5 transition-colors flex items-center justify-between shadow-sm">
+                                <span class="font-bold text-brand-dark text-sm">Immediate pickup (Within 45 mins)</span>
+                                <i class="ph-bold ph-lightning text-amber-500 text-lg"></i>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer block">
+                            <input type="radio" name="hh-time" value="Tomorrow Morning (8:00 AM - 12:00 PM)" class="custom-radio sr-only">
+                            <div class="border border-brand-border bg-white rounded-2xl p-3.5 transition-colors shadow-sm">
+                                <span class="font-bold text-brand-dark text-sm">Morning slot (8:00 AM - 12:00 PM)</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer block">
+                            <input type="radio" name="hh-time" value="Tomorrow Evening (4:00 PM - 8:00 PM)" class="custom-radio sr-only">
+                            <div class="border border-brand-border bg-white rounded-2xl p-3.5 transition-colors shadow-sm">
+                                <span class="font-bold text-brand-dark text-sm">Evening slot (4:00 PM - 8:00 PM)</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-4 pb-6">
+                    <button type="submit" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg text-sm hover:opacity-90 active:scale-[0.98] transition-all">
+                        Confirm Pickup Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: SCHEDULE - BUSINESS (Commercial)
+         ========================================== -->
+    <div id="view-schedule-biz" class="view bg-brand-bg relative">
+        <div class="view-content px-5 pt-8 pb-32">
+            <div class="flex items-center gap-3 mb-6">
+                <button onclick="nav('home-biz')" class="w-8 h-8 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border">
+                    <i class="ph ph-arrow-left text-lg"></i>
+                </button>
+                <h1 class="text-lg font-bold text-brand-dark flex-1">Commercial Pickup</h1>
+            </div>
+
+            <form id="biz-schedule-form" onsubmit="submitBizPickup(event)" class="space-y-5">
+                <div>
+                    <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider px-1 mb-1">Commercial Materials</h3>
+                    <p class="text-[11px] text-brand-grayText px-1 mb-3">Select scrap categories for collection &amp; recycling value.</p>
+
+                    <div class="space-y-2.5">
+                        <!-- Cardboard -->
+                        <label class="flex items-center justify-between bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="biz-mat-cardboard" value="Cardboard" onchange="updateBizRates()" class="biz-sched-main w-5 h-5 accent-brand-dark rounded" checked>
+                                <span class="font-bold text-brand-dark text-sm">Cardboard / Cartons</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-brand-dark bg-brand-bg px-2.5 py-1 rounded-lg">₹10 / kg</span>
+                        </label>
+
+                        <!-- Paper -->
+                        <label class="flex items-center justify-between bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="biz-mat-paper" value="Paper" onchange="updateBizRates()" class="biz-sched-main w-5 h-5 accent-brand-dark rounded">
+                                <span class="font-bold text-brand-dark text-sm">Paper / Office Records</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-brand-dark bg-brand-bg px-2.5 py-1 rounded-lg">₹12 / kg</span>
+                        </label>
+
+                        <!-- Metals with expandable sub-checklist -->
+                        <div class="bg-white border border-brand-border rounded-2xl shadow-sm overflow-hidden">
+                            <label class="flex items-center justify-between p-4 cursor-pointer">
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" id="biz-mat-metals" value="Metals" onchange="toggleBizMetalSub(this.checked); updateBizRates();" class="biz-sched-main w-5 h-5 accent-brand-dark rounded">
+                                    <span class="font-bold text-brand-dark text-sm">Scrap Metals</span>
+                                </div>
+                                <span class="text-xs font-extrabold text-brand-dark bg-brand-bg px-2.5 py-1 rounded-lg">₹25 - 420 / kg</span>
+                            </label>
+                            <div id="biz-sched-metal-sub" class="hidden bg-brand-bg border-t border-brand-border p-3 pl-8 space-y-2.5">
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <div class="flex items-center gap-2.5">
+                                        <input type="checkbox" value="Copper" class="biz-metal-item accent-brand-dark w-4 h-4 rounded" onchange="updateBizRates()">
+                                        <span class="font-semibold text-xs text-brand-dark">Copper Wire / Pipes</span>
+                                    </div>
+                                    <span class="text-[11px] font-bold text-brand-grayText">₹380 / kg</span>
+                                </label>
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <div class="flex items-center gap-2.5">
+                                        <input type="checkbox" value="Iron" class="biz-metal-item accent-brand-dark w-4 h-4 rounded" onchange="updateBizRates()">
+                                        <span class="font-semibold text-xs text-brand-dark">Iron / Cast Iron</span>
+                                    </div>
+                                    <span class="text-[11px] font-bold text-brand-grayText">₹30 / kg</span>
+                                </label>
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <div class="flex items-center gap-2.5">
+                                        <input type="checkbox" value="Aluminium" class="biz-metal-item accent-brand-dark w-4 h-4 rounded" onchange="updateBizRates()">
+                                        <span class="font-semibold text-xs text-brand-dark">Aluminium Sections / Cans</span>
+                                    </div>
+                                    <span class="text-[11px] font-bold text-brand-grayText">₹130 / kg</span>
+                                </label>
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <div class="flex items-center gap-2.5">
+                                        <input type="checkbox" value="Brass" class="biz-metal-item accent-brand-dark w-4 h-4 rounded" onchange="updateBizRates()">
+                                        <span class="font-semibold text-xs text-brand-dark">Brass / Bronze</span>
+                                    </div>
+                                    <span class="text-[11px] font-bold text-brand-grayText">₹300 / kg</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Plastics -->
+                        <label class="flex items-center justify-between bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="biz-mat-plastic" value="Plastic" onchange="updateBizRates()" class="biz-sched-main w-5 h-5 accent-brand-dark rounded">
+                                <span class="font-bold text-brand-dark text-sm">Industrial / Hard Plastics</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-brand-dark bg-brand-bg px-2.5 py-1 rounded-lg">₹15 / kg</span>
+                        </label>
+
+                        <!-- Cloth / Textile -->
+                        <label class="flex items-center justify-between bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="biz-mat-cloth" value="Cloth" onchange="updateBizRates()" class="biz-sched-main w-5 h-5 accent-brand-dark rounded">
+                                <span class="font-bold text-brand-dark text-sm">Cloth / Textile Waste</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-brand-dark bg-brand-bg px-2.5 py-1 rounded-lg">₹5 / kg</span>
+                        </label>
+
+                        <!-- Vegetable / Fruit (Wet) -->
+                        <label class="flex items-center justify-between bg-white p-4 rounded-2xl border border-brand-border shadow-sm cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="biz-mat-wet" value="Vegetable/Fruit Waste" onchange="updateBizRates()" class="biz-sched-main w-5 h-5 accent-brand-dark rounded">
+                                <span class="font-bold text-brand-dark text-sm">Vegetable / Fruit (Wet Bulk)</span>
+                            </div>
+                            <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">Compost</span>
+                        </label>
+
+                        <!-- Others -->
+                        <div class="bg-white border border-brand-border rounded-2xl p-4 shadow-sm space-y-2">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="biz-mat-other" value="Others" onchange="document.getElementById('biz-other-input').classList.toggle('hidden', !this.checked); updateBizRates();" class="biz-sched-main w-5 h-5 accent-brand-dark rounded">
+                                <span class="font-bold text-brand-dark text-sm">Other Commercial Materials</span>
+                            </label>
+                            <input type="text" id="biz-other-input" placeholder="Type material description here..."
+                                class="hidden w-full bg-brand-bg border border-brand-border rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-brand-dark mt-2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Scrap Rates Summary Box -->
+                <div class="bg-brand-light/40 rounded-2xl p-4 border border-brand-primary/20 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold text-brand-dark flex items-center gap-1.5">
+                            <i class="ph ph-scales text-base"></i> Estimated Payout Rates
+                        </h4>
+                        <button type="button" onclick="openModal('modal-rates')" class="text-[11px] font-bold text-brand-dark bg-white border border-brand-border px-2.5 py-1 rounded-full hover:bg-gray-50 shadow-xs active:scale-95 transition-transform">View Rate Card</button>
+                    </div>
+                    <div id="biz-rates-display" class="text-xs text-brand-dark font-medium space-y-1 pt-1">
+                        Select materials above to preview live rates.
+                    </div>
+                </div>
+
+                <!-- Estimated Weight -->
+                <div>
+                    <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider px-1 mb-2">Estimated Total Weight</h3>
+                    <input type="text" id="biz-est-weight" placeholder="e.g. 25 kg or 200 kg"
+                        class="w-full bg-white border border-brand-border rounded-2xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-brand-dark shadow-sm">
+                </div>
+
+                <!-- Date & Time Interval -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider px-1 mb-1">Date &amp; Time Window</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-brand-grayText mb-1">Pickup Date</label>
+                            <input type="date" id="biz-date" required
+                                class="w-full bg-white border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-brand-dark shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-brand-grayText mb-1">Time Slot</label>
+                            <select id="biz-time-slot" required
+                                class="w-full bg-white border border-brand-border rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-brand-dark shadow-sm">
+                                <option value="Morning (9:00 AM - 1:00 PM)">Morning (9 AM - 1 PM)</option>
+                                <option value="Afternoon (1:00 PM - 5:00 PM)">Afternoon (1 PM - 5 PM)</option>
+                                <option value="Evening (5:00 PM - 9:00 PM)">Evening (5 PM - 9 PM)</option>
+                                <option value="Instant Urgent (Within 1 hr)">Instant Urgent ⚡</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 pb-6">
+                    <button type="submit" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg text-sm hover:opacity-90 active:scale-[0.98] transition-all">
+                        Schedule Commercial Pickup
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: SEGREGATION GUIDE (HOUSEHOLD)
+         ========================================== -->
+    <div id="view-seg-guide" class="view bg-brand-bg overflow-y-auto">
+        <div class="view-content px-6 pt-10 pb-8">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="nav(segGuideBackTo || 'home-hh')" class="w-10 h-10 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-gray-50 active:scale-95 transition-transform">
+                    <i class="ph-bold ph-arrow-left text-lg"></i>
+                </button>
+                <h2 class="text-xl font-extrabold text-brand-dark">Segregation Guide</h2>
+                <div class="w-10"></div>
+            </div>
+            <p class="text-sm font-medium text-brand-grayText mb-5 leading-relaxed">Tap a category to see what goes in it and how to sort it properly.</p>
+            <div id="seg-guide-list" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: SUCCESS
+         ========================================== -->
+    <div id="view-success" class="view bg-brand-bg px-6 py-12 justify-center text-center">
+        <div class="w-24 h-24 bg-brand-dark text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+            <i class="ph-bold ph-check text-5xl"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold text-brand-dark mb-2 tracking-tight">Request Sent!</h2>
+        <p class="text-brand-grayText text-sm px-4 mb-10">Your pickup has been successfully scheduled. A collector will be assigned shortly.</p>
+        <button onclick="returnToHome()" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg text-sm hover:opacity-90 active:scale-[0.98] transition-all">
+            Back to Home
+        </button>
+    </div>
+
+    <!-- ==========================================
+         VIEW: ACTIVITY TAB
+         ========================================== -->
+    <div id="view-pickups" class="view bg-brand-bg">
+        <div class="view-content px-5 pt-8 pb-32">
+            <h1 class="text-2xl font-extrabold tracking-tight text-brand-dark mb-6">Activity &amp; Pickups</h1>
+            <div id="pickups-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: PROFILE TAB
+         ========================================== -->
+    <div id="view-profile" class="view bg-brand-bg">
+        <div class="view-content px-5 pt-8 pb-32">
+            <!-- Top Header: Back Button + Title -->
+            <div class="flex items-center gap-3 mb-6">
+                <button onclick="returnToHome()" class="w-8 h-8 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-gray-50 active:scale-95 transition-transform">
+                    <i class="ph ph-arrow-left text-lg"></i>
+                </button>
+                <h1 class="text-base font-bold text-brand-dark flex-1 text-center pr-8">Profile</h1>
+            </div>
+
+            <!-- Avatar & User Info -->
+            <div class="text-center mb-5">
+                <div class="w-20 h-20 bg-brand-dark text-white rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-2.5 shadow-sm" id="profile-avatar">W</div>
+                <h2 class="text-lg font-black text-brand-dark user-first-name-full">--</h2>
+                <div class="flex justify-center mt-1">
+                    <span class="bg-[#E7F3EB] text-[#1E3B2B] text-xs font-bold px-3.5 py-1 rounded-full user-role-display">Household</span>
+                </div>
+            </div>
+
+            <!-- Details Card -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-brand-border space-y-3.5">
+                <div class="flex justify-between items-center">
+                    <span class="text-[11px] font-bold text-brand-grayText uppercase tracking-wider">PHONE</span>
+                    <span class="text-sm font-bold text-brand-dark" id="profile-phone">--</span>
+                </div>
+                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
+                    <span class="text-[11px] font-bold text-brand-grayText uppercase tracking-wider">DATE OF BIRTH</span>
+                    <span class="text-sm font-bold text-brand-dark" id="profile-dob">--</span>
+                </div>
+                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
+                    <span class="text-[11px] font-bold text-brand-grayText uppercase tracking-wider">PINCODE</span>
+                    <span class="text-sm font-bold text-brand-dark" id="profile-pincode">--</span>
+                </div>
+                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
+                    <span class="text-[11px] font-bold text-brand-grayText uppercase tracking-wider">HOUSEHOLD CODE</span>
+                    <span class="text-sm font-bold text-brand-dark" id="profile-hhcode">—</span>
+                </div>
+            </div>
+
+            <!-- Addresses Section -->
+            <div class="mt-6">
+                <h3 class="text-xs font-bold text-brand-grayText uppercase tracking-wider px-1 mb-2.5">ADDRESSES</h3>
+                <div id="profile-addresses-list" class="space-y-2.5"></div>
+                <button type="button" onclick="openAddAddressModal()" class="w-full border-2 border-dashed border-brand-dark/40 rounded-2xl py-3.5 text-xs font-bold text-brand-dark hover:border-brand-dark hover:bg-white/40 transition-colors mt-2 flex items-center justify-center gap-1.5">
+                    <i class="ph-bold ph-plus"></i> Add another address
+                </button>
+            </div>
+
+            <!-- Profile Actions -->
+            <div class="mt-5 space-y-2.5">
+                <button type="button" onclick="openEditProfileModal()" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-xs shadow-md hover:opacity-95 active:scale-[0.99] transition-all">
+                    Edit Profile
+                </button>
+                <button type="button" onclick="handleLogout()" class="w-full bg-white border border-red-200 text-red-600 font-bold py-3 rounded-full text-xs hover:bg-red-50 transition-colors">
+                    Log Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: SETTINGS
+         ========================================== -->
+    <div id="view-settings" class="view bg-brand-bg">
+        <div class="view-content px-5 pt-8 pb-32">
+            <!-- Top Header -->
+            <div class="flex items-center gap-3 mb-6">
+                <button onclick="returnToHome()" class="w-8 h-8 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-gray-50 active:scale-95 transition-transform">
+                    <i class="ph ph-arrow-left text-lg"></i>
+                </button>
+                <h1 class="text-base font-bold text-brand-dark flex-1 text-center pr-8">Settings</h1>
+            </div>
+
+            <!-- Injected dynamic settings based on role -->
+            <div id="settings-dynamic-content"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW: HELP & FAQS
+         ========================================== -->
+    <div id="view-faq" class="view bg-brand-bg">
+        <div class="view-content px-5 pt-8 pb-32">
+            <!-- Top Header -->
+            <div class="flex items-center gap-3 mb-6">
+                <button onclick="nav('settings')" class="w-8 h-8 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-gray-50 active:scale-95 transition-transform">
+                    <i class="ph ph-arrow-left text-lg"></i>
+                </button>
+                <h1 class="text-base font-bold text-brand-dark flex-1 text-center pr-8">Help &amp; FAQs</h1>
+            </div>
+
+            <!-- Injected accordion FAQs based on role -->
+            <div id="faq-accordion-list"></div>
+        </div>
+    </div>
+
+    <!-- Pickup status panel (home): swipe up or tap to open Activity -->
+    <div id="pickup-panel" class="hidden absolute left-0 right-0 bottom-[84px] px-4 z-40 touch-none select-none cursor-pointer" role="button" tabindex="0" aria-label="Tap or swipe up to view pickup status">
+        <div class="w-full bg-brand-dark text-white rounded-3xl px-4 pt-2.5 pb-3.5 shadow-xl">
+            <div class="w-10 h-1 bg-white/30 rounded-full mx-auto mb-2.5"></div>
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center shrink-0">
+                    <i class="ph-bold ph-check text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="pp-title" class="font-extrabold text-xs leading-tight truncate">Pickup placed</p>
+                    <p id="pp-sub" class="text-[11px] font-medium text-brand-light mt-0.5 truncate"></p>
+                </div>
+                <i class="ph-bold ph-caret-up text-base shrink-0 opacity-80"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         GLOBAL BOTTOM NAV
+         ========================================== -->
+    <div id="bottom-nav" class="hidden absolute bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-brand-border flex justify-around items-center py-2.5 pb-6 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.03)]">
+        <button onclick="returnToHome()" id="nav-btn-home" class="flex flex-col items-center gap-1 text-brand-dark w-20">
+            <i class="ph-fill ph-house text-2xl"></i>
+            <span class="text-[10px] font-bold">Home</span>
+        </button>
+        <button onclick="nav('pickups')" id="nav-btn-pickups" class="flex flex-col items-center gap-1 text-brand-grayText w-20">
+            <i class="ph ph-clock-counter-clockwise text-2xl"></i>
+            <span class="text-[10px] font-medium">Activity</span>
+        </button>
+        <button onclick="nav('profile')" id="nav-btn-profile" class="flex flex-col items-center gap-1 text-brand-grayText w-20">
+            <i class="ph ph-user text-2xl"></i>
+            <span class="text-[10px] font-medium">Profile</span>
+        </button>
+    </div>
+
+</div>
+
+<!-- MODALS -->
+<!-- Segregation Guide Modal -->
+<div id="modal-segregate" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-segregate-content">
+        <button onclick="closeModal('modal-segregate')" class="absolute top-4 right-4 w-8 h-8 bg-brand-bg rounded-full flex items-center justify-center text-brand-dark">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <h3 class="text-xl font-extrabold text-brand-dark mb-4 mt-2">Segregation Guide</h3>
+        <div class="space-y-4 mb-6">
+            <div class="bg-green-50 rounded-2xl p-4 border border-green-100 flex gap-3 items-start">
+                <i class="ph-fill ph-leaf text-green-600 text-xl mt-0.5"></i>
+                <div>
+                    <h4 class="font-bold text-green-900 text-sm">Wet Waste (Green Bin)</h4>
+                    <p class="text-xs text-green-700 mt-1 leading-relaxed">Vegetable peels, fruit scraps, leftover food, tea leaves.</p>
+                </div>
+            </div>
+            <div class="bg-blue-50 rounded-2xl p-4 border border-blue-100 flex gap-3 items-start">
+                <i class="ph-fill ph-box-arrow-down text-blue-600 text-xl mt-0.5"></i>
+                <div>
+                    <h4 class="font-bold text-blue-900 text-sm">Dry Waste (Blue Bin)</h4>
+                    <p class="text-xs text-blue-700 mt-1 leading-relaxed">Paper, clean plastic containers, cardboard, metal cans, glass bottles.</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="closeModal('modal-segregate')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm">Got it</button>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div id="modal-qr" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/70 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-qr')">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[320px] shadow-2xl text-center relative transform transition-transform scale-95" id="modal-qr-content">
+        <button onclick="closeModal('modal-qr')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200">
+            <i class="ph-bold ph-x text-base"></i>
+        </button>
+        <div id="qr-modal-body">
+            <h3 class="text-lg font-bold text-brand-dark mb-1">Pickup QR Code</h3>
+            <p class="text-xs text-brand-grayText mb-4">Collector will scan to verify pickup.</p>
+            
+            <div class="bg-white border-2 border-brand-border rounded-2xl p-3 inline-block mb-3 shadow-inner">
+                <div id="qr-code-container" class="w-[200px] h-[200px] mx-auto flex items-center justify-center"></div>
+            </div>
+            
+            <p class="text-sm font-black text-brand-dark tracking-wide uppercase" id="qr-id-text">ID: --</p>
+            <p class="text-xs font-bold text-brand-grayText mt-0.5" id="qr-pin-text">Security PIN: ----</p>
+
+            <a id="qr-wa-direct-btn" href="#" target="_blank" class="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors mt-3">
+                <i class="ph-bold ph-whatsapp-logo text-base text-emerald-600"></i>
+                <span>Open in WhatsApp</span>
+            </a>
+        </div>
+
+        <!-- Success overlay inside modal once collected -->
+        <div id="qr-success-overlay" class="hidden py-3">
+            <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                <i class="ph-bold ph-check text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-brand-dark mb-1">Pickup Collected!</h3>
+            <p class="text-xs text-brand-grayText mb-4" id="qr-success-desc">Waste safely verified and weighed.</p>
+            <div class="bg-brand-bg rounded-2xl p-4 border border-brand-border mb-5 text-left space-y-1.5">
+                <div class="flex justify-between text-xs font-semibold text-brand-dark">
+                    <span>Measured Weight</span>
+                    <b id="qr-success-weight">-- kg</b>
+                </div>
+                <div class="flex justify-between text-xs font-semibold text-brand-dark">
+                    <span>Cash Payout</span>
+                    <b id="qr-success-payout">₹--</b>
+                </div>
+                <div class="flex justify-between text-xs font-bold text-emerald-700 pt-1.5 border-t border-brand-border">
+                    <span>Green Points Earned</span>
+                    <b>+50 pts ⭐</b>
+                </div>
+            </div>
+            <button onclick="closeModal('modal-qr'); returnToHome();" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm hover:opacity-90 active:scale-95 transition-all">
+                Done
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Address Modal (Add / Edit) -->
+<div id="modal-address" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-address-content">
+        <button onclick="closeModal('modal-address')" class="absolute top-4 right-4 w-8 h-8 bg-brand-bg rounded-full flex items-center justify-center text-brand-dark">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <h3 class="text-xl font-extrabold text-brand-dark mb-1 mt-1" id="address-modal-title">Address Details</h3>
+        <p class="text-xs text-brand-grayText mb-4">Set your pickup location details.</p>
+        
+        <form id="address-form" onsubmit="handleSaveAddress(event)" class="space-y-4">
+            <input type="hidden" id="address-id">
+            <div>
+                <label class="block text-xs font-semibold text-brand-dark mb-1">Address Label</label>
+                <input type="text" id="address-label" required placeholder="e.g. Primary, Home, Flat, Office"
+                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-brand-dark mb-1">Complete Address</label>
+                <textarea id="address-text" required rows="2" placeholder="House No, Street, Landmark"
+                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-dark shadow-sm resize-none"></textarea>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-brand-dark mb-1">Pincode</label>
+                <input type="text" id="address-pincode" required placeholder="e.g. 110020"
+                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm">
+            </div>
+            <label class="flex items-center gap-2.5 cursor-pointer pt-1">
+                <input type="checkbox" id="address-is-primary" class="w-4 h-4 accent-brand-dark rounded">
+                <span class="text-xs font-bold text-brand-dark">Set as Primary Address</span>
+            </label>
+            <p id="edit-address-msg" class="text-red-600 text-xs text-center font-semibold min-h-[16px]"></p>
+            <button type="submit" id="btn-save-address" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm hover:opacity-90 active:scale-[0.98] transition-all">
+                Save Address
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="modal-edit-profile" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-edit-profile-content">
+        <button onclick="closeModal('modal-edit-profile')" class="absolute top-4 right-4 w-8 h-8 bg-brand-bg rounded-full flex items-center justify-center text-brand-dark">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <h3 class="text-xl font-extrabold text-brand-dark mb-1 mt-1">Edit Profile</h3>
+        <p class="text-xs text-brand-grayText mb-4">Update your personal account details.</p>
+        
+        <form onsubmit="handleSaveProfile(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-brand-dark mb-1">Full Name</label>
+                <input type="text" id="edit-profile-name" required placeholder="Your full name"
+                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-brand-dark mb-1">Date of Birth</label>
+                <input type="date" id="edit-profile-dob" required
+                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-brand-dark mb-1">Pincode</label>
+                <input type="text" id="edit-profile-pincode" required placeholder="e.g. 110020"
+                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm">
+            </div>
+            <p id="edit-profile-msg" class="text-red-600 text-xs text-center font-semibold min-h-[16px]"></p>
+            <button type="submit" id="btn-save-profile" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm hover:opacity-90 active:scale-[0.98] transition-all">
+                Save Profile
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Scrap Rate Card Modal -->
+<div id="modal-rates" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[340px] shadow-2xl relative transform transition-transform scale-95" id="modal-rates-content">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xl font-extrabold text-brand-dark">Scrap Rate Card</h3>
+            <button onclick="closeModal('modal-rates')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200">
+                <i class="ph-bold ph-x text-base"></i>
+            </button>
+        </div>
+        <div class="space-y-3 mb-6 text-sm text-brand-dark font-medium max-h-[50vh] overflow-y-auto pr-1">
+            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Cardboard / Cartons</span><b class="text-brand-dark">₹10 / kg</b></div>
+            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Paper / Office Records</span><b class="text-brand-dark">₹12 / kg</b></div>
+            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Metals (Iron / Steel)</span><b class="text-brand-dark">₹25 / kg</b></div>
+            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Metals (Copper)</span><b class="text-brand-dark">₹400 / kg</b></div>
+            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Metals (Aluminium)</span><b class="text-brand-dark">₹110 / kg</b></div>
+            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Industrial Plastics</span><b class="text-brand-dark">₹15 / kg</b></div>
+            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Cloth / Textiles</span><b class="text-brand-dark">₹5 / kg</b></div>
+        </div>
+        <button onclick="closeModal('modal-rates')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm hover:opacity-90 active:scale-95 transition-all">Close</button>
+    </div>
+</div>
+
+<!-- Action Bottom Sheet (Reschedule / Cancel) -->
+<div id="sheet-action" class="modal fixed inset-0 z-50 items-end sm:items-center justify-center bg-brand-dark/40 backdrop-blur-sm" onclick="if(event.target===this) closeModal('sheet-action')">
+    <div class="bg-white w-full max-w-[420px] rounded-t-[32px] sm:rounded-[32px] p-6 pb-10 shadow-2xl transform transition-transform" id="sheet-action-content">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-5 sm:hidden"></div>
+        <h3 class="text-xl font-extrabold text-brand-dark mb-4 text-center">Manage Pickup</h3>
+        
+        <div class="space-y-3">
+            <button onclick="applyReschedule('Instant (within 60 mins)')" class="w-full bg-brand-bg border border-brand-border text-brand-dark font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors">
+                <span class="flex flex-col items-center leading-tight">
+                    <span>Reschedule to Instant ⚡</span>
+                    <span class="text-[11px] font-medium text-brand-grayText mt-0.5">Urgent collection within 60 mins</span>
+                </span>
+            </button>
+            <button onclick="applyReschedule('Tomorrow Morning (8:00 AM - 12:00 PM)')" class="w-full bg-brand-bg border border-brand-border text-brand-dark font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors">
+                Tomorrow Morning (8 AM - 12 PM)
+            </button>
+            <button onclick="applyReschedule('Tomorrow Evening (4:00 PM - 8:00 PM)')" class="w-full bg-brand-bg border border-brand-border text-brand-dark font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors">
+                Tomorrow Evening (4 PM - 8 PM)
+            </button>
+            <div class="h-1"></div>
+            <button onclick="promptCancel()" class="w-full bg-red-50 border border-red-100 text-red-600 font-bold py-3.5 rounded-2xl hover:bg-red-100 transition-colors">
+                Cancel Pickup Request
+            </button>
+        </div>
+        <button onclick="closeModal('sheet-action')" class="w-full mt-5 text-brand-grayText font-bold text-sm">Close</button>
+    </div>
+</div>
+
+<!-- Green Points Bottom Sheet -->
+<div id="sheet-points" class="modal fixed inset-0 z-50 items-end justify-center bg-brand-dark/40 backdrop-blur-sm" onclick="if(event.target===this) closeModal('sheet-points')">
+    <div class="bg-white w-full max-w-[420px] rounded-t-[32px] pb-8 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar transform transition-transform" id="sheet-points-content">
+        <!-- Rendered dynamically by renderPointsSheet() -->
+    </div>
+</div>
+
+<!-- Confirmation Modal for Cancel -->
+<div id="modal-confirm" class="modal fixed inset-0 z-[60] items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[300px] shadow-2xl text-center transform transition-transform scale-95" id="modal-confirm-content">
+        <div class="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="ph-bold ph-warning text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-extrabold text-brand-dark mb-1">Are you sure?</h3>
+        <p class="text-xs font-medium text-brand-grayText mb-6">Do you really want to cancel this pickup request?</p>
+        <div class="flex gap-3">
+            <button onclick="closeModal('modal-confirm')" class="flex-1 bg-brand-bg text-brand-dark font-bold py-3 rounded-full text-sm">No, Keep</button>
+            <button onclick="confirmCancel()" class="flex-1 bg-red-600 text-white font-bold py-3 rounded-full text-sm shadow-md hover:bg-red-700">Yes, Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ─── Config ──────────────────────────────────────────────────────────────
+    const API_BASE   = window.location.protocol.startsWith('http') 
+        ? `${window.location.origin}/api` 
+        : 'http://localhost:3001/api';
+    const SESSION_KEY = 'circular_user';
+
+    const bizRates = {
+        "Cardboard":              "₹10 / kg",
+        "Paper":                  "₹12 / kg",
+        "Scrap Metals":           "₹25 - ₹420 / kg",
+        "Copper":                 "₹380 / kg",
+        "Iron":                   "₹30 / kg",
+        "Aluminium":              "₹130 / kg",
+        "Brass":                  "₹300 / kg",
+        "Hard Plastics":          "₹15 / kg",
+        "Cloth / Textile":        "₹5 / kg",
+        "Vegetable / Fruit Bulk": "Compost / Bio-energy",
+        "Others":                 "Price on inspection"
+    };
+
+    // ─── Settings Storage & Helpers ──────────────────────────────────────────
+    const SETTINGS_KEY = 'circular_settings';
+    const defaultSettings = {
+        notifPickup: true,
+        notifOffers: false,
+        notifRates:  true,
+        notifDrop:   true,
+        segDefault:  true,
+        slot:        'Immediate Pickup',
+        dark:        false,
+        isVolPaused: false
+    };
+
+    function loadSavedSettings() {
+        try {
+            const raw = localStorage.getItem(SETTINGS_KEY);
+            return raw ? { ...defaultSettings, ...JSON.parse(raw) } : { ...defaultSettings };
+        } catch (e) {
+            return { ...defaultSettings };
+        }
+    }
+
+    function saveSettingsToStorage(s) {
+        try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+        } catch (e) {}
+    }
+
+    function setSetting(k, v) {
+        appState.settings[k] = v;
+        saveSettingsToStorage(appState.settings);
+        if (k === 'dark') {
+            applyDarkMode(v);
+        }
+        if (k === 'segDefault') {
+            const t = document.getElementById('hh-seg-toggle');
+            if (t) {
+                t.checked = v;
+                updateHHCatState();
+            }
+        }
+    }
+
+    function applyDarkMode(isDark) {
+        if (isDark) {
+            document.documentElement.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+        }
+    }
+
+    function toast(msg) {
+        let t = document.getElementById('app-toast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'app-toast';
+            t.className = 'fixed left-1/2 -translate-x-1/2 bottom-12 z-[70] bg-brand-dark text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none max-w-[85%] text-center';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.classList.remove('opacity-0');
+        t.classList.add('opacity-100');
+        setTimeout(() => {
+            t.classList.remove('opacity-100');
+            t.classList.add('opacity-0');
+        }, 2200);
+    }
+
+    function shareApp() {
+        const d = { title: 'Circular Waste App', text: 'Join me on Circular Waste - Smart segregation and recycling app!', url: window.location.origin };
+        if (navigator.share) {
+            navigator.share(d).catch(() => {});
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(d.url).then(() => toast('Link copied to clipboard!'), () => toast('Could not copy link'));
+        } else {
+            toast('Share via WhatsApp or browser copy');
+        }
+    }
+
+    function deleteAccount() {
+        if (confirm('Delete your account and all data? This cannot be undone.')) {
+            handleLogout();
+            toast('Account deleted.');
+        }
+    }
+
+    // ─── State ───────────────────────────────────────────────────────────────
+    const appState = {
+        user:      null,   // filled after login/register
+        pickups:   [],
+        addresses: [],
+        settings:  loadSavedSettings()
+    };
+
+    // ─── Session ─────────────────────────────────────────────────────────────
+    function saveSession(user)  { localStorage.setItem(SESSION_KEY, JSON.stringify(user)); }
+    function clearSession()     { localStorage.removeItem(SESSION_KEY); }
+    function loadSession()      {
+        const raw = localStorage.getItem(SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+    }
+
+    // ─── Boot ─────────────────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+        if (appState.settings.dark) applyDarkMode(true);
+        const saved = loadSession();
+        if (saved) {
+            appState.user = saved;
+            applyUserToDOM();
+            applyTheme(saved.role);
+            returnToHome();
+        } else {
+            nav('auth');
+        }
+    });
+
+    // ─── Auth Tab Switch & Role Selection ────────────────────────────────────
+    let selectedRegistrationRole = 'Household';
+
+    function openRoleSelection() {
+        previewTheme('hh');
+        const hhRadio = document.querySelector('input[name="selected_role"][value="Household"]');
+        if (hhRadio) hhRadio.checked = true;
+        selectedRegistrationRole = 'Household';
+        nav('role');
+    }
+
+    function returnToAuthLogin() {
+        previewTheme('hh');
+        nav('auth');
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        if (tabLogin) tabLogin.classList.add('active-tab');
+        if (tabRegister) tabRegister.classList.remove('active-tab');
+    }
+
+    function continueToRegistrationDetails() {
+        const radio = document.querySelector('input[name="selected_role"]:checked');
+        if (radio) selectedRegistrationRole = radio.value;
+
+        // Apply theme for selected role
+        applyTheme(selectedRegistrationRole);
+
+        if (selectedRegistrationRole === 'Recycler') {
+            nav('rec-sub');
+            return;
+        }
+
+        const badge = document.getElementById('reg-role-badge');
+        if (badge) badge.textContent = selectedRegistrationRole;
+
+        nav('reg-common');
+    }
+
+    function handleRecSubRoleContinue() {
+        const radio = document.querySelector('input[name="subrole"]:checked');
+        const subrole = radio ? radio.value : 'Volunteer';
+        if (subrole === 'Industrial') {
+            nav('rec-email');
+            return;
+        }
+        selectedRegistrationRole = 'Recycler';
+        const badge = document.getElementById('reg-role-badge');
+        if (badge) badge.textContent = 'Volunteer (Drop-off)';
+        nav('reg-common');
+    }
+
+    function switchAuthTab(tab) {
+        if (tab === 'register') {
+            openRoleSelection();
+            return;
+        }
+        nav('auth');
+        const loginOtpMsg = document.getElementById('login-otp-msg');
+        if (loginOtpMsg) loginOtpMsg.classList.add('hidden');
+        const regMsg = document.getElementById('reg-msg');
+        if (regMsg) regMsg.textContent = '';
+    }
+
+    // ─── Navigation ──────────────────────────────────────────────────────────
+    function nav(viewId) {
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById(`view-${viewId}`);
+        if (target) target.classList.add('active');
+
+        const bottomNav  = document.getElementById('bottom-nav');
+        const hideNavViews = ['auth', 'role', 'rec-sub', 'reg-common', 'onboarding-hh', 'reg-vol', 'reg-biz', 'onboarding-rec', 'rec-email', 'schedule-hh', 'schedule-biz', 'success', 'settings', 'faq', 'seg-guide'];
+
+        if (hideNavViews.includes(viewId)) {
+            bottomNav.classList.add('hidden');
+        } else {
+            bottomNav.classList.remove('hidden');
+            updateNavIcons(viewId);
+        }
+
+        renderPickupPanel();
+
+        if (viewId === 'pickups') loadPickupsFromDB();
+        if (viewId === 'profile') loadProfileAddresses();
+        if (viewId === 'settings') renderSettings();
+        if (viewId === 'faq') renderFaq();
+        if (viewId === 'schedule-biz') {
+            const bizDate = document.getElementById('biz-date');
+            if (bizDate && !bizDate.value) {
+                bizDate.value = new Date().toISOString().split('T')[0];
+            }
+            updateBizRates();
+        }
+        if (viewId === 'schedule-hh') {
+            const segToggle = document.getElementById('hh-seg-toggle');
+            if (segToggle && appState.settings) {
+                segToggle.checked = !!appState.settings.segDefault;
+            }
+            updateHHCatState();
+        }
+    }
+
+    function returnToHome() {
+        const role = appState.user?.role;
+        if (role === 'Household') nav('home-hh');
+        else if (role === 'Business') nav('home-biz');
+        else nav('home-vol');
+    }
+
+    function updateNavIcons(viewId) {
+        const btns = {
+            home:    document.getElementById('nav-btn-home'),
+            pickups: document.getElementById('nav-btn-pickups'),
+            profile: document.getElementById('nav-btn-profile')
+        };
+
+        // Reset all
+        Object.values(btns).forEach(btn => {
+            if (!btn) return;
+            btn.classList.replace('text-brand-dark', 'text-brand-grayText');
+            const ic = btn.querySelector('i');
+            if (ic && ic.classList.contains('ph-fill')) ic.classList.replace('ph-fill', 'ph');
+            const sp = btn.querySelector('span');
+            if (sp) sp.className = 'text-[10px] font-medium';
+        });
+
+        let active = null;
+        if (viewId.startsWith('home'))    active = btns.home;
+        else if (viewId === 'pickups')    active = btns.pickups;
+        else if (viewId === 'profile')    active = btns.profile;
+
+        if (active) {
+            active.classList.replace('text-brand-grayText', 'text-brand-dark');
+            const ic = active.querySelector('i');
+            if (ic && ic.classList.contains('ph')) ic.classList.replace('ph', 'ph-fill');
+            const sp = active.querySelector('span');
+            if (sp) sp.className = 'text-[10px] font-bold';
+        }
+    }
+
+    // ─── Theming ─────────────────────────────────────────────────────────────
+    function previewTheme(prefix) {
+        const body = document.getElementById('body-theme');
+        body.className = 'text-brand-dark font-sans antialiased';
+        if (prefix === 'biz') body.classList.add('theme-biz');
+        if (prefix === 'rec') body.classList.add('theme-rec');
+    }
+
+    function applyTheme(role) {
+        if (role === 'Business') previewTheme('biz');
+        else if (role === 'Recycler') previewTheme('rec');
+        else previewTheme('hh');
+    }
+
+    // ─── Format Helpers ──────────────────────────────────────────────────────
+    function formatDob(dateStr) {
+        if (!dateStr) return '—';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    function formatPhone(phoneStr) {
+        if (!phoneStr) return '—';
+        const p = String(phoneStr).replace(/\D/g, '');
+        return p.length === 12 && p.startsWith('91') ? p.slice(2) : p;
+    }
+
+    // ─── DOM User Strings ─────────────────────────────────────────────────────
+    function applyUserToDOM() {
+        const u = appState.user;
+        if (!u) return;
+        const firstName = u.name.split(' ')[0];
+        document.querySelectorAll('.user-first-name').forEach(el => el.textContent = firstName);
+        document.querySelectorAll('.user-first-name-full').forEach(el => el.textContent = u.name);
+        document.querySelectorAll('.user-address').forEach(el => el.textContent = u.address);
+        document.querySelectorAll('.user-pincode').forEach(el => el.textContent = 'PIN: ' + u.pincode);
+        document.querySelectorAll('.user-pincode-plain').forEach(el => el.textContent = u.pincode);
+        document.querySelectorAll('.user-email-display').forEach(el => el.textContent = u.email);
+        document.querySelectorAll('.user-role-display').forEach(el => el.textContent = u.role);
+        if (u.phone) document.querySelectorAll('.user-phone-display').forEach(el => el.textContent = '+91 ' + u.phone.replace(/^91/, ''));
+        if (u.hh_code) document.querySelectorAll('.user-hh-code').forEach(el => el.textContent = u.hh_code);
+        
+        // Profile Avatar & Card fields
+        const av = document.getElementById('profile-avatar');
+        if (av) av.textContent = firstName.charAt(0).toUpperCase();
+        const pPhone = document.getElementById('profile-phone');
+        if (pPhone) pPhone.textContent = formatPhone(u.phone);
+        const pDob = document.getElementById('profile-dob');
+        if (pDob) pDob.textContent = formatDob(u.dob);
+        const pPincode = document.getElementById('profile-pincode');
+        if (pPincode) pPincode.textContent = u.pincode || '—';
+        const pHh = document.getElementById('profile-hhcode');
+        if (pHh) pHh.textContent = u.hh_code || '—';
+    }
+
+    // ─── WhatsApp OTP System ──────────────────────────────────────────────────
+    let isRegisterPhoneVerified = false;
+    let verifiedRegisterPhone = '';
+
+    async function sendRegisterOTP() {
+        const phoneInput = document.getElementById('reg-phone');
+        const phone = phoneInput.value.replace(/\D/g, '');
+        const btn = document.getElementById('btn-reg-send-otp');
+        const msgEl = document.getElementById('reg-msg');
+
+        if (phone.length < 10) {
+            msgEl.textContent = 'Please enter a valid 10-digit WhatsApp mobile number.';
+            msgEl.className = 'form-msg text-red-600';
+            phoneInput.focus();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Sending…`;
+        msgEl.textContent = '';
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                msgEl.className = 'form-msg text-red-600';
+                msgEl.textContent = data.error || 'Failed to send OTP.';
+                btn.disabled = false;
+                btn.innerHTML = `<i class="ph ph-whatsapp-logo text-base"></i> Send OTP`;
+                return;
+            }
+
+            document.getElementById('reg-otp-section').classList.remove('hidden');
+            btn.innerHTML = `Resend`;
+            btn.disabled = false;
+            msgEl.className = 'form-msg text-emerald-600';
+            msgEl.textContent = '✅ WhatsApp OTP sent! Please check your WhatsApp.';
+            document.getElementById('reg-otp').focus();
+
+        } catch (err) {
+            msgEl.className = 'form-msg text-red-600';
+            msgEl.textContent = 'Cannot connect to server. Is backend running?';
+            btn.disabled = false;
+            btn.innerHTML = `<i class="ph ph-whatsapp-logo text-base"></i> Send OTP`;
+        }
+    }
+
+    async function verifyRegisterOTP() {
+        const phone = document.getElementById('reg-phone').value.replace(/\D/g, '');
+        const otp = document.getElementById('reg-otp').value.trim();
+        const btn = document.getElementById('btn-reg-verify-otp');
+        const msgEl = document.getElementById('reg-msg');
+
+        if (!otp || otp.length < 4) {
+            msgEl.className = 'form-msg text-red-600';
+            msgEl.textContent = 'Please enter the 4-digit code received on WhatsApp.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Verifying…';
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, otp })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                msgEl.className = 'form-msg text-red-600';
+                msgEl.textContent = data.error || 'Incorrect OTP code.';
+                btn.disabled = false;
+                btn.textContent = 'Verify Code';
+                return;
+            }
+
+            isRegisterPhoneVerified = true;
+            verifiedRegisterPhone = data.phone || phone;
+
+            document.getElementById('reg-otp-section').classList.add('hidden');
+            document.getElementById('btn-reg-send-otp').classList.add('hidden');
+            document.getElementById('reg-phone').disabled = true;
+            document.getElementById('reg-phone').classList.add('opacity-70');
+            
+            document.getElementById('reg-verified-phone-txt').textContent = `+91 ${phone.slice(-10)}`;
+            document.getElementById('reg-verified-badge').classList.remove('hidden');
+
+            msgEl.className = 'form-msg text-emerald-600';
+            msgEl.textContent = '✅ WhatsApp number verified successfully!';
+
+        } catch (err) {
+            msgEl.className = 'form-msg text-red-600';
+            msgEl.textContent = 'Cannot connect to server.';
+            btn.disabled = false;
+            btn.textContent = 'Verify Code';
+        }
+    }
+
+    // ─── WhatsApp Fast Login ──────────────────────────────────────────────────
+    async function sendLoginOTP() {
+        const phoneInput = document.getElementById('login-phone');
+        const phone = phoneInput.value.replace(/\D/g, '');
+        const btn = document.getElementById('btn-login-send-otp');
+        const msgEl = document.getElementById('login-otp-msg');
+
+        if (phone.length < 10) {
+            msgEl.className = 'text-[11px] font-semibold text-center text-red-600';
+            msgEl.classList.remove('hidden');
+            msgEl.textContent = 'Please enter a valid 10-digit number.';
+            phoneInput.focus();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Sending…`;
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                msgEl.className = 'text-[11px] font-semibold text-center text-red-600';
+                msgEl.classList.remove('hidden');
+                msgEl.textContent = data.error || 'Failed to send OTP.';
+                btn.disabled = false;
+                btn.innerHTML = `<i class="ph ph-whatsapp-logo text-sm"></i> Send OTP`;
+                return;
+            }
+
+            document.getElementById('login-otp-section').classList.remove('hidden');
+            btn.innerHTML = `Resend`;
+            btn.disabled = false;
+            msgEl.className = 'text-[11px] font-semibold text-center text-emerald-600';
+            msgEl.classList.remove('hidden');
+            msgEl.textContent = '✅ OTP sent to WhatsApp! Enter below.';
+            document.getElementById('login-otp').focus();
+
+        } catch (err) {
+            msgEl.className = 'text-[11px] font-semibold text-center text-red-600';
+            msgEl.classList.remove('hidden');
+            msgEl.textContent = 'Server connection error.';
+            btn.disabled = false;
+            btn.innerHTML = `<i class="ph ph-whatsapp-logo text-sm"></i> Send OTP`;
+        }
+    }
+
+    async function verifyLoginOTP() {
+        const phone = document.getElementById('login-phone').value.replace(/\D/g, '');
+        const otp = document.getElementById('login-otp').value.trim();
+        const btn = document.getElementById('btn-login-verify-otp');
+        const msgEl = document.getElementById('login-otp-msg');
+
+        if (!otp || otp.length < 4) {
+            msgEl.className = 'text-[11px] font-semibold text-center text-red-600';
+            msgEl.classList.remove('hidden');
+            msgEl.textContent = 'Enter the 4-digit code.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Verifying…';
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, otp })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                msgEl.className = 'text-[11px] font-semibold text-center text-red-600';
+                msgEl.classList.remove('hidden');
+                msgEl.textContent = data.error || 'Incorrect OTP code.';
+                btn.disabled = false;
+                btn.textContent = 'Verify & Login';
+                return;
+            }
+
+            if (data.user) {
+                // User already registered! Fast login
+                appState.user = data.user;
+                saveSession(data.user);
+                applyUserToDOM();
+                applyTheme(data.user.role);
+
+                if (data.user.role === 'Household') returnToHome();
+                else if (data.user.role === 'Business') returnToHome();
+                else nav('onboarding-rec');
+            } else {
+                // Not registered yet -> switch to Role Selection with verified phone!
+                isRegisterPhoneVerified = true;
+                verifiedRegisterPhone = phone;
+
+                document.getElementById('reg-phone').value = phone.slice(-10);
+                document.getElementById('reg-phone').disabled = true;
+                document.getElementById('reg-phone').classList.add('opacity-70');
+                document.getElementById('reg-verified-phone-txt').textContent = `+91 ${phone.slice(-10)}`;
+                document.getElementById('reg-verified-badge').classList.remove('hidden');
+                document.getElementById('btn-reg-send-otp').classList.add('hidden');
+                document.getElementById('reg-otp-section').classList.add('hidden');
+
+                openRoleSelection();
+            }
+
+        } catch (err) {
+            msgEl.className = 'text-[11px] font-semibold text-center text-red-600';
+            msgEl.classList.remove('hidden');
+            msgEl.textContent = 'Cannot connect to server.';
+            btn.disabled = false;
+            btn.textContent = 'Verify & Login';
+        }
+    }
+
+    // ─── Login ───────────────────────────────────────────────────────────────
+    async function handleLogin(e) {
+        e.preventDefault();
+        const email    = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        const msgEl    = document.getElementById('login-msg');
+        const btn      = document.getElementById('login-btn');
+
+        msgEl.textContent = '';
+        btn.textContent   = 'Logging in…';
+        btn.disabled      = true;
+
+        try {
+            const res  = await fetch(`${API_BASE}/users/login`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                msgEl.textContent = data.error || 'Login failed.';
+                return;
+            }
+
+            appState.user = data.user;
+            saveSession(data.user);
+            applyUserToDOM();
+            applyTheme(data.user.role);
+
+            if (data.user.role === 'Household') returnToHome();
+            else if (data.user.role === 'Business') returnToHome();
+            else nav('onboarding-rec');
+
+        } catch (err) {
+            msgEl.textContent = 'Cannot reach server. Is the backend running?';
+        } finally {
+            btn.textContent = 'Login';
+            btn.disabled    = false;
+        }
+    }
+
+    // ─── Register ─────────────────────────────────────────────────────────────
+    async function handleRegistration(e) {
+        e.preventDefault();
+        const name     = document.getElementById('reg-name').value.trim();
+        const dob      = document.getElementById('reg-dob').value;
+        const address  = document.getElementById('reg-address').value.trim();
+        const pincode  = document.getElementById('reg-pincode').value.trim();
+        const role     = selectedRegistrationRole || 'Household';
+        const msgEl    = document.getElementById('reg-msg');
+
+        if (!isRegisterPhoneVerified || !verifiedRegisterPhone) {
+            msgEl.className = 'form-msg text-red-600';
+            msgEl.textContent = 'Please verify your WhatsApp mobile number with OTP first.';
+            document.getElementById('reg-phone').focus();
+            return;
+        }
+
+        msgEl.textContent = '';
+        msgEl.className   = 'form-msg text-red-600';
+
+        try {
+            const res  = await fetch(`${API_BASE}/users/register`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({
+                    name,
+                    dob,
+                    address,
+                    pincode,
+                    role,
+                    phone: verifiedRegisterPhone
+                })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                msgEl.textContent = data.error || 'Registration failed.';
+                return;
+            }
+
+            appState.user = data.user;
+            saveSession(data.user);
+            applyUserToDOM();
+            applyTheme(role);
+
+            if (role === 'Household') nav('onboarding-hh');
+            else if (role === 'Business') nav('reg-biz');
+            else nav('reg-vol');
+
+        } catch (err) {
+            msgEl.textContent = 'Cannot reach server. Is the backend running?';
+        }
+    }
+
+    // ─── Household Code ──────────────────────────────────────────────────────
+    function generateHHCode() {
+        document.getElementById('hh-code-input').value = 'HH-' + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    async function completeHHOnboarding() {
+        const code = document.getElementById('hh-code-input').value || 'HH-0000';
+        appState.user.hhCode = code;
+        document.querySelectorAll('.user-hh-code').forEach(el => el.textContent = code);
+
+        if (appState.user.id) {
+            try {
+                const res = await fetch(`${API_BASE}/users/${appState.user.id}/hh-code`, {
+                    method:  'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ hh_code: code })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    appState.user = { ...appState.user, hh_code: code };
+                    saveSession(appState.user);
+                }
+            } catch (err) { console.warn('Could not save HH code:', err); }
+        }
+        returnToHome();
+    }
+
+    async function submitVolReg(e) {
+        if (e) e.preventDefault();
+        const bio = document.getElementById('vol-bio')?.value.trim() || '';
+        if (appState.user?.id) {
+            try {
+                await fetch(`${API_BASE}/users/${appState.user.id}/profile`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bio })
+                });
+            } catch (err) {}
+            appState.user.bio = bio;
+            saveSession(appState.user);
+        }
+        returnToHome();
+    }
+
+    async function submitBizReg(e) {
+        if (e) e.preventDefault();
+        const selected = [];
+        document.querySelectorAll('.biz-reg-main:checked').forEach(cb => {
+            if (cb.value === 'Metals') {
+                const sub = [];
+                document.querySelectorAll('.biz-reg-sub:checked').forEach(scb => sub.push(scb.value));
+                if (sub.length) selected.push(`Metals (${sub.join(', ')})`);
+                else selected.push('Metals');
+            } else {
+                selected.push(cb.value);
+            }
+        });
+        if (appState.user?.id) {
+            try {
+                await fetch(`${API_BASE}/users/${appState.user.id}/profile`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ saved_materials: selected.join(', ') })
+                });
+            } catch (err) {}
+            appState.user.savedBizMaterials = selected;
+            saveSession(appState.user);
+        }
+        returnToHome();
+    }
+
+    // ─── Profile & Address Management ─────────────────────────────────────────
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+    }
+
+    async function loadProfileAddresses() {
+        if (!appState.user?.id) return;
+        const listEl = document.getElementById('profile-addresses-list');
+        if (!listEl) return;
+        try {
+            const res = await fetch(`${API_BASE}/users/${appState.user.id}/addresses`);
+            const data = await res.json();
+            const addresses = data.addresses || [];
+            appState.addresses = addresses;
+            renderAddresses(addresses);
+        } catch (err) {
+            console.error('Failed to load addresses', err);
+        }
+    }
+
+    function renderAddresses(addresses) {
+        const listEl = document.getElementById('profile-addresses-list');
+        if (!listEl) return;
+        if (addresses.length === 0) {
+            listEl.innerHTML = `<p class="text-xs text-brand-grayText p-3.5 bg-white rounded-2xl border border-brand-border">No saved addresses yet.</p>`;
+            return;
+        }
+        listEl.innerHTML = addresses.map(a => `
+            <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-sm">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-brand-dark">${escapeHtml(a.label || 'Address')}</span>
+                        ${a.is_primary ? '<span class="bg-[#E7F3EB] text-[#1E3B2B] text-[10px] font-bold px-2 py-0.5 rounded-full">Primary</span>' : ''}
+                    </div>
+                    <button type="button" onclick="openEditAddressModal(${a.id})" class="text-xs font-bold text-brand-dark hover:underline">Edit</button>
+                </div>
+                <p class="text-xs text-brand-grayText font-medium">${escapeHtml(a.address)}${a.pincode ? ` (PIN: ${escapeHtml(a.pincode)})` : ''}</p>
+            </div>
+        `).join('');
+    }
+
+    function openAddAddressModal() {
+        document.getElementById('address-form')?.reset();
+        document.getElementById('address-id').value = '';
+        document.getElementById('address-label').value = 'Secondary';
+        document.getElementById('address-is-primary').checked = false;
+        document.getElementById('address-modal-title').textContent = 'Add Another Address';
+        document.getElementById('edit-address-msg').textContent = '';
+        
+        const m = document.getElementById('modal-address');
+        const c = document.getElementById('modal-address-content');
+        m.classList.add('active');
+        setTimeout(() => c.classList.replace('scale-95', 'scale-100'), 10);
+    }
+
+    function openEditAddressModal(id) {
+        const addr = (appState.addresses || []).find(a => a.id === id);
+        if (!addr) return;
+        document.getElementById('address-id').value = addr.id;
+        document.getElementById('address-label').value = addr.label || 'Primary';
+        document.getElementById('address-text').value = addr.address || '';
+        document.getElementById('address-pincode').value = addr.pincode || '';
+        document.getElementById('address-is-primary').checked = !!addr.is_primary;
+        document.getElementById('address-modal-title').textContent = 'Edit Address';
+        document.getElementById('edit-address-msg').textContent = '';
+
+        const m = document.getElementById('modal-address');
+        const c = document.getElementById('modal-address-content');
+        m.classList.add('active');
+        setTimeout(() => c.classList.replace('scale-95', 'scale-100'), 10);
+    }
+
+    async function handleSaveAddress(e) {
+        e.preventDefault();
+        const id = document.getElementById('address-id').value;
+        const label = document.getElementById('address-label').value.trim();
+        const address = document.getElementById('address-text').value.trim();
+        const pincode = document.getElementById('address-pincode').value.trim();
+        const is_primary = document.getElementById('address-is-primary').checked;
+        const msgEl = document.getElementById('edit-address-msg');
+        const btn = document.getElementById('btn-save-address');
+
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        msgEl.textContent = '';
+
+        try {
+            const url = id 
+                ? `${API_BASE}/users/${appState.user.id}/addresses/${id}`
+                : `${API_BASE}/users/${appState.user.id}/addresses`;
+            const method = id ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ label, address, pincode, is_primary })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                msgEl.textContent = data.error || 'Failed to save address.';
+                return;
+            }
+
+            if (is_primary) {
+                appState.user.address = address;
+                appState.user.pincode = pincode;
+                saveSession(appState.user);
+                applyUserToDOM();
+            }
+
+            await loadProfileAddresses();
+            closeModal('modal-address');
+        } catch (err) {
+            msgEl.textContent = 'Cannot reach server.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save Address';
+        }
+    }
+
+    function openEditProfileModal() {
+        const u = appState.user;
+        if (!u) return;
+        document.getElementById('edit-profile-name').value = u.name || '';
+        document.getElementById('edit-profile-dob').value = u.dob || '';
+        document.getElementById('edit-profile-pincode').value = u.pincode || '';
+        document.getElementById('edit-profile-msg').textContent = '';
+
+        const m = document.getElementById('modal-edit-profile');
+        const c = document.getElementById('modal-edit-profile-content');
+        m.classList.add('active');
+        setTimeout(() => c.classList.replace('scale-95', 'scale-100'), 10);
+    }
+
+    async function handleSaveProfile(e) {
+        e.preventDefault();
+        const name = document.getElementById('edit-profile-name').value.trim();
+        const dob = document.getElementById('edit-profile-dob').value;
+        const pincode = document.getElementById('edit-profile-pincode').value.trim();
+        const msgEl = document.getElementById('edit-profile-msg');
+        const btn = document.getElementById('btn-save-profile');
+
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        msgEl.textContent = '';
+
+        try {
+            const res = await fetch(`${API_BASE}/users/${appState.user.id}/profile`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, dob, pincode })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                msgEl.textContent = data.error || 'Failed to update profile.';
+                return;
+            }
+
+            appState.user = { ...appState.user, ...data.user };
+            saveSession(appState.user);
+            applyUserToDOM();
+            closeModal('modal-edit-profile');
+        } catch (err) {
+            msgEl.textContent = 'Cannot reach server.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save Profile';
+        }
+    }
+
+    // ─── Settings & FAQs ──────────────────────────────────────────────────────
+    function renderSettings() {
+        const u = appState.user || {};
+        const r = u.role || 'Household';
+        const S = appState.settings || defaultSettings;
+        const container = document.getElementById('settings-dynamic-content');
+        if (!container) return;
+
+        const profileCard = `
+            <!-- Profile Quick Link Card -->
+            <div onclick="nav('profile')" class="bg-white rounded-2xl p-4 border border-brand-border shadow-sm flex items-center justify-between cursor-pointer hover:border-brand-dark/30 transition-colors mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-full bg-brand-dark text-white flex items-center justify-center font-extrabold text-lg shadow-sm">
+                        ${(u.name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-bold text-brand-dark">${escapeHtml(u.name || 'User Profile')}</p>
+                            <span class="bg-[#E7F3EB] text-[#1E3B2B] text-[10px] font-bold px-2 py-0.5 rounded-full">${u.role || 'Household'}</span>
+                        </div>
+                        <p class="text-[11px] text-brand-grayText font-medium mt-0.5">Manage personal info &amp; saved addresses</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 text-xs font-bold text-brand-dark">
+                    <span>View</span>
+                    <i class="ph-bold ph-caret-right text-brand-grayText"></i>
+                </div>
+            </div>
+        `;
+
+        let roleContent = '';
+        if (r === 'Household') {
+            roleContent = `
+                <!-- Notifications -->
+                <div class="mb-5">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Notifications</div>
+                    <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                        ${renderSettingToggle('Pickup updates', 'Confirmations, reminders and status', S.notifPickup, "setSetting('notifPickup', this.checked)")}
+                        ${renderSettingToggle('Offers & tips', 'Eco-friendly tips and news', S.notifOffers, "setSetting('notifOffers', this.checked)")}
+                    </div>
+                </div>
+
+                <!-- Pickup Preferences -->
+                <div class="mb-5">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Pickup Preferences</div>
+                    <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                        ${renderSettingToggle('Segregated waste by default', 'Pre-select segregated toggle when scheduling', S.segDefault, "setSetting('segDefault', this.checked)")}
+                        <div class="flex justify-between items-center p-4">
+                            <div>
+                                <p class="text-sm font-bold text-brand-dark">Default pickup timing</p>
+                                <p class="text-[11px] text-brand-grayText font-medium">Auto-selected time slot</p>
+                            </div>
+                            <select onchange="setSetting('slot', this.value)" class="bg-brand-bg border border-brand-border rounded-xl px-2.5 py-1.5 font-bold text-xs text-brand-dark focus:outline-none">
+                                <option value="Immediate Pickup" ${S.slot === 'Immediate Pickup' ? 'selected' : ''}>Immediate</option>
+                                <option value="Tomorrow Morning (8:00 AM - 12:00 PM)" ${S.slot.includes('Morning') ? 'selected' : ''}>Morning</option>
+                                <option value="Tomorrow Evening (4:00 PM - 8:00 PM)" ${S.slot.includes('Evening') ? 'selected' : ''}>Evening</option>
+                            </select>
+                        </div>
+                        ${renderSettingLink('Language', 'App display language', "toast('More languages coming soon!')", 'English ›')}
+                        ${renderSettingToggle('Dark mode', 'Comfortable night reading', S.dark, "setSetting('dark', this.checked)")}
+                    </div>
+                </div>
+            `;
+        } else if (r === 'Business') {
+            roleContent = `
+                <!-- Notifications -->
+                <div class="mb-5">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Notifications</div>
+                    <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                        ${renderSettingToggle('Pickup updates', 'Commercial pickup progress and status', S.notifPickup, "setSetting('notifPickup', this.checked)")}
+                        ${renderSettingToggle('Rate changes', 'Real-time scrap rate updates', S.notifRates, "setSetting('notifRates', this.checked)")}
+                        ${renderSettingToggle('Offers & tips', 'B2B recycling bulk incentives', S.notifOffers, "setSetting('notifOffers', this.checked)")}
+                    </div>
+                </div>
+
+                <!-- Pickup Preferences -->
+                <div class="mb-5">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Pickup Preferences</div>
+                    <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                        <div class="flex justify-between items-center p-4">
+                            <div>
+                                <p class="text-sm font-bold text-brand-dark">Default pickup timing</p>
+                                <p class="text-[11px] text-brand-grayText font-medium">Auto-selected time slot</p>
+                            </div>
+                            <select onchange="setSetting('slot', this.value)" class="bg-brand-bg border border-brand-border rounded-xl px-2.5 py-1.5 font-bold text-xs text-brand-dark focus:outline-none">
+                                <option value="Morning" ${S.slot.includes('Morning') ? 'selected' : ''}>Morning</option>
+                                <option value="Afternoon" ${S.slot.includes('Afternoon') ? 'selected' : ''}>Afternoon</option>
+                                <option value="Evening" ${S.slot.includes('Evening') ? 'selected' : ''}>Evening</option>
+                                <option value="Instant" ${S.slot.includes('Instant') ? 'selected' : ''}>Instant</option>
+                            </select>
+                        </div>
+                        ${renderSettingLink('Scrap rates card', 'Check market pricing per kg', "openModal('modal-rates')", 'Rates ›')}
+                        ${renderSettingLink('Language', 'App display language', "toast('More languages coming soon!')", 'English ›')}
+                        ${renderSettingToggle('Dark mode', 'Comfortable night reading', S.dark, "setSetting('dark', this.checked)")}
+                    </div>
+                </div>
+            `;
+        } else {
+            roleContent = `
+                <!-- Receiving Preferences -->
+                <div class="mb-5">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Receiving</div>
+                    <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                        ${renderSettingToggle('Pause receiving', 'Temporarily opt out of new organic drop-offs', S.isVolPaused, "setSetting('isVolPaused', this.checked)")}
+                        ${renderSettingLink('Service pincode', 'Active area: ' + (u.pincode || '--'), "nav('profile')", (u.pincode || '--') + ' ›')}
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="mb-5">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Notifications</div>
+                    <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                        ${renderSettingToggle('Drop-off alerts', 'When neighbours bring biodegradable waste', S.notifDrop, "setSetting('notifDrop', this.checked)")}
+                        ${renderSettingToggle('Offers & tips', 'Community compost tips & updates', S.notifOffers, "setSetting('notifOffers', this.checked)")}
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="mb-5">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Preferences</div>
+                    <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                        ${renderSettingLink('Language', 'App display language', "toast('More languages coming soon!')", 'English ›')}
+                        ${renderSettingToggle('Dark mode', 'Comfortable night reading', S.dark, "setSetting('dark', this.checked)")}
+                    </div>
+                </div>
+            `;
+        }
+
+        const commonContent = `
+            <!-- Community -->
+            <div class="mb-5">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Community</div>
+                <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                    ${renderSettingLink('Share the app', 'Invite friends and neighbours', 'shareApp()', 'Share ›')}
+                    ${renderSettingLink('Support our mission', 'Help us reach more neighbourhoods', "toast('Donations feature coming soon!')", 'Support ›')}
+                </div>
+            </div>
+
+            <!-- Support -->
+            <div class="mb-6">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Support</div>
+                <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                    ${renderSettingLink('Help & FAQs', 'Questions, segregation rules & guides', "nav('faq')", 'FAQs ›')}
+                    ${renderSettingLink('Contact support', 'Reach out to our helpline', "toast('Support helpline: +91 98765 43210')", 'Contact ›')}
+                    ${renderSettingLink('Send feedback', 'Help us make Circular better', "toast('Feedback form opening soon')", 'Feedback ›')}
+                    ${renderSettingLink('Privacy & terms', 'Data policy and user terms', "toast('Terms & Privacy: Clean & Secure')", 'Legal ›')}
+                    <button type="button" onclick="deleteAccount()" class="w-full flex items-center justify-between p-4 text-left hover:bg-red-50/50 transition-colors">
+                        <div>
+                            <p class="text-sm font-bold text-red-600">Delete account</p>
+                            <p class="text-[11px] text-red-400 font-medium">Permanently remove your account and data</p>
+                        </div>
+                        <i class="ph-bold ph-trash text-red-500 text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="button" onclick="handleLogout()" class="w-full bg-white border border-red-200 text-red-600 font-bold py-3.5 rounded-2xl text-xs hover:bg-red-50 shadow-sm transition-colors mb-6">
+                Log Out
+            </button>
+        `;
+
+        container.innerHTML = profileCard + roleContent + commonContent;
+    }
+
+    function renderSettingToggle(title, desc, isChecked, onchangeFn) {
+        const id = 'set-tg-' + title.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return `
+            <div class="flex items-center justify-between p-4">
+                <div class="pr-3">
+                    <label for="${id}" class="text-sm font-bold text-brand-dark block cursor-pointer">${title}</label>
+                    ${desc ? `<p class="text-[11px] text-brand-grayText font-medium mt-0.5 leading-snug">${desc}</p>` : ''}
+                </div>
+                <div class="relative inline-block w-11 align-middle select-none shrink-0">
+                    <input type="checkbox" id="${id}" onchange="${onchangeFn}" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 border-gray-300 appearance-none cursor-pointer transition-all duration-300 z-10" ${isChecked ? 'checked' : ''}/>
+                    <label for="${id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderSettingLink(title, desc, onclickFn, actionLabel) {
+        return `
+            <button type="button" onclick="${onclickFn}" class="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50/60 transition-colors">
+                <div class="pr-3">
+                    <p class="text-sm font-bold text-brand-dark">${title}</p>
+                    ${desc ? `<p class="text-[11px] text-brand-grayText font-medium mt-0.5 leading-snug">${desc}</p>` : ''}
+                </div>
+                <span class="text-xs font-bold text-brand-grayText shrink-0">${actionLabel || '›'}</span>
+            </button>
+        `;
+    }
+
+    // ─── Help & FAQs ──────────────────────────────────────────────────────────
+    const FAQS = [
+        { title: 'Pickups', roles: ['Household', 'Business'], items: [
+            ['How do I schedule a pickup?', 'Tap "Schedule a Pickup" on Home, choose your waste categories and a timing slot, then tap Confirm Pickup.'],
+            ['What do the slots mean?', 'Morning, Afternoon and Evening are scheduled slots. Immediate Pickup sends a local collector to your door within 45 minutes.'],
+            ['Can I cancel a pickup?', 'Yes. Open the Activity tab, and tap "Cancel" on any pending pickup card.'],
+            ['What is the QR code for?', 'Tap "Show QR" on your active pickup so the collector can scan and verify the request at your doorstep.']
+        ]},
+        { title: 'Segregation & Fees', roles: ['Household'], items: [
+            ['Why is there a fee for non-segregated waste?', 'Mixed waste takes extra time and effort to sort manually. Keeping biodegradable wet waste and dry recyclables separated avoids the ₹30 fee.'],
+            ['What items count as Dry Recyclables?', 'Clean cardboard, newspapers, plastic bottles, tins, cans, and scrap metals.'],
+            ['What items count as Biodegradable Wet Waste?', 'Kitchen peels, food scraps, cooked leftovers, and fruit residue.']
+        ]},
+        { title: 'Scrap Payouts & Rates', roles: ['Household', 'Business'], items: [
+            ['Do households get paid for recyclables?', 'Yes! When you have more than 2kg of dry recyclables or scrap metal, the collector pays you market scrap value at pickup.'],
+            ['How are commercial scrap rates decided?', 'Rates are based on live scrap market rates (e.g. Copper ₹380/kg, Aluminium ₹130/kg, Cartons ₹10/kg) and updated regularly.']
+        ]},
+        { title: 'Volunteers & Recyclers', roles: ['Recycler'], items: [
+            ['What waste will I receive?', 'Biodegradable organic waste and compostable matter dropped off in your area.'],
+            ['Can I pause receiving drop-offs?', 'Yes. You can toggle "Pause receiving" anytime under Settings or your Volunteer Hub.']
+        ]},
+        { title: 'Account & Security', roles: ['Household', 'Business', 'Recycler'], items: [
+            ['How do I log in or switch phones?', 'Enter your verified WhatsApp phone number, receive your one-time code via WhatsApp, and log in securely.'],
+            ['How do I change my address?', 'Go to Profile > Addresses and tap "Edit" or "+ Add another address".']
+        ]}
+    ];
+
+    function renderFaq() {
+        const role = appState.user?.role || 'Household';
+        const container = document.getElementById('faq-accordion-list');
+        if (!container) return;
+        let n = 0;
+        const groups = FAQS.filter(g => g.roles.includes(role)).map(g => `
+            <div class="mb-5">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2.5 px-1">${g.title}</div>
+                <div class="space-y-2.5">
+                    ${g.items.map(it => {
+                        const i = n++;
+                        return `
+                            <div class="bg-white rounded-2xl border border-brand-border shadow-sm overflow-hidden">
+                                <button onclick="toggleFaq(${i})" id="faq-btn-${i}" class="w-full flex items-center justify-between gap-3 p-4 text-left">
+                                    <span class="text-sm font-bold text-brand-dark leading-snug">${escapeHtml(it[0])}</span>
+                                    <i id="faq-caret-${i}" class="ph-bold ph-caret-down text-brand-grayText shrink-0 transition-transform duration-200"></i>
+                                </button>
+                                <div id="faq-body-${i}" class="hidden border-t border-brand-border px-4 py-3.5 text-xs font-medium text-brand-dark/80 bg-brand-bg/40 leading-relaxed">
+                                    ${escapeHtml(it[1])}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `).join('');
+        container.innerHTML = groups;
+    }
+
+    function toggleFaq(i) {
+        const body = document.getElementById('faq-body-' + i);
+        if (!body) return;
+        const willOpen = body.classList.contains('hidden');
+        document.querySelectorAll('[id^="faq-body-"]').forEach(b => b.classList.add('hidden'));
+        document.querySelectorAll('[id^="faq-caret-"]').forEach(c => c.classList.remove('rotate-180'));
+        if (willOpen) {
+            body.classList.remove('hidden');
+            document.getElementById('faq-caret-' + i)?.classList.add('rotate-180');
+        }
+    }
+
+    // ─── Logout ──────────────────────────────────────────────────────────────
+    function handleLogout() {
+        clearSession();
+        appState.user    = null;
+        appState.pickups = [];
+        document.getElementById('body-theme').className = 'text-brand-dark font-sans antialiased';
+        // Reset forms
+        isRegisterPhoneVerified = false;
+        verifiedRegisterPhone = '';
+        const regBadge = document.getElementById('reg-verified-badge');
+        if (regBadge) regBadge.classList.add('hidden');
+        const regPhone = document.getElementById('reg-phone');
+        if (regPhone) {
+            regPhone.disabled = false;
+            regPhone.classList.remove('opacity-70');
+            regPhone.value = '';
+        }
+        const sendBtn = document.getElementById('btn-reg-send-otp');
+        if (sendBtn) {
+            sendBtn.classList.remove('hidden');
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = `<i class="ph ph-paper-plane-tilt text-base"></i> Send OTP`;
+        }
+        const loginPhone = document.getElementById('login-phone');
+        if (loginPhone) loginPhone.value = '';
+        const loginOtpSec = document.getElementById('login-otp-section');
+        if (loginOtpSec) loginOtpSec.classList.add('hidden');
+        switchAuthTab('login');
+        nav('auth');
+    }
+
+    // ─── Modals ───────────────────────────────────────────────────────────────
+    function openModal(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        const c = document.getElementById(id + '-content');
+        m.classList.add('active');
+        if (c) setTimeout(() => c.classList.replace('scale-95', 'scale-100'), 10);
+    }
+    function openSegregateModal() {
+        openSegGuide();
+    }
+
+    let qrPollInterval = null;
+
+    function openQRModal(id) {
+        const p = appState.pickups.find(x => x.id === id || x.dbId === id) || { id: id, pin: '4821' };
+        const pin = p.pin || '4821';
+        const botPhone = '917657864774';
+        const waText = `VERIFY ${p.id} ${pin}`;
+        const waUrl = `https://wa.me/${botPhone}?text=${encodeURIComponent(waText)}`;
+
+        document.getElementById('qr-modal-body')?.classList.remove('hidden');
+        document.getElementById('qr-success-overlay')?.classList.add('hidden');
+        document.getElementById('qr-id-text').textContent = 'ID: #' + p.id;
+        const pinEl = document.getElementById('qr-pin-text');
+        if (pinEl) pinEl.textContent = 'Security PIN: ' + pin;
+
+        const directBtn = document.getElementById('qr-wa-direct-btn');
+        if (directBtn) directBtn.href = waUrl;
+
+        const qrContainer = document.getElementById('qr-code-container');
+        if (qrContainer) {
+            qrContainer.innerHTML = '';
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(qrContainer, {
+                    text: waUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#0A3B2C",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } else {
+                const img = document.createElement('img');
+                img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(waUrl)}`;
+                img.className = 'w-[200px] h-[200px] object-contain mx-auto';
+                qrContainer.appendChild(img);
+            }
+        }
+
+        openModal('modal-qr');
+        startQRCompletionPolling(p.id, p.dbId);
+    }
+
+    function startQRCompletionPolling(reqId, dbId) {
+        clearInterval(qrPollInterval);
+        const targetId = dbId || reqId;
+        qrPollInterval = setInterval(async () => {
+            const m = document.getElementById('modal-qr');
+            if (!m || !m.classList.contains('active')) {
+                clearInterval(qrPollInterval);
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/pickups/${targetId}/status`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const p = data.pickup;
+                if (p && p.status === 'Completed') {
+                    clearInterval(qrPollInterval);
+                    
+                    document.getElementById('qr-modal-body')?.classList.add('hidden');
+                    const overlay = document.getElementById('qr-success-overlay');
+                    if (overlay) overlay.classList.remove('hidden');
+                    
+                    const weightEl = document.getElementById('qr-success-weight');
+                    if (weightEl) weightEl.textContent = (p.actual_weight || '0') + ' kg';
+                    const payoutEl = document.getElementById('qr-success-payout');
+                    if (payoutEl) payoutEl.textContent = p.payout_amount ? `₹${p.payout_amount}` : '₹0';
+
+                    // Update app points
+                    appState.points = (appState.points || 0) + 50;
+                    document.querySelectorAll('#home-pts-display').forEach(el => el.textContent = `${appState.points} pts`);
+                    
+                    // Reload pickups
+                    loadPickupsFromDB();
+                }
+            } catch (e) {}
+        }, 2500);
+    }
+
+    function closeModal(id) {
+        if (id === 'modal-qr') clearInterval(qrPollInterval);
+        const m = document.getElementById(id);
+        const c = document.getElementById(id + '-content');
+        c?.classList.add('scale-95');
+        c?.classList.remove('scale-100');
+        setTimeout(() => m?.classList.remove('active'), 200);
+    }
+
+    // ─── Segregation Guide (Household) ────────────────────────────────────────
+    const SEG_GUIDE = [
+        {
+            key: 'wet', title: 'Biodegradable (Wet) Waste', sub: 'Food scraps & organics',
+            icon: 'ph-leaf', tint: 'bg-green-50 text-green-600', dot: 'bg-green-500',
+            sections: [
+                { label: 'Include', items: [
+                    'Vegetable and fruit peels, leftover cooked food, tea leaves, coffee grounds',
+                    'Eggshells, bones, meat and fish waste',
+                    'Flowers, garland, puja offerings, garden leaves and cuttings'
+                ]},
+                { label: 'Tips', tips: true, items: [
+                    'Drain excess water before binning.',
+                    'No plastic bags in the bin. Use newspaper or a compostable liner.',
+                    "Don't mix in tissues soiled with chemicals or oil-soaked paper."
+                ]}
+            ]
+        },
+        {
+            key: 'dry', title: 'Dry Recyclables', sub: 'Paper, cardboard, plastic, metal & glass',
+            icon: 'ph-recycle', tint: 'bg-blue-50 text-blue-600', dot: 'bg-blue-500',
+            sections: [
+                { label: 'Include', items: [
+                    '<strong>Paper</strong>: Newspaper, magazines, notebooks, office paper',
+                    '<strong>Cardboard</strong>: Cartons, delivery boxes, packaging boxes',
+                    '<strong>Plastic</strong>: Bottles, containers, jars, bags, wrappers',
+                    '<strong>Metal</strong>: Cans, tins, foil, utensils, lids',
+                    '<strong>Glass</strong>: Bottles and jars'
+                ]},
+                { label: 'Tips', tips: true, items: [
+                    "Keep items clean and dry. Rinse food containers, because wet or greasy items can't be recycled.",
+                    '<strong>Paper</strong>: Keep dry. Greasy or food-stained paper goes to wet or other waste.',
+                    '<strong>Cardboard</strong>: Flatten boxes and remove tape.',
+                    '<strong>Plastic</strong>: Rinse, empty and crush bottles. Check the recycling number if you can.',
+                    "<strong>Metal</strong>: Rinse out food. Don't crush sharp edges inward.",
+                    '<strong>Glass</strong>: Wrap broken glass in paper and label it "Glass" to protect handlers.'
+                ]}
+            ]
+        },
+        {
+            key: 'other', title: 'Other Waste (Non-recyclable)', sub: 'Things that cannot be recycled',
+            icon: 'ph-trash', tint: 'bg-gray-100 text-gray-600', dot: 'bg-gray-500',
+            sections: [
+                { label: 'Include', items: [
+                    'Sanitary pads, diapers, tissues, cotton, bandages (wrap in paper and mark it)',
+                    'Used masks and gloves',
+                    'Thermocol, ceramics, cigarette butts',
+                    'Multi-layer chip packets, torn clothes, sweepings and dust, broken toys'
+                ]},
+                { label: 'Tips', tips: true, items: [
+                    'Wrap sanitary and hygiene waste in paper and mark it with a red cross or "Sanitary" so workers can handle it safely.'
+                ]}
+            ]
+        },
+        {
+            key: 'ewaste', title: 'E-Waste', sub: 'Batteries & electronics',
+            icon: 'ph-battery-warning', tint: 'bg-orange-50 text-orange-600', dot: 'bg-orange-500',
+            callout: "Don't put in any bin. Keep it separate.",
+            sections: [
+                { label: 'Include', items: [
+                    'Phones, chargers, cables, earphones, power banks',
+                    'Batteries (all types), bulbs, tube lights, CFLs',
+                    'Remote controls, keyboards, old computers, small appliances'
+                ]},
+                { label: 'Tips', tips: true, items: [
+                    'Store it in a separate box until pickup.',
+                    "Don't break or open devices. Batteries can leak or catch fire.",
+                    'Hand it to the garbage collector after having mentioned it in the app or schedule a special pickup in the app.'
+                ]}
+            ]
+        },
+        {
+            key: 'harmful', title: 'Harmful (Hazardous) Waste', sub: 'Chemicals, medicines & sharps',
+            icon: 'ph-warning-diamond', tint: 'bg-red-50 text-red-600', dot: 'bg-red-500',
+            sections: [
+                { label: 'Include', items: [
+                    'Paint cans and thinners, pesticides and insecticides',
+                    'Expired or unused medicines',
+                    'Chemical cleaners, acids, car oil',
+                    'Mercury items (thermometers), aerosol cans',
+                    'Syringes and sharps'
+                ]},
+                { label: 'Tips', tips: true, items: [
+                    'Never pour it down the drain or mix it with other waste.',
+                    'Wrap sharps in a puncture-proof container, like a plastic bottle, and mark it clearly.'
+                ]}
+            ]
+        }
+    ];
+
+    function renderSegGuide() {
+        const list = document.getElementById('seg-guide-list');
+        if (!list) return;
+        list.innerHTML = SEG_GUIDE.map(c => {
+            let body = '';
+            if (c.callout) {
+                body += `<div class="flex items-center gap-2 bg-brand-bg border border-brand-border rounded-2xl px-4 py-3 text-sm font-bold text-brand-dark"><i class="ph-fill ph-info text-lg"></i><span>${c.callout}</span></div>`;
+            }
+            (c.sections || []).forEach(sec => {
+                body += `<div class="mt-3">
+                    <h5 class="text-[11px] font-bold text-brand-grayText uppercase tracking-wider mb-2">${sec.label}</h5>
+                    <ul class="space-y-2">` +
+                    sec.items.map(it => `<li class="flex gap-2.5 text-xs font-medium text-brand-dark leading-snug"><span class="w-1.5 h-1.5 rounded-full ${sec.tips ? 'bg-yellow-500' : c.dot} mt-1.5 shrink-0"></span><span>${it}</span></li>`).join('') +
+                    `</ul></div>`;
+            });
+            return `
+            <div id="seg-card-${c.key}" class="bg-white rounded-3xl border border-brand-border shadow-sm overflow-hidden">
+                <button type="button" onclick="toggleSeg('${c.key}')" class="w-full flex items-center gap-3.5 p-4 text-left hover:bg-gray-50/50 transition-colors">
+                    <div class="w-11 h-11 ${c.tint} rounded-2xl flex items-center justify-center shrink-0"><i class="ph-fill ${c.icon} text-xl"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-extrabold text-brand-dark text-sm leading-tight">${c.title}</h4>
+                        <p class="text-[11px] text-brand-grayText font-medium mt-0.5">${c.sub}</p>
+                    </div>
+                    <i id="seg-caret-${c.key}" class="ph-bold ph-caret-down text-brand-grayText transition-transform duration-300"></i>
+                </button>
+                <div id="seg-body-${c.key}" class="hidden border-t border-brand-border px-5 py-4 space-y-3 bg-[#fafcf9]">${body}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function toggleSeg(key) {
+        const body = document.getElementById('seg-body-' + key);
+        const caret = document.getElementById('seg-caret-' + key);
+        if (!body) return;
+        const willOpen = body.classList.contains('hidden');
+        SEG_GUIDE.forEach(c => {
+            document.getElementById('seg-body-' + c.key)?.classList.add('hidden');
+            document.getElementById('seg-caret-' + c.key)?.classList.remove('rotate-180');
+        });
+        if (willOpen) {
+            body.classList.remove('hidden');
+            caret?.classList.add('rotate-180');
+        }
+    }
+
+    let segGuideBackTo = 'home-hh';
+    function openSegGuide(key, from) {
+        segGuideBackTo = from || (appState.user?.role === 'Business' ? 'home-biz' : (appState.user?.role === 'Recycler' ? 'home-vol' : 'home-hh'));
+        renderSegGuide();
+        nav('seg-guide');
+        if (key) {
+            toggleSeg(key);
+            setTimeout(() => {
+                const el = document.getElementById('seg-card-' + key);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+        }
+    }
+
+    // ─── Green Points ─────────────────────────────────────────────────────────
+    const POINT_MILESTONES = [
+        { pts: 0,   icon: 'ph-seedling' },
+        { pts: 50,  icon: 'ph-plant' },
+        { pts: 100, icon: 'ph-tree' },
+        { pts: 250, icon: 'ph-medal' }
+    ];
+
+    function renderPointsSheet() {
+        const pts = appState.points || 0;
+        const cards = POINT_MILESTONES.map(m => {
+            const pct = m.pts === 0 ? 100 : Math.min(100, Math.round(pts / m.pts * 100));
+            const done = pts >= m.pts;
+            return `<div class="snap-center shrink-0 w-[34%] bg-brand-bg border border-brand-border rounded-2xl p-4 text-center">
+                <div class="w-10 h-10 rounded-full ${done ? 'bg-brand-dark text-white' : 'bg-white text-brand-dark border border-brand-border'} flex items-center justify-center mx-auto mb-2"><i class="ph-fill ${m.icon} text-lg"></i></div>
+                <p class="text-xs font-extrabold text-brand-dark mb-1.5">${m.pts} pts</p>
+                <div class="h-1.5 bg-white rounded-full overflow-hidden border border-brand-border"><div class="h-full bg-yellow-400 rounded-full" style="width:${pct}%"></div></div>
+            </div>`;
+        }).join('');
+        const content = document.getElementById('sheet-points-content');
+        if (!content) return;
+        content.innerHTML = `
+            <div class="bg-brand-dark text-white px-6 pt-5 pb-8 relative overflow-hidden text-center">
+                <div class="w-12 h-1.5 bg-white/30 rounded-full mx-auto mb-5"></div>
+                <i class="ph-fill ph-leaf absolute -bottom-10 -right-8 text-[10rem] text-white opacity-[0.06] -rotate-12 pointer-events-none"></i>
+                <div class="relative z-10">
+                    <div class="w-16 h-16 bg-yellow-400 text-brand-dark rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg"><i class="ph-fill ph-star text-3xl"></i></div>
+                    <p class="text-5xl font-black tracking-tight">${pts}<span class="text-xl font-bold ml-1.5 text-brand-light">pts</span></p>
+                </div>
+            </div>
+            <div class="px-6 pt-6">
+                <p class="text-sm font-semibold text-brand-dark leading-relaxed text-center mb-4">The more you segregate, the more points you earn. This is a pat on your back for contributing to the environment.</p>
+                <p class="text-xs font-bold text-brand-grayText mb-3 text-center">More successful pickups = more points</p>
+                <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar -mx-6 px-6 pb-2">${cards}</div>
+                <button onclick="closeModal('sheet-points')" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full text-sm mt-5 active:scale-95 transition-transform">Got it</button>
+            </div>`;
+    }
+
+    function openPoints() { 
+        renderPointsSheet(); 
+        openModal('sheet-points'); 
+    }
+
+    // ─── Household Pickup ─────────────────────────────────────────────────────
+    function updateHHCatState() {
+        const seg = document.getElementById('hh-seg-toggle')?.checked;
+        const warning = document.getElementById('hh-seg-warning');
+        if (warning) {
+            warning.classList.toggle('hidden', !!seg);
+        }
+    }
+
+    async function submitHHPickup(e) {
+        e.preventDefault();
+        const seg = document.getElementById('hh-seg-toggle')?.checked;
+        const cats = [];
+
+        if (document.getElementById('hh-cat-wet')?.checked) cats.push('Biodegradable Wet Waste');
+        if (document.getElementById('hh-cat-dry')?.checked) cats.push('Dry Recyclables');
+        if (document.getElementById('hh-cat-other')?.checked) {
+            const customVal = document.getElementById('hh-other-input')?.value.trim();
+            cats.push(customVal ? `Other: ${customVal}` : 'Other Waste');
+        }
+        if (document.getElementById('hh-cat-ewaste')?.checked) cats.push('E Waste');
+        if (document.getElementById('hh-cat-harmful')?.checked) cats.push('Harmful Waste');
+
+        if (cats.length === 0) {
+            if (!seg) {
+                cats.push('Mixed Waste (Unsegregated)');
+            } else {
+                return alert('Please select at least one waste category.');
+            }
+        }
+
+        const segLabel = seg ? '[Segregated]' : '[Mixed Waste + ₹30 fee]';
+        const finalItems = `${cats.join(', ')} ${segLabel}`;
+
+        const time = document.querySelector('input[name="hh-time"]:checked')?.value || 'Immediate Pickup';
+        const qty  = document.getElementById('hh-qty')?.value.trim() || 'Standard Household Bin';
+
+        try {
+            const res = await fetch(`${API_BASE}/pickups`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ user_id: appState.user.id, role: 'Household', items: finalItems, time_slot: time, quantity: qty })
+            });
+            const data = await res.json();
+            if (!res.ok) return alert(data.error || 'Failed.');
+
+            appState.pickups.unshift({ id: data.pickup.request_id, dbId: data.pickup.id, items: data.pickup.items, time: data.pickup.time_slot, qty: data.pickup.quantity, status: data.pickup.status, pin: data.pickup.pin });
+            renderPickupPanel();
+            nav('success');
+        } catch (err) { alert('Cannot reach server.'); }
+    }
+
+    // ─── Business Pickup ─────────────────────────────────────────────────────
+    function toggleBizMetalSub(isChecked) {
+        const el = document.getElementById('biz-sched-metal-sub');
+        if (el) el.classList.toggle('hidden', !isChecked);
+    }
+
+    function updateBizRates() {
+        const sel = [];
+        if (document.getElementById('biz-mat-cardboard')?.checked) sel.push('Cardboard');
+        if (document.getElementById('biz-mat-paper')?.checked) sel.push('Paper');
+        if (document.getElementById('biz-mat-metals')?.checked) {
+            const subMetals = Array.from(document.querySelectorAll('.biz-metal-item:checked')).map(el => el.value);
+            if (subMetals.length > 0) {
+                subMetals.forEach(m => sel.push(m));
+            } else {
+                sel.push('Scrap Metals');
+            }
+        }
+        if (document.getElementById('biz-mat-plastic')?.checked) sel.push('Hard Plastics');
+        if (document.getElementById('biz-mat-cloth')?.checked) sel.push('Cloth / Textile');
+        if (document.getElementById('biz-mat-wet')?.checked) sel.push('Vegetable / Fruit Bulk');
+        if (document.getElementById('biz-mat-other')?.checked) sel.push('Others');
+
+        const d = document.getElementById('biz-rates-display');
+        if (!d) return;
+        if (sel.length === 0) {
+            d.innerHTML = '<span class="text-brand-grayText">Select materials above to preview live rates.</span>';
+            return;
+        }
+        d.innerHTML = sel.map(item => `
+            <div class="flex justify-between items-center py-1 border-b border-brand-primary/10 last:border-0">
+                <span class="font-medium text-brand-dark">${item}</span>
+                <span class="font-bold text-brand-dark text-xs bg-white/70 px-2 py-0.5 rounded">${bizRates[item] || 'Market Rate'}</span>
+            </div>
+        `).join('');
+    }
+
+    async function submitBizPickup(e) {
+        e.preventDefault();
+        const sel = [];
+        if (document.getElementById('biz-mat-cardboard')?.checked) sel.push('Cardboard');
+        if (document.getElementById('biz-mat-paper')?.checked) sel.push('Paper');
+        if (document.getElementById('biz-mat-metals')?.checked) {
+            const subMetals = Array.from(document.querySelectorAll('.biz-metal-item:checked')).map(el => el.value);
+            if (subMetals.length > 0) {
+                sel.push(`Scrap Metals (${subMetals.join(', ')})`);
+            } else {
+                sel.push('Scrap Metals');
+            }
+        }
+        if (document.getElementById('biz-mat-plastic')?.checked) sel.push('Hard Plastics');
+        if (document.getElementById('biz-mat-cloth')?.checked) sel.push('Cloth / Textile');
+        if (document.getElementById('biz-mat-wet')?.checked) sel.push('Vegetable / Fruit Bulk');
+        if (document.getElementById('biz-mat-other')?.checked) {
+            const custom = document.getElementById('biz-other-input')?.value.trim();
+            sel.push(custom ? `Other: ${custom}` : 'Other Commercial Materials');
+        }
+
+        if (sel.length === 0) return alert('Select at least one commercial material.');
+
+        const date = document.getElementById('biz-date')?.value || new Date().toISOString().split('T')[0];
+        const time = document.getElementById('biz-time-slot')?.value || 'Morning (9:00 AM - 1:00 PM)';
+        const weight = document.getElementById('biz-est-weight')?.value.trim() || 'Commercial Volume';
+
+        try {
+            const res = await fetch(`${API_BASE}/pickups`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ 
+                    user_id: appState.user.id, 
+                    role: 'Business', 
+                    items: sel.join(', '), 
+                    time_slot: `${date} • ${time}`,
+                    quantity: weight
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) return alert(data.error || 'Failed.');
+            appState.pickups.unshift({ id: data.pickup.request_id, dbId: data.pickup.id, items: data.pickup.items, time: data.pickup.time_slot, qty: data.pickup.quantity, status: data.pickup.status, pin: data.pickup.pin });
+            renderPickupPanel();
+            nav('success');
+        } catch (err) { alert('Cannot reach server.'); }
+    }
+
+    // ─── Activity / Pickups ───────────────────────────────────────────────────
+    async function loadPickupsFromDB() {
+        if (!appState.user?.id) return;
+        try {
+            const res  = await fetch(`${API_BASE}/pickups?user_id=${appState.user.id}`);
+            const data = await res.json();
+            appState.pickups = data.pickups.map(p => ({
+                id: p.request_id, dbId: p.id, items: p.items, time: p.time_slot, qty: p.quantity, status: p.status, pin: p.pin, actual_weight: p.actual_weight, payout_amount: p.payout_amount
+            }));
+            renderPickups();
+            renderPickupPanel();
+        } catch (err) { 
+            renderPickups(); 
+            renderPickupPanel();
+        }
+    }
+
+    function renderPickups() {
+        const list = document.getElementById('pickups-list');
+        list.innerHTML = '';
+
+        if (appState.pickups.length === 0) {
+            list.innerHTML = `<div class="text-center py-10 opacity-50"><i class="ph ph-calendar-blank text-4xl mb-2"></i><p class="text-sm font-medium">No active pickups.</p></div>`;
+            return;
+        }
+
+        appState.pickups.forEach((p, i) => {
+            const isCompleted = (p.status || '').toLowerCase() === 'completed';
+            const badgeClass = isCompleted 
+                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                : 'bg-brand-light text-brand-dark';
+            const badgeIcon = isCompleted 
+                ? '<i class="ph-bold ph-check text-xs"></i> ' 
+                : '';
+
+            const actionButtons = isCompleted ? `
+                <div class="flex items-center justify-between text-xs font-semibold text-emerald-800 bg-emerald-50 px-3.5 py-2.5 rounded-xl border border-emerald-200 mt-2">
+                    <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-base text-emerald-600"></i> Collected &amp; Verified</span>
+                    <span class="font-bold text-emerald-800">${p.actual_weight ? p.actual_weight + ' kg • ' : ''}+50 pts ⭐</span>
+                </div>
+            ` : `
+                <div class="flex gap-2 pt-3 border-t border-gray-100">
+                    <button onclick="openQRModal('${p.id}')" class="flex-1 bg-brand-dark text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all">
+                        <i class="ph-bold ph-qr-code text-sm"></i> Show QR
+                    </button>
+                    <button onclick="openActionSheet(${i})" class="flex-1 bg-white border border-brand-border text-brand-dark font-bold py-2.5 rounded-xl text-xs hover:bg-gray-50 active:scale-95 transition-all">
+                        Reschedule / Cancel
+                    </button>
+                </div>
+            `;
+
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-2xl p-5 shadow-sm border border-brand-border';
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div class="${badgeClass} text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide flex items-center gap-1">
+                        ${badgeIcon}${p.status}
+                    </div>
+                    <span class="text-xs font-semibold text-brand-grayText">#${p.id}</span>
+                </div>
+                <h3 class="font-bold text-brand-dark text-base leading-tight mb-1">${p.items}</h3>
+                <p class="text-xs text-brand-grayText mb-3 flex items-center gap-1.5"><i class="ph-fill ph-clock"></i> ${p.time}${p.qty ? ` • <i class="ph-fill ph-scales"></i> ${p.qty}` : ''}</p>
+                ${actionButtons}`;
+            list.appendChild(card);
+        });
+    }
+
+    // ─── Pickup Reschedule & Cancel Action Sheet ──────────────────────────────
+    let currentActionIndex = -1;
+
+    function openActionSheet(index) {
+        currentActionIndex = index;
+        openModal('sheet-action');
+    }
+
+    async function applyReschedule(timeType) {
+        if (currentActionIndex > -1 && appState.pickups[currentActionIndex]) {
+            const p = appState.pickups[currentActionIndex];
+            p.time = timeType;
+            if (p.dbId || p.id) {
+                try {
+                    await fetch(`${API_BASE}/pickups/${p.dbId || p.id}/reschedule`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ time_slot: timeType })
+                    });
+                } catch (e) { console.warn('Reschedule API failed:', e); }
+            }
+            renderPickups();
+            renderPickupPanel();
+            closeModal('sheet-action');
+        }
+    }
+
+    function promptCancel() {
+        closeModal('sheet-action');
+        setTimeout(() => { openModal('modal-confirm'); }, 250);
+    }
+
+    async function confirmCancel() {
+        if (currentActionIndex > -1 && appState.pickups[currentActionIndex]) {
+            const p = appState.pickups[currentActionIndex];
+            if (p.dbId || p.id) {
+                try {
+                    await fetch(`${API_BASE}/pickups/${p.dbId || p.id}`, { method: 'DELETE' });
+                } catch (e) { console.warn('Cancel API failed:', e); }
+            }
+            appState.pickups.splice(currentActionIndex, 1);
+            currentActionIndex = -1;
+            renderPickups();
+            renderPickupPanel();
+        }
+        closeModal('modal-confirm');
+    }
+
+    async function cancelPickup(index) {
+        const p = appState.pickups[index];
+        if (p?.dbId || p?.id) {
+            try { await fetch(`${API_BASE}/pickups/${p.dbId || p.id}`, { method: 'DELETE' }); } catch (e) {}
+        }
+        appState.pickups.splice(index, 1);
+        renderPickups();
+        renderPickupPanel();
+    }
+
+    // ─── Home Pickup Status Panel ─────────────────────────────────────────────
+    function renderPickupPanel() {
+        const bar = document.getElementById('pickup-panel');
+        if (!bar) return;
+        const homeHH = document.getElementById('view-home-hh')?.classList.contains('active');
+        const homeBiz = document.getElementById('view-home-biz')?.classList.contains('active');
+        const homeVol = document.getElementById('view-home-vol')?.classList.contains('active');
+        const onHome = homeHH || homeBiz || homeVol;
+        const p = appState.pickups && appState.pickups.find(x => (x.status || '').toLowerCase() !== 'completed');
+
+        if (!onHome || !p || !appState.user || appState.user.role === 'Recycler') {
+            bar.classList.add('hidden');
+            return;
+        }
+
+        bar.classList.remove('hidden');
+        const titleEl = document.getElementById('pp-title');
+        const subEl = document.getElementById('pp-sub');
+        if (titleEl) titleEl.textContent = 'Pickup placed for ' + p.time;
+        if (subEl) subEl.textContent = p.items + (p.qty ? ' • ' + p.qty : '');
+    }
+
+    function initPickupPanelGesture() {
+        const bar = document.getElementById('pickup-panel');
+        if (!bar) return;
+        let startY = null, dy = 0;
+        bar.addEventListener('pointerdown', e => {
+            startY = e.clientY; dy = 0;
+            bar.style.transition = 'none';
+            bar.setPointerCapture(e.pointerId);
+        });
+        bar.addEventListener('pointermove', e => {
+            if (startY === null) return;
+            dy = Math.min(0, e.clientY - startY);
+            bar.style.transform = `translateY(${dy}px)`;
+        });
+        bar.addEventListener('pointerup', e => {
+            if (startY === null) return;
+            const moved = Math.abs(e.clientY - startY);
+            startY = null;
+            bar.style.transition = 'transform 0.25s ease';
+            bar.style.transform = '';
+            if (dy < -30 || moved < 8) nav('pickups');
+            dy = 0;
+        });
+        bar.addEventListener('pointercancel', () => {
+            startY = null; dy = 0;
+            bar.style.transition = 'transform 0.25s ease';
+            bar.style.transform = '';
+        });
+        bar.addEventListener('keydown', e => { if (e.key === 'Enter') nav('pickups'); });
+    }
+
+    initPickupPanelGesture();
+</script>
+</body>
+</html>

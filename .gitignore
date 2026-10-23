@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Secrets and environment variables
+.env
+backend/.env
+*.env
+
+# WhatsApp Auth Sessions & Cache (CRITICAL: Do NOT commit WhatsApp session keys)
+.baileys_auth/
+backend/.baileys_auth/
+.wwebjs_auth/
+backend/.wwebjs_auth/
+.wwebjs_cache/
+backend/.wwebjs_cache/
+
+# SQLite Database & local logs
+*.db
+*.db-journal
+*.log
+backend/circular.db
+
+# System & Editor files
+.DS_Store
+*/.DS_Store
+.vscode/
+.idea/

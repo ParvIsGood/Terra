@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>circular. Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+    <style>
+        body { background: #f0f4f0; }
+        .status-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .status-Pending   { background: #fef3c7; color: #92400e; }
+        .status-Collected { background: #d1fae5; color: #065f46; }
+        .status-Cancelled { background: #fee2e2; color: #991b1b; }
+        .tab-active { border-bottom: 3px solid #0A3B2C; color: #0A3B2C; font-weight: 700; }
+    </style>
+</head>
+<body class="font-sans antialiased text-gray-800 min-h-screen">
+
+<!-- LOGIN GATE -->
+<div id="admin-gate" class="min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-xl border border-gray-100">
+        <h1 class="text-3xl font-extrabold text-[#0A3B2C] mb-1">circular.</h1>
+        <p class="text-sm text-gray-500 mb-6 font-medium">Admin Panel Access</p>
+        <div class="space-y-4">
+            <div>
+                <label class="text-xs font-semibold text-gray-600 block mb-1">Admin Key</label>
+                <input type="password" id="gate-key" placeholder="Enter admin key"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#0A3B2C] focus:ring-1 focus:ring-[#0A3B2C]"
+                    onkeydown="if(event.key==='Enter') unlockAdmin()">
+            </div>
+            <p id="gate-error" class="text-red-600 text-xs font-semibold min-h-[16px]"></p>
+            <button onclick="unlockAdmin()" class="w-full bg-[#0A3B2C] text-white font-bold py-3.5 rounded-full text-sm hover:opacity-90 transition-opacity">
+                Access Dashboard
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ADMIN DASHBOARD (hidden until auth) -->
+<div id="admin-dashboard" class="hidden">
+
+    <!-- Sidebar + Content Layout -->
+    <div class="flex min-h-screen">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-[#0A3B2C] text-white flex flex-col min-h-screen shrink-0">
+            <div class="p-6 border-b border-white/10">
+                <h1 class="text-2xl font-extrabold tracking-tighter">circular.</h1>
+                <p class="text-green-300 text-xs font-semibold mt-1">Admin Panel</p>
+            </div>
+
+            <nav class="p-4 flex-1 space-y-1">
+                <button onclick="showTab('users')" id="tab-users-btn"
+                    class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
+                    <i class="ph ph-users text-lg"></i> Users
+                </button>
+                <button onclick="showTab('collectors')" id="tab-collectors-btn"
+                    class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
+                    <i class="ph ph-whatsapp-logo text-lg text-green-400"></i> WhatsApp Collectors
+                </button>
+                <button onclick="showTab('pickups')" id="tab-pickups-btn"
+                    class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
+                    <i class="ph ph-truck text-lg"></i> Pickups
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-white/10">
+                <button onclick="lockAdmin()" class="w-full flex items-center gap-2 text-green-300 text-sm font-semibold hover:text-white transition-colors px-4 py-2">
+                    <i class="ph ph-sign-out"></i> Lock
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 p-8 overflow-auto">
+
+            <!-- Header bar -->
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-gray-800" id="page-title">Users</h2>
+                    <p class="text-sm text-gray-400 font-medium mt-0.5" id="page-subtitle">All registered accounts</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openWhatsAppConnectModal()" id="btn-wa-status" class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-emerald-100 transition-colors shadow-sm">
+                        <i class="ph-fill ph-whatsapp-logo text-lg text-emerald-600"></i>
+                        <span id="wa-status-text">WhatsApp Bot Status</span>
+                    </button>
+                    <button onclick="refreshData()" class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 shadow-sm transition-colors">
+                        <i class="ph ph-arrows-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats row -->
+            <div class="grid grid-cols-4 gap-4 mb-8">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Users</p>
+                    <p class="text-3xl font-extrabold text-[#0A3B2C]" id="stat-users">—</p>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Kabadiwalas</p>
+                    <p class="text-3xl font-extrabold text-emerald-600" id="stat-collectors">—</p>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Pickups</p>
+                    <p class="text-3xl font-extrabold text-[#0A3B2C]" id="stat-pickups">—</p>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Pending</p>
+                    <p class="text-3xl font-extrabold text-amber-600" id="stat-pending">—</p>
+                </div>
+            </div>
+
+            <!-- USERS TABLE -->
+            <div id="tab-users" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="font-bold text-gray-700">Registered Users</h3>
+                    <input type="text" id="user-search" placeholder="Search by name or email…"
+                        oninput="filterUsers()"
+                        class="border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0A3B2C] w-56">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                <th class="text-left px-6 py-3">ID</th>
+                                <th class="text-left px-6 py-3">Name</th>
+                                <th class="text-left px-6 py-3">Email</th>
+                                <th class="text-left px-6 py-3">Role</th>
+                                <th class="text-left px-6 py-3">Pincode</th>
+                                <th class="text-left px-6 py-3">HH Code</th>
+                                <th class="text-left px-6 py-3">Joined</th>
+                                <th class="text-left px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody" class="divide-y divide-gray-50">
+                            <tr><td colspan="8" class="text-center py-10 text-gray-400">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- COLLECTORS (WHATSAPP) TABLE -->
+            <div id="tab-collectors" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-fill ph-whatsapp-logo text-green-600 text-xl"></i>
+                        <h3 class="font-bold text-gray-700">Kabadiwalas (WhatsApp Partners)</h3>
+                    </div>
+                    <span class="text-xs bg-green-50 text-green-700 font-semibold px-3 py-1 rounded-full border border-green-200">Live WhatsApp Connected</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                <th class="text-left px-6 py-3">ID</th>
+                                <th class="text-left px-6 py-3">Phone</th>
+                                <th class="text-left px-6 py-3">Name</th>
+                                <th class="text-left px-6 py-3">Area / Pincode</th>
+                                <th class="text-left px-6 py-3">Materials</th>
+                                <th class="text-left px-6 py-3">Duty Status</th>
+                                <th class="text-left px-6 py-3">Registered</th>
+                                <th class="text-left px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="collectors-tbody" class="divide-y divide-gray-50">
+                            <tr><td colspan="8" class="text-center py-10 text-gray-400">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PICKUPS TABLE -->
+            <div id="tab-pickups" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="font-bold text-gray-700">All Pickup Requests</h3>
+                    <select id="status-filter" onchange="filterPickups()"
+                        class="border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0A3B2C]">
+                        <option value="">All statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Collected">Collected</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                <th class="text-left px-6 py-3">ID</th>
+                                <th class="text-left px-6 py-3">User</th>
+                                <th class="text-left px-6 py-3">Role</th>
+                                <th class="text-left px-6 py-3">Items</th>
+                                <th class="text-left px-6 py-3">Time Slot</th>
+                                <th class="text-left px-6 py-3">Status</th>
+                                <th class="text-left px-6 py-3">Created</th>
+                                <th class="text-left px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pickups-tbody" class="divide-y divide-gray-50">
+                            <tr><td colspan="8" class="text-center py-10 text-gray-400">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- WHATSAPP CONNECT MODAL -->
+<div id="wa-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-7 max-w-sm w-full shadow-2xl text-center relative">
+        <button onclick="closeWhatsAppModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 text-green-600 text-3xl">
+            <i class="ph-fill ph-whatsapp-logo"></i>
+        </div>
+        <h3 class="font-extrabold text-gray-800 text-lg mb-1">WhatsApp Bot Link</h3>
+        <p class="text-xs text-gray-500 mb-5" id="wa-modal-desc">Scan with WhatsApp on your phone to link automatic alerts.</p>
+        
+        <div id="wa-qr-container" class="bg-gray-50 p-4 rounded-2xl border border-gray-200 inline-block mb-4 min-w-[200px] min-h-[200px] flex items-center justify-center">
+            <p class="text-xs text-gray-400">Loading QR code…</p>
+        </div>
+        
+        <div id="wa-connected-state" class="hidden py-4">
+            <div class="text-emerald-600 font-bold text-sm flex items-center justify-center gap-1.5 mb-1">
+                <i class="ph-bold ph-check-circle text-lg"></i> WhatsApp Connected!
+            </div>
+            <p class="text-xs text-gray-500">Auto alerts are active. Pickups will automatically be sent to Kabadiwalas.</p>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="confirm-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <i class="ph ph-warning text-red-600 text-2xl"></i>
+        </div>
+        <h3 class="font-bold text-gray-800 text-lg mb-2" id="delete-modal-title">Delete?</h3>
+        <p class="text-gray-500 text-sm mb-6" id="delete-modal-desc">This action cannot be undone.</p>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')"
+                class="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl text-sm hover:bg-gray-50">Cancel</button>
+            <button id="confirm-delete-btn" class="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-red-700">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE  = window.location.protocol.startsWith('http') 
+        ? `${window.location.origin}/api` 
+        : 'http://localhost:3001/api';
+    const ADMIN_KEY = 'circular-admin-2024';
+    let   adminKey  = '';
+
+    let allUsers      = [];
+    let allPickups    = [];
+    let allCollectors = [];
+
+    // ── Gate ──────────────────────────────────────────────────────────────────
+    function unlockAdmin() {
+        const key = document.getElementById('gate-key').value.trim();
+        if (!key) { document.getElementById('gate-error').textContent = 'Enter the admin key.'; return; }
+
+        adminKey = key;
+        fetch(`${API_BASE}/admin/users`, { headers: { 'x-admin-key': adminKey } })
+            .then(res => {
+                if (res.status === 403) {
+                    document.getElementById('gate-error').textContent = 'Invalid admin key.';
+                    adminKey = '';
+                    return;
+                }
+                return res.json().then(data => {
+                    document.getElementById('admin-gate').classList.add('hidden');
+                    document.getElementById('admin-dashboard').classList.remove('hidden');
+                    loadAll();
+                });
+            })
+            .catch(() => { document.getElementById('gate-error').textContent = 'Cannot reach server.'; });
+    }
+
+    function lockAdmin() {
+        adminKey = '';
+        document.getElementById('gate-key').value = '';
+        document.getElementById('gate-error').textContent = '';
+        document.getElementById('admin-gate').classList.remove('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden');
+    }
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+    function showTab(tab) {
+        document.getElementById('tab-users').classList.toggle('hidden',      tab !== 'users');
+        document.getElementById('tab-collectors').classList.toggle('hidden', tab !== 'collectors');
+        document.getElementById('tab-pickups').classList.toggle('hidden',    tab !== 'pickups');
+
+        document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+            btn.classList.remove('bg-white/20', 'text-white');
+        });
+
+        const activeBtn = document.getElementById(`tab-${tab}-btn`);
+        activeBtn.classList.add('bg-white/20', 'text-white');
+
+        if (tab === 'users') {
+            document.getElementById('page-title').textContent    = 'Users';
+            document.getElementById('page-subtitle').textContent = 'All registered web accounts';
+        } else if (tab === 'collectors') {
+            document.getElementById('page-title').textContent    = 'WhatsApp Collectors (Kabadiwalas)';
+            document.getElementById('page-subtitle').textContent = 'Field workers registered directly via WhatsApp';
+        } else {
+            document.getElementById('page-title').textContent    = 'Pickups';
+            document.getElementById('page-subtitle').textContent = 'All pickup requests across all users';
+        }
+    }
+
+    // ── Load all data ─────────────────────────────────────────────────────────
+    async function loadAll() {
+        await Promise.all([loadUsers(), loadCollectors(), loadPickups()]);
+    }
+
+    function refreshData() { loadAll(); }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    async function loadUsers() {
+        try {
+            const res  = await fetch(`${API_BASE}/admin/users`, { headers: { 'x-admin-key': adminKey } });
+            const data = await res.json();
+            allUsers   = data.users || [];
+            document.getElementById('stat-users').textContent = allUsers.length;
+            renderUsers(allUsers);
+        } catch (e) {
+            document.getElementById('users-tbody').innerHTML = `<tr><td colspan="8" class="text-center py-10 text-red-400">Failed to load users.</td></tr>`;
+        }
+    }
+
+    function filterUsers() {
+        const q = document.getElementById('user-search').value.toLowerCase();
+        renderUsers(q ? allUsers.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) : allUsers);
+    }
+
+    const roleColors = {
+        Household: 'bg-green-100 text-green-800',
+        Business:  'bg-amber-100 text-amber-800',
+        Recycler:  'bg-blue-100  text-blue-800',
+    };
+
+    function renderUsers(users) {
+        const tbody = document.getElementById('users-tbody');
+        if (!users.length) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-gray-400">No users found.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = users.map(u => `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-gray-400 font-mono text-xs">#${u.id}</td>
+                <td class="px-6 py-4 font-semibold text-gray-800">${escHtml(u.name)}</td>
+                <td class="px-6 py-4 text-gray-500">${escHtml(u.email)}</td>
+                <td class="px-6 py-4">
+                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold ${roleColors[u.role] || 'bg-gray-100 text-gray-700'}">
+                        ${u.role}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-gray-500 font-mono text-xs">${u.pincode}</td>
+                <td class="px-6 py-4 font-mono text-xs ${u.hh_code ? 'text-green-700 font-bold' : 'text-gray-300'}">${u.hh_code || '—'}</td>
+                <td class="px-6 py-4 text-gray-400 text-xs">${u.created_at || '—'}</td>
+                <td class="px-6 py-4">
+                    <button onclick="confirmDelete('user', ${u.id})"
+                        class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1 transition-colors">
+                        <i class="ph ph-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>`).join('');
+    }
+
+    // ── Collectors (WhatsApp) ────────────────────────────────────────────────
+    async function loadCollectors() {
+        try {
+            const res  = await fetch(`${API_BASE}/admin/collectors`, { headers: { 'x-admin-key': adminKey } });
+            const data = await res.json();
+            allCollectors = data.collectors || [];
+            document.getElementById('stat-collectors').textContent = allCollectors.length;
+            renderCollectors(allCollectors);
+        } catch (e) {
+            document.getElementById('collectors-tbody').innerHTML = `<tr><td colspan="8" class="text-center py-10 text-red-400">Failed to load collectors.</td></tr>`;
+        }
+    }
+
+    function renderCollectors(collectors) {
+        const tbody = document.getElementById('collectors-tbody');
+        if (!collectors.length) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-gray-400">No WhatsApp collectors registered yet.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = collectors.map(c => `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-gray-400 font-mono text-xs">#${c.id}</td>
+                <td class="px-6 py-4 font-mono font-semibold text-green-700">${escHtml(c.phone_number)}</td>
+                <td class="px-6 py-4 font-semibold text-gray-800">${escHtml(c.name || 'Incomplete')}</td>
+                <td class="px-6 py-4 text-gray-600 text-xs">
+                    <span class="font-medium">${escHtml(c.operating_area || '—')}</span>
+                    ${c.pincode ? `<span class="text-gray-400 block font-mono text-[11px]">PIN: ${c.pincode}</span>` : ''}
+                </td>
+                <td class="px-6 py-4 text-gray-700 text-xs max-w-[200px] truncate">${escHtml(c.materials || '—')}</td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${c.is_available ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}">
+                        <span class="w-1.5 h-1.5 rounded-full ${c.is_available ? 'bg-green-600' : 'bg-gray-400'}"></span>
+                        ${c.is_available ? 'On Duty' : 'Off Duty'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-gray-400 text-xs">${c.created_at || '—'}</td>
+                <td class="px-6 py-4">
+                    <button onclick="confirmDelete('collector', ${c.id})"
+                        class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1 transition-colors">
+                        <i class="ph ph-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>`).join('');
+    }
+
+    // ── Pickups ───────────────────────────────────────────────────────────────
+    async function loadPickups() {
+        try {
+            const res  = await fetch(`${API_BASE}/admin/pickups`, { headers: { 'x-admin-key': adminKey } });
+            const data = await res.json();
+            allPickups = data.pickups || [];
+            const pending = allPickups.filter(p => p.status === 'Pending').length;
+            document.getElementById('stat-pickups').textContent = allPickups.length;
+            document.getElementById('stat-pending').textContent  = pending;
+            renderPickups(allPickups);
+        } catch (e) {
+            document.getElementById('pickups-tbody').innerHTML = `<tr><td colspan="8" class="text-center py-10 text-red-400">Failed to load pickups.</td></tr>`;
+        }
+    }
+
+    function filterPickups() {
+        const status = document.getElementById('status-filter').value;
+        renderPickups(status ? allPickups.filter(p => p.status === status) : allPickups);
+    }
+
+    function renderPickups(pickups) {
+        const tbody = document.getElementById('pickups-tbody');
+        if (!pickups.length) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-gray-400">No pickups found.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = pickups.map(p => `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 font-mono text-xs text-gray-400">${p.request_id}</td>
+                <td class="px-6 py-4">
+                    <p class="font-semibold text-gray-800 text-xs">${escHtml(p.user_name || '—')}</p>
+                    <p class="text-gray-400 text-[11px]">${escHtml(p.user_email || '')}</p>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold ${roleColors[p.role] || 'bg-gray-100 text-gray-700'}">${p.role}</span>
+                </td>
+                <td class="px-6 py-4 text-gray-700 text-xs max-w-[180px] truncate">${escHtml(p.items)}</td>
+                <td class="px-6 py-4 text-gray-500 text-xs">${escHtml(p.time_slot)}</td>
+                <td class="px-6 py-4">
+                    <select onchange="updatePickupStatus(${p.id}, this.value)"
+                        class="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#0A3B2C] font-semibold">
+                        <option value="Pending"   ${p.status === 'Pending'   ? 'selected' : ''}>Pending</option>
+                        <option value="Collected" ${p.status === 'Collected' ? 'selected' : ''}>Collected</option>
+                        <option value="Cancelled" ${p.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                </td>
+                <td class="px-6 py-4 text-gray-400 text-xs">${p.created_at || '—'}</td>
+                <td class="px-6 py-4">
+                    <span class="status-pill status-${p.status}">${p.status}</span>
+                </td>
+            </tr>`).join('');
+    }
+
+    async function updatePickupStatus(id, status) {
+        try {
+            await fetch(`${API_BASE}/admin/pickups/${id}/status`, {
+                method:  'PATCH',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+                body:    JSON.stringify({ status })
+            });
+            loadPickups();
+        } catch (e) { alert('Failed to update status.'); }
+    }
+
+    // ── Delete modal ─────────────────────────────────────────────────────────
+    function confirmDelete(type, id) {
+        const modal = document.getElementById('confirm-modal');
+        const title = document.getElementById('delete-modal-title');
+        const desc  = document.getElementById('delete-modal-desc');
+
+        if (type === 'user') {
+            title.textContent = 'Delete User?';
+            desc.textContent  = 'This will permanently delete the user and their pickups.';
+        } else {
+            title.textContent = 'Delete Kabadiwala?';
+            desc.textContent  = 'This will remove this WhatsApp collector partner from the system.';
+        }
+
+        modal.classList.remove('hidden');
+        document.getElementById('confirm-delete-btn').onclick = async () => {
+            modal.classList.add('hidden');
+            const endpoint = type === 'user' ? `/admin/users/${id}` : `/admin/collectors/${id}`;
+            try {
+                await fetch(`${API_BASE}${endpoint}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } });
+                loadAll();
+            } catch (e) { alert('Delete failed.'); }
+        };
+    }
+
+    // ── WhatsApp Modal & Status ─────────────────────────────────────────────
+    let waPollInterval = null;
+
+    function openWhatsAppConnectModal() {
+        document.getElementById('wa-modal').classList.remove('hidden');
+        checkWhatsAppStatus();
+        if (!waPollInterval) {
+            waPollInterval = setInterval(checkWhatsAppStatus, 3000);
+        }
+    }
+
+    function closeWhatsAppModal() {
+        document.getElementById('wa-modal').classList.add('hidden');
+        if (waPollInterval) {
+            clearInterval(waPollInterval);
+            waPollInterval = null;
+        }
+    }
+
+    async function checkWhatsAppStatus() {
+        try {
+            const res  = await fetch(`${API_BASE}/whatsapp/status`);
+            const data = await res.json();
+
+            const statusBtn = document.getElementById('btn-wa-status');
+            const statusTxt = document.getElementById('wa-status-text');
+            const qrBox     = document.getElementById('wa-qr-container');
+            const doneState = document.getElementById('wa-connected-state');
+
+            if (data.isReady) {
+                statusTxt.textContent = 'WhatsApp: Active 🟢';
+                statusBtn.className = 'flex items-center gap-2 bg-emerald-100 border border-emerald-300 text-emerald-900 px-4 py-2.5 rounded-xl text-sm font-semibold';
+                qrBox.classList.add('hidden');
+                doneState.classList.remove('hidden');
+            } else {
+                statusTxt.textContent = 'Scan WhatsApp QR ⚡';
+                statusBtn.className = 'flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-900 px-4 py-2.5 rounded-xl text-sm font-semibold animate-pulse';
+                doneState.classList.add('hidden');
+                qrBox.classList.remove('hidden');
+
+                if (data.qrCodeDataUrl) {
+                    qrBox.innerHTML = `<img src="${data.qrCodeDataUrl}" class="w-48 h-48 rounded-lg shadow-sm" alt="WhatsApp QR">`;
+                } else {
+                    qrBox.innerHTML = `<p class="text-xs text-gray-400">Generating QR code… please wait</p>`;
+                }
+            }
+        } catch (e) {
+            console.warn('Status check error:', e);
+        }
+    }
+
+    // Auto-check once on load
+    setTimeout(checkWhatsAppStatus, 1500);
+
+    function escHtml(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+</script>
+</body>
+</html>
