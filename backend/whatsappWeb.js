@@ -1091,7 +1091,7 @@ async function startWhatsApp() {
                                     `${breakdownLines}\n` +
                                     `──────────────────\n` +
                                     `📦 *Total Weight:* *${totalWeight} kg*\n` +
-                                    `💵 *Scrap Amount (40% Factory Rate):* *₹${payout}* (Wallet me add ho chuke hain)\n` +
+                                    `💵 *Scrap Amount:* *₹${payout}* (Wallet me add ho chuke hain)\n` +
                                     `⭐ Green Points: *+${ptsEarned} pts* (Impact Score - not cash)\n\n` +
                                     `Thank you for contributing to a cleaner, zero-waste environment! 🌍`
                                 ).catch(e => console.error('Error notifying customer of completion:', e));
@@ -1145,7 +1145,7 @@ async function startWhatsApp() {
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
                                 `📦 *कुल वजन (Total Weight):* *${totalWeight} kg*\n` +
-                                `💵 *Scrap Payout (40% Factory Rate):* *₹${payout}*\n\n` +
+                                `💵 *Scrap Payout:* *₹${payout}*\n\n` +
                                 `❓ *क्या मैं इसे कन्फर्म कर दूँ? (Should I confirm this?)*\n\n` +
                                 `1️⃣ *हाँ / YES* - कन्फर्म और कम्पलीट करने के लिए\n` +
                                 `2️⃣ *नहीं / NO* - दोबारा वजन बोलने/बदलने के लिए\n\n` +
@@ -1158,7 +1158,7 @@ async function startWhatsApp() {
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
                                 `📦 *Total Weight:* *${totalWeight} kg*\n` +
-                                `💵 *Scrap Payout (40% Factory Rate):* *₹${payout}*\n\n` +
+                                `💵 *Scrap Payout:* *₹${payout}*\n\n` +
                                 `❓ *Should I confirm and complete this pickup?*\n\n` +
                                 `1️⃣ Reply *YES* or *1* to Confirm & Complete\n` +
                                 `2️⃣ Reply *NO* or *2* to re-enter weight\n\n` +
@@ -1171,7 +1171,7 @@ async function startWhatsApp() {
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
                                 `📦 *Kul Weight (Total):* *${totalWeight} kg*\n` +
-                                `💵 *Scrap Payout (40% Factory Rate):* *₹${payout}*\n\n` +
+                                `💵 *Scrap Payout:* *₹${payout}*\n\n` +
                                 `❓ *Kya main ise confirm kar doon? (Should I confirm this?)*\n\n` +
                                 `1️⃣ Reply *HAAN*, *YES* ya *1* - Confirm & Complete karne ke liye\n` +
                                 `2️⃣ Reply *NAHI*, *NO* ya *2* - Dobara bolne/likhne ke liye\n\n` +

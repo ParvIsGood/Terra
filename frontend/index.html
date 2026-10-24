@@ -863,9 +863,9 @@
                     <div class="bg-emerald-50/70 rounded-xl p-2.5 border border-emerald-200/60 text-[10px] text-emerald-900 font-medium space-y-0.5">
                         <p class="font-bold flex items-center gap-1">
                             <i class="ph-fill ph-check-circle text-emerald-600"></i>
-                            <span>Scrap Recyclables Payout: 40% of factory recycling rate</span>
+                            <span>Doorstep Scrap Payout: Real cash credited upon weigh-in</span>
                         </p>
-                        <p class="text-emerald-800">Weighed at your doorstep &amp; credited directly to cash wallet.</p>
+                        <p class="text-emerald-800">Weighed accurately at your doorstep &amp; credited directly to cash wallet.</p>
                     </div>
                 </div>
 
@@ -1144,7 +1144,7 @@
                         <i class="ph-fill ph-shield-check text-emerald-700 text-sm"></i> Available Scrap Balance
                     </span>
                     <span class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> 40% Rate Disbursed
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> Active Balance
                     </span>
                 </div>
 
@@ -1668,7 +1668,7 @@
         <div class="flex justify-between items-center mb-3">
             <div>
                 <h3 class="text-xl font-extrabold text-brand-dark">Scrap Rate Card</h3>
-                <p class="text-[11px] font-semibold text-emerald-700">40% of wholesale factory recycling rate</p>
+                <p class="text-[11px] font-semibold text-emerald-700">Verified Doorstep Scrap Payout Rates</p>
             </div>
             <button onclick="closeModal('modal-rates')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200">
                 <i class="ph-bold ph-x text-base"></i>
@@ -1678,49 +1678,49 @@
             <div class="flex justify-between items-center border-b border-brand-border pb-2">
                 <div>
                     <span class="font-bold text-brand-dark block">Cardboard / Cartons</span>
-                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹19/kg</span>
+                    <span class="text-[10px] text-brand-grayText">Flattened delivery boxes &amp; cartons</span>
                 </div>
                 <b class="text-brand-dark text-sm">₹7.60 / kg</b>
             </div>
             <div class="flex justify-between items-center border-b border-brand-border pb-2">
                 <div>
                     <span class="font-bold text-brand-dark block">Paper / Newspaper / Books</span>
-                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹20/kg</span>
+                    <span class="text-[10px] text-brand-grayText">Newspapers, notebooks &amp; office records</span>
                 </div>
                 <b class="text-brand-dark text-sm">₹8.00 / kg</b>
             </div>
             <div class="flex justify-between items-center border-b border-brand-border pb-2">
                 <div>
                     <span class="font-bold text-brand-dark block">Plastics (Bottles / Rigid)</span>
-                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹25/kg</span>
+                    <span class="text-[10px] text-brand-grayText">PET bottles, cans &amp; rigid containers</span>
                 </div>
                 <b class="text-brand-dark text-sm">₹10.00 / kg</b>
             </div>
             <div class="flex justify-between items-center border-b border-brand-border pb-2">
                 <div>
                     <span class="font-bold text-brand-dark block">Iron / Steel Scrap</span>
-                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹35/kg</span>
+                    <span class="text-[10px] text-brand-grayText">Utensils, pipes, metal rods &amp; tin</span>
                 </div>
                 <b class="text-brand-dark text-sm">₹14.00 / kg</b>
             </div>
             <div class="flex justify-between items-center border-b border-brand-border pb-2">
                 <div>
                     <span class="font-bold text-brand-dark block">Aluminium Scrap</span>
-                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹110/kg</span>
+                    <span class="text-[10px] text-brand-grayText">Sections, cans, sheets &amp; foil</span>
                 </div>
                 <b class="text-brand-dark text-sm">₹44.00 / kg</b>
             </div>
             <div class="flex justify-between items-center border-b border-brand-border pb-2">
                 <div>
                     <span class="font-bold text-brand-dark block">Copper Scrap</span>
-                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹400/kg</span>
+                    <span class="text-[10px] text-brand-grayText">Wires, coils, motors &amp; pipe</span>
                 </div>
                 <b class="text-brand-dark text-sm">₹160.00 / kg</b>
             </div>
             <div class="flex justify-between items-center border-b border-brand-border pb-2">
                 <div>
                     <span class="font-bold text-brand-dark block">E-Waste (Cables / Devices)</span>
-                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹40/kg</span>
+                    <span class="text-[10px] text-brand-grayText">Old electronics, chargers &amp; wiring</span>
                 </div>
                 <b class="text-brand-dark text-sm">₹16.00 / kg</b>
             </div>
@@ -2156,17 +2156,17 @@
     const SESSION_KEY = 'circular_user';
 
     const bizRates = {
-        "Cardboard":              "₹7.60 / kg (40% factory rate)",
-        "Paper":                  "₹8.00 / kg (40% factory rate)",
-        "Scrap Metals":           "₹14 - ₹160 / kg (40% factory rate)",
-        "Copper":                 "₹160.00 / kg (40% of ₹400)",
-        "Iron":                   "₹14.00 / kg (40% of ₹35)",
-        "Aluminium":              "₹44.00 / kg (40% of ₹110)",
-        "Brass":                  "₹112.00 / kg (40% of ₹280)",
-        "Hard Plastics":          "₹10.00 / kg (40% of ₹25)",
-        "Cloth / Textile":        "₹2.00 / kg (40% of ₹5)",
+        "Cardboard":              "₹7.60 / kg",
+        "Paper":                  "₹8.00 / kg",
+        "Scrap Metals":           "₹14 - ₹160 / kg",
+        "Copper":                 "₹160.00 / kg",
+        "Iron":                   "₹14.00 / kg",
+        "Aluminium":              "₹44.00 / kg",
+        "Brass":                  "₹112.00 / kg",
+        "Hard Plastics":          "₹10.00 / kg",
+        "Cloth / Textile":        "₹2.00 / kg",
         "Vegetable / Fruit Bulk": "₹0 Payout (Compost / Bio-energy)",
-        "Others":                 "40% of verified recycling unit rate"
+        "Others":                 "Price upon doorstep weigh-in"
     };
 
     // ─── Settings Storage & Helpers ──────────────────────────────────────────
@@ -3503,8 +3503,8 @@
             ['What items count as Biodegradable Wet Waste?', 'Kitchen peels, food scraps, cooked leftovers, and fruit residue.']
         ]},
         { title: 'Scrap Payouts & Points', roles: ['Household', 'Business'], items: [
-            ['How are scrap payouts calculated?', 'For segregated dry recyclables, you receive 40% of the factory wholesale recycling rate directly in your cash wallet upon doorstep weigh-in. Non-segregated and normal household garbage receive ₹0 payout.'],
-            ['Can Green Points be converted to wallet cash?', 'No. Green Points are non-monetary environmental impact badges that reflect your CO₂ reduction. Real cash in your wallet comes exclusively from 40% scrap sales payouts and can be withdrawn via UPI anytime.']
+            ['How are scrap payouts calculated?', 'For segregated dry recyclables, you receive instant doorstep scrap payouts directly in your cash wallet based on verified weigh-in rates. Non-segregated and normal household garbage receive ₹0 payout.'],
+            ['Can Green Points be converted to wallet cash?', 'No. Green Points are non-monetary environmental impact badges that reflect your CO₂ reduction. Real cash in your wallet comes exclusively from verified scrap sales payouts and can be withdrawn via UPI anytime.']
         ]},
         { title: 'Volunteers & Recyclers', roles: ['Recycler'], items: [
             ['What waste will I receive?', 'Biodegradable organic waste and compostable matter dropped off in your area.'],
@@ -3711,8 +3711,8 @@
             icon: 'ph-fill ph-coins',
             iconColor: 'bg-amber-100 text-amber-800',
             title: 'Green Points & Cash Wallet ⭐',
-            desc: 'Earn real doorstep cash payouts (40% of factory recycling rate) for verified scrap, withdrawable to UPI. Earn Green Points to build your community Eco-Badge & CO₂ impact karma.',
-            pill: '⭐ Points = Impact Score • Wallet = 40% Scrap Cash'
+            desc: 'Earn real doorstep cash payouts for verified scrap, withdrawable to UPI. Earn Green Points to build your community Eco-Badge & CO₂ impact karma.',
+            pill: '⭐ Points = Impact Score • Wallet = Real Cash'
         },
         {
             badge: 'Feature 4 of 4 • Transparency',
