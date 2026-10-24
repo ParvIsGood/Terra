@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, downloadMediaMessage } = require('@whiskeysockets/baileys');
 const pino   = require('pino');
 const QRCode = require('qrcode');
 const path   = require('path');
@@ -95,18 +95,21 @@ async function parseMaterialWeightsSmart(inputStr) {
         try {
             const prompt = `You are an AI scrap & waste weight extractor for Circular by Terra in India.
 Extract all materials and their weights in kg from this message sent by a local Kabadiwala/collector: "${inputStr}"
-Correct any typos, slang, or Hindi/Hinglish terms:
-- "plastoc", "plasstic", "panni", "bottles", "botle" -> "Plastic"
-- "gatta", "gata", "carton", "dabba", "cardbord", "box" -> "Cardboard"
-- "loha", "lohaa", "steel", "iron", "aluminium", "tin", "tamba" -> "Metals"
-- "raddi", "paper", "akhbar", "akbar", "books", "kitab" -> "Paper"
-- "kaanch", "glass", "sheesha" -> "Glass"
-- "kapda", "clothes", "fabric" -> "Cloth"
-- "wet", "gila", "sabzi", "food" -> "Wet Waste"
-- "dry", "sukha" -> "Dry Waste"
-
-Respond ONLY with valid JSON in this exact structure, nothing else:
-{"items":[{"material":"Plastic","weight":10}],"totalWeight":10}
+Rules:
+- Correct typos, slang, or Hindi/Hinglish terms:
+  • "plastoc", "plasstic", "panni", "bottles", "botle" -> "Plastic"
+  • "gatta", "gata", "dabba" -> "Gatta (Cardboard)"
+  • "cardboard", "cardbard", "carton", "box" -> "Cardboard"
+  • "loha", "lohaa", "steel", "iron", "aluminium", "tin", "tamba" -> "Metals (Loha)"
+  • "raddi", "paper", "akhbar", "akbar", "books", "kitab" -> "Paper (Raddi)"
+  • "kaanch", "glass", "sheesha" -> "Glass"
+  • "kapda", "clothes", "fabric" -> "Cloth"
+  • "wet", "gila", "sabzi", "food" -> "Wet Waste"
+  • "dry", "sukha" -> "Dry Waste"
+- Convert spoken Hindi numbers if any: "ek"=1, "do"=2, "teen"=3, "chaar"=4, "paanch"=5, "chheh"=6, "saat"=7, "aath"=8, "nau"=9, "das"=10, "gyaarah"=11, "baarah"=12, "terah"=13, "chaudah"=14, "pandrah"=15, "bees"=20.
+- Keep each distinct material entered by the collector separate so they see all their inputs in the breakdown.
+- Respond ONLY with valid JSON in this exact structure, nothing else:
+{"items":[{"material":"Gatta (Cardboard)","weight":8},{"material":"Plastic","weight":7}],"totalWeight":15}
 If only a single total weight is given without material name, use material "Recyclables (Total)".
 If no weight is found, return {"items":[],"totalWeight":0}`;
 
@@ -388,11 +391,57 @@ async function startWhatsApp() {
                 if (!cleanDigits || cleanDigits.length < 8) continue;
 
                 // Extract message body text
-                const text = (
+                let text = (
                     msg.message.conversation ||
                     msg.message.extendedTextMessage?.text ||
                     ''
                 ).trim();
+
+                // 🎙️ WHATSAPP VOICE NOTE HANDLER (Groq Whisper AI)
+                if (!text && msg.message.audioMessage) {
+                    try {
+                        console.log(`🎙️ [WhatsApp Voice Note] Audio received from ${phone}. Transcribing with Groq Whisper...`);
+                        const audioBuffer = await downloadMediaMessage(
+                            msg,
+                            'buffer',
+                            {},
+                            {
+                                logger: pino({ level: 'silent' }),
+                                reuploadRequest: sock.updateMediaMessage
+                            }
+                        );
+
+                        if (audioBuffer && audioBuffer.length > 0) {
+                            const form = new FormData();
+                            const mime = msg.message.audioMessage.mimetype || 'audio/ogg';
+                            const blob = new Blob([audioBuffer], { type: mime });
+                            form.append('file', blob, 'voice.ogg');
+                            form.append('model', 'whisper-large-v3-turbo');
+                            form.append('prompt', 'Transcribe Hindi, English, and Hinglish scrap waste items and weights like plastic, gatta, raddi, loha, kgs, kilo, etc.');
+
+                            const whisperRes = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` },
+                                body: form
+                            });
+
+                            const whisperData = await whisperRes.json();
+                            if (whisperData.text) {
+                                text = whisperData.text.trim();
+                                console.log(`🎙️ [Groq Whisper] Transcribed text: "${text}"`);
+                                await sock.sendMessage(remoteJid, {
+                                    text: `🎙️ *Voice Note:* _"${text}"_\n⏳ Processing...`
+                                });
+                            } else {
+                                console.warn('Whisper transcription returned no text:', whisperData);
+                            }
+                        }
+                    } catch (voiceErr) {
+                        console.error('Error downloading or transcribing WhatsApp voice note:', voiceErr);
+                    }
+                }
+
+                if (!text && !msg.message.locationMessage) continue;
 
                 const lowerBody = text.toLowerCase();
                 const db = await getDb();
