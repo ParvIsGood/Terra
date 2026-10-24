@@ -1570,10 +1570,10 @@
             <p class="text-sm font-black text-brand-dark tracking-wide uppercase" id="qr-id-text">ID: --</p>
             <p class="text-xs font-bold text-brand-grayText mt-0.5" id="qr-pin-text">Security PIN: ----</p>
 
-            <a id="qr-wa-direct-btn" href="#" target="_blank" class="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors mt-3">
-                <i class="ph-bold ph-whatsapp-logo text-base text-emerald-600"></i>
-                <span>Open in WhatsApp</span>
-            </a>
+            <div class="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-2.5 mt-3 text-[11px] text-emerald-900 font-semibold flex items-center justify-center gap-1.5">
+                <i class="ph-bold ph-shield-check text-emerald-700 text-sm"></i>
+                <span>Show this screen to collector at doorstep</span>
+            </div>
         </div>
 
         <!-- Success overlay inside modal once collected -->
@@ -3722,9 +3722,6 @@
         document.getElementById('qr-id-text').textContent = 'ID: #' + p.id;
         const pinEl = document.getElementById('qr-pin-text');
         if (pinEl) pinEl.textContent = 'Security PIN: ' + pin;
-
-        const directBtn = document.getElementById('qr-wa-direct-btn');
-        if (directBtn) directBtn.href = waUrl;
 
         const qrContainer = document.getElementById('qr-code-container');
         if (qrContainer) {
