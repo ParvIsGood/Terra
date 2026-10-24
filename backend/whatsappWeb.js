@@ -7,6 +7,37 @@ const path   = require('path');
 const fs     = require('fs');
 const { getDb, persist } = require('./database');
 const googleTTS = require('google-tts-api');
+const ffmpegPath = require('ffmpeg-static');
+const { spawn } = require('child_process');
+
+function convertMp3ToOpusOgg(mp3Buffer) {
+    return new Promise((resolve, reject) => {
+        try {
+            const proc = spawn(ffmpegPath, [
+                '-i', 'pipe:0',
+                '-c:a', 'libopus',
+                '-b:a', '32k',
+                '-vbr', 'on',
+                '-compression_level', '10',
+                '-f', 'ogg',
+                'pipe:1'
+            ]);
+
+            const chunks = [];
+            proc.stdout.on('data', chunk => chunks.push(chunk));
+            proc.on('close', code => {
+                if (code === 0) resolve(Buffer.concat(chunks));
+                else reject(new Error(`ffmpeg exited with code ${code}`));
+            });
+            proc.on('error', err => reject(err));
+
+            proc.stdin.write(mp3Buffer);
+            proc.stdin.end();
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
 
 let sock = null;
 let qrCodeDataUrl = null;
@@ -1754,13 +1785,23 @@ async function sendWhatsAppVoiceNote(target, spokenText, lang = 'hi') {
         });
 
         if (base64Audio) {
-            const buffer = Buffer.from(base64Audio, 'base64');
+            const mp3Buffer = Buffer.from(base64Audio, 'base64');
+            let audioToSend = mp3Buffer;
+            let mimeType = 'audio/mp4';
+
+            try {
+                audioToSend = await convertMp3ToOpusOgg(mp3Buffer);
+                mimeType = 'audio/ogg; codecs=opus';
+            } catch (convErr) {
+                console.warn('Opus conversion warning, falling back to mp3:', convErr.message);
+            }
+
             await sock.sendMessage(jid, {
-                audio: buffer,
-                mimetype: 'audio/mp4',
+                audio: audioToSend,
+                mimetype: mimeType,
                 ptt: true
             });
-            console.log(`🎙️ [WhatsApp Voice Note Addon] Successfully sent to ${jid}`);
+            console.log(`🎙️ [WhatsApp Voice Note Addon] Successfully sent native ${mimeType} to ${jid}`);
             return { success: true };
         }
     } catch (err) {
