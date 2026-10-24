@@ -116,91 +116,6 @@
         /* Error / success message */
         .form-msg { font-size: 0.75rem; font-weight: 600; text-align: center; margin-top: 8px; min-height: 18px; }
 
-        /* Interactive Brand Logo Spin */
-        .brand-spin-logo {
-            transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
-            will-change: transform;
-            cursor: pointer;
-        }
-
-        /* ── Main Page Brand Logo (Step 1 -> Step 2 -> Step 3) ── */
-        .brand-arc-group {
-            opacity: 0;
-            transform-origin: 50px 50px;
-        }
-
-        .brand-arc-group path {
-            stroke-dasharray: 45;
-            stroke-dashoffset: 45;
-        }
-
-        /* Step 1: Arc 1 draws & springs in */
-        .brand-arc-1 {
-            animation: brandStepIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            animation-delay: 0.15s;
-        }
-        .brand-arc-1 path {
-            animation: brandDrawArc 0.35s ease-out forwards;
-            animation-delay: 0.15s;
-        }
-
-        /* Step 2: Arc 2 draws & springs in */
-        .brand-arc-2 {
-            animation: brandStepIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            animation-delay: 0.55s;
-        }
-        .brand-arc-2 path {
-            animation: brandDrawArc 0.35s ease-out forwards;
-            animation-delay: 0.55s;
-        }
-
-        /* Step 3: Arc 3 completes the loop */
-        .brand-arc-3 {
-            animation: brandStepIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            animation-delay: 0.95s;
-        }
-        .brand-arc-3 path {
-            animation: brandDrawArc 0.35s ease-out forwards;
-            animation-delay: 0.95s;
-        }
-
-        /* Final assembly spin pulse */
-        .main-logo-squircle {
-            animation: brandLogoAssembleSpin 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            animation-delay: 1.35s;
-        }
-
-        @keyframes brandStepIn {
-            0% {
-                opacity: 0;
-                transform: scale(0.6);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        @keyframes brandDrawArc {
-            0% {
-                stroke-dashoffset: 45;
-            }
-            100% {
-                stroke-dashoffset: 0;
-            }
-        }
-
-        @keyframes brandLogoAssembleSpin {
-            0% {
-                transform: scale(1) rotate(0deg);
-            }
-            50% {
-                transform: scale(1.08) rotate(-180deg);
-            }
-            100% {
-                transform: scale(1) rotate(-360deg);
-            }
-        }
     </style>
 </head>
 <body class="text-brand-dark font-sans antialiased" id="body-theme">
@@ -214,24 +129,8 @@
         <div class="px-6 py-8 my-auto w-full">
             <!-- Logo -->
             <div class="mb-6 text-center flex flex-col items-center">
-                <div class="relative mb-3.5 group cursor-pointer inline-block" onclick="triggerLogoAssembly(this)" title="Tap to replay animation!">
-                    <!-- Squircle Container without white border -->
-                    <div class="w-20 h-20 bg-[#1f7a5a] rounded-[24px] shadow-lg shadow-emerald-950/20 flex items-center justify-center p-2.5 main-logo-squircle active:scale-95 transition-all">
-                        <svg viewBox="0 0 100 100" class="w-full h-full overflow-visible">
-                            <!-- Step 1: Arc 1 (Left / Top-Left) -->
-                            <g class="brand-arc-group brand-arc-1" transform="rotate(120 50 50)">
-                                <path d="M 70.68 32.64 A 27 27 0 0 1 70.68 67.36" fill="none" stroke="#9fd0b8" stroke-width="9.5" stroke-linecap="round" />
-                            </g>
-                            <!-- Step 2: Arc 2 (Bottom) -->
-                            <g class="brand-arc-group brand-arc-2" transform="rotate(240 50 50)">
-                                <path d="M 70.68 32.64 A 27 27 0 0 1 70.68 67.36" fill="none" stroke="#c2e8d5" stroke-width="9.5" stroke-linecap="round" />
-                            </g>
-                            <!-- Step 3: Arc 3 (Right) Completes the loop! -->
-                            <g class="brand-arc-group brand-arc-3" transform="rotate(0 50 50)">
-                                <path d="M 70.68 32.64 A 27 27 0 0 1 70.68 67.36" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" />
-                            </g>
-                        </svg>
-                    </div>
+                <div class="mb-3.5 inline-block">
+                    <img src="logo.png" class="w-20 h-20 rounded-[24px] shadow-lg shadow-emerald-950/20 object-cover select-none" alt="Circular by Terra">
                 </div>
                 <h1 class="text-4xl font-extrabold tracking-tighter text-brand-dark mb-1">circular.</h1>
                 <p class="text-brand-grayText font-medium text-xs">Smarter waste, cleaner cities.</p>
@@ -699,7 +598,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 select-none" title="Tap to spin Circular logo!">
+                    <img src="logo.png" class="w-9 h-9 rounded-xl shadow-xs object-cover select-none" alt="circular.">
                     <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform cursor-pointer" title="Settings">
                         <i class="ph-bold ph-gear text-lg"></i>
                     </button>
@@ -763,7 +662,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 select-none" title="Tap to spin Circular logo!">
+                    <img src="logo.png" class="w-9 h-9 rounded-xl shadow-xs object-cover select-none" alt="circular.">
                     <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
                         <i class="ph-bold ph-gear text-lg"></i>
                     </button>
@@ -798,7 +697,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 select-none" title="Tap to spin Circular logo!">
+                    <img src="logo.png" class="w-9 h-9 rounded-xl shadow-xs object-cover select-none" alt="circular.">
                     <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
                         <i class="ph-bold ph-gear text-lg"></i>
                     </button>
@@ -849,7 +748,7 @@
                     <!-- Non-segregated fee warning -->
                     <div id="hh-seg-warning" class="hidden bg-[#FDE8E8] text-[#9B1C1C] text-xs font-semibold p-3 rounded-xl flex items-center gap-2">
                         <i class="ph-fill ph-warning-circle text-base shrink-0"></i>
-                        <span>Fee will be applicable for non-segregated waste pickup.</span>
+                        <span>Non-segregated mixed waste incurs a <b>₹15 sorting fee</b>. (Segregated collection is FREE ₹0).</span>
                     </div>
                 </div>
 
@@ -908,28 +807,69 @@
                     <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider px-1 mb-2.5">Pickup Timing</h3>
                     <div class="space-y-2">
                         <label class="cursor-pointer block">
-                            <input type="radio" name="hh-time" value="Immediate Pickup" class="custom-radio sr-only" checked>
+                            <input type="radio" name="hh-time" value="Immediate Pickup" onchange="calculatePickupFees()" class="custom-radio sr-only" checked>
                             <div class="border border-brand-border bg-white rounded-2xl p-3.5 transition-colors flex items-center justify-between shadow-sm">
-                                <span class="font-bold text-brand-dark text-sm">Immediate pickup (Within 45 mins)</span>
+                                <div>
+                                    <span class="font-bold text-brand-dark text-sm block">Immediate pickup (Within 45 mins)</span>
+                                    <span class="text-[10px] text-amber-700 font-semibold block mt-0.5">₹30 instant priority convenience fee</span>
+                                </div>
                                 <i class="ph-bold ph-lightning text-amber-500 text-lg"></i>
                             </div>
                         </label>
                         <label class="cursor-pointer block">
-                            <input type="radio" name="hh-time" value="Tomorrow Morning (8:00 AM - 12:00 PM)" class="custom-radio sr-only">
-                            <div class="border border-brand-border bg-white rounded-2xl p-3.5 transition-colors shadow-sm">
-                                <span class="font-bold text-brand-dark text-sm">Morning slot (8:00 AM - 12:00 PM)</span>
+                            <input type="radio" name="hh-time" value="Tomorrow Morning (8:00 AM - 12:00 PM)" onchange="calculatePickupFees()" class="custom-radio sr-only">
+                            <div class="border border-brand-border bg-white rounded-2xl p-3.5 transition-colors flex items-center justify-between shadow-sm">
+                                <div>
+                                    <span class="font-bold text-brand-dark text-sm block">Morning slot (8:00 AM - 12:00 PM)</span>
+                                    <span class="text-[10px] text-emerald-700 font-semibold block mt-0.5">₹0 slot fee (Scheduled)</span>
+                                </div>
+                                <i class="ph-bold ph-sun text-brand-grayText text-base"></i>
                             </div>
                         </label>
                         <label class="cursor-pointer block">
-                            <input type="radio" name="hh-time" value="Tomorrow Evening (4:00 PM - 8:00 PM)" class="custom-radio sr-only">
-                            <div class="border border-brand-border bg-white rounded-2xl p-3.5 transition-colors shadow-sm">
-                                <span class="font-bold text-brand-dark text-sm">Evening slot (4:00 PM - 8:00 PM)</span>
+                            <input type="radio" name="hh-time" value="Tomorrow Evening (4:00 PM - 8:00 PM)" onchange="calculatePickupFees()" class="custom-radio sr-only">
+                            <div class="border border-brand-border bg-white rounded-2xl p-3.5 transition-colors flex items-center justify-between shadow-sm">
+                                <div>
+                                    <span class="font-bold text-brand-dark text-sm block">Evening slot (4:00 PM - 8:00 PM)</span>
+                                    <span class="text-[10px] text-emerald-700 font-semibold block mt-0.5">₹0 slot fee (Scheduled)</span>
+                                </div>
+                                <i class="ph-bold ph-moon text-brand-grayText text-base"></i>
                             </div>
                         </label>
                     </div>
                 </div>
 
-                <div class="pt-4 pb-6">
+                <!-- Real-time Doorstep Fee & Payout Summary Card -->
+                <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-xs space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-brand-dark flex items-center gap-1.5">
+                            <i class="ph-bold ph-receipt text-emerald-700"></i>
+                            <span>Pickup Fee &amp; Payout Summary</span>
+                        </span>
+                        <span id="hh-fee-total-badge" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">₹30 Doorstep Fee</span>
+                    </div>
+                    
+                    <div class="space-y-1.5 text-[11px] text-brand-grayText border-t border-brand-border/60 pt-2">
+                        <div class="flex justify-between">
+                            <span>Waste Collection Fee:</span>
+                            <span id="hh-fee-seg-text" class="font-bold text-emerald-700">₹0 (Segregated Free)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Time Slot Convenience:</span>
+                            <span id="hh-fee-time-text" class="font-bold text-amber-700">+₹30 (Instant Priority)</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50/70 rounded-xl p-2.5 border border-emerald-200/60 text-[10px] text-emerald-900 font-medium space-y-0.5">
+                        <p class="font-bold flex items-center gap-1">
+                            <i class="ph-fill ph-check-circle text-emerald-600"></i>
+                            <span>Scrap Recyclables Payout: 40% of factory recycling rate</span>
+                        </p>
+                        <p class="text-emerald-800">Weighed at your doorstep &amp; credited directly to cash wallet.</p>
+                    </div>
+                </div>
+
+                <div class="pt-2 pb-6">
                     <button type="submit" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full shadow-lg text-sm hover:opacity-90 active:scale-[0.98] transition-all">
                         Confirm Pickup Request
                     </button>
@@ -1218,7 +1158,7 @@
                     </div>
 
                     <!-- Green Points Row -->
-                    <div class="flex items-center justify-between bg-white/10 rounded-2xl p-2.5 px-3 mb-4 backdrop-blur-xs border border-white/10">
+                    <div class="flex items-center justify-between bg-white/10 rounded-2xl p-2.5 px-3 mb-2 backdrop-blur-xs border border-white/10">
                         <div class="flex items-center gap-2">
                             <div class="w-7 h-7 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-sm font-bold">
                                 ⭐
@@ -1228,11 +1168,16 @@
                                 <p id="wallet-points-display" class="text-xs font-bold text-white">0 pts</p>
                             </div>
                         </div>
-                        <button onclick="openRedeemModal()" class="text-[11px] font-bold text-emerald-300 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 px-2.5 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1 cursor-pointer">
-                            <span>Redeem to Cash</span>
-                            <i class="ph-bold ph-arrow-right text-[10px]"></i>
+                        <button onclick="openPoints()" class="text-[11px] font-bold text-emerald-200 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 px-2.5 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1 cursor-pointer">
+                            <span>Impact Score</span>
+                            <i class="ph-bold ph-info text-[10px]"></i>
                         </button>
                     </div>
+
+                    <p class="text-[10px] text-emerald-100/70 font-medium px-1 mb-4 flex items-center gap-1">
+                        <i class="ph-fill ph-shield-check text-emerald-300 text-xs"></i>
+                        <span>Wallet balance is 40% scrap payout cash. Points are non-monetary impact score.</span>
+                    </p>
 
                     <!-- Action Buttons -->
                     <div class="grid grid-cols-2 gap-2.5">
@@ -1747,21 +1692,70 @@
 
 <!-- Scrap Rate Card Modal -->
 <div id="modal-rates" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm">
-    <div class="bg-white rounded-[32px] p-6 w-full max-w-[340px] shadow-2xl relative transform transition-transform scale-95" id="modal-rates-content">
-        <div class="flex justify-between items-center mb-5">
-            <h3 class="text-xl font-extrabold text-brand-dark">Scrap Rate Card</h3>
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-rates-content">
+        <div class="flex justify-between items-center mb-3">
+            <div>
+                <h3 class="text-xl font-extrabold text-brand-dark">Scrap Rate Card</h3>
+                <p class="text-[11px] font-semibold text-emerald-700">40% of wholesale factory recycling rate</p>
+            </div>
             <button onclick="closeModal('modal-rates')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200">
                 <i class="ph-bold ph-x text-base"></i>
             </button>
         </div>
-        <div class="space-y-3 mb-6 text-sm text-brand-dark font-medium max-h-[50vh] overflow-y-auto pr-1">
-            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Cardboard / Cartons</span><b class="text-brand-dark">₹10 / kg</b></div>
-            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Paper / Office Records</span><b class="text-brand-dark">₹12 / kg</b></div>
-            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Metals (Iron / Steel)</span><b class="text-brand-dark">₹25 / kg</b></div>
-            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Metals (Copper)</span><b class="text-brand-dark">₹400 / kg</b></div>
-            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Metals (Aluminium)</span><b class="text-brand-dark">₹110 / kg</b></div>
-            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Industrial Plastics</span><b class="text-brand-dark">₹15 / kg</b></div>
-            <div class="flex justify-between border-b border-brand-border pb-2.5"><span>Cloth / Textiles</span><b class="text-brand-dark">₹5 / kg</b></div>
+        <div class="space-y-2.5 mb-5 text-xs text-brand-dark font-medium max-h-[50vh] overflow-y-auto pr-1">
+            <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                <div>
+                    <span class="font-bold text-brand-dark block">Cardboard / Cartons</span>
+                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹19/kg</span>
+                </div>
+                <b class="text-brand-dark text-sm">₹7.60 / kg</b>
+            </div>
+            <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                <div>
+                    <span class="font-bold text-brand-dark block">Paper / Newspaper / Books</span>
+                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹20/kg</span>
+                </div>
+                <b class="text-brand-dark text-sm">₹8.00 / kg</b>
+            </div>
+            <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                <div>
+                    <span class="font-bold text-brand-dark block">Plastics (Bottles / Rigid)</span>
+                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹25/kg</span>
+                </div>
+                <b class="text-brand-dark text-sm">₹10.00 / kg</b>
+            </div>
+            <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                <div>
+                    <span class="font-bold text-brand-dark block">Iron / Steel Scrap</span>
+                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹35/kg</span>
+                </div>
+                <b class="text-brand-dark text-sm">₹14.00 / kg</b>
+            </div>
+            <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                <div>
+                    <span class="font-bold text-brand-dark block">Aluminium Scrap</span>
+                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹110/kg</span>
+                </div>
+                <b class="text-brand-dark text-sm">₹44.00 / kg</b>
+            </div>
+            <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                <div>
+                    <span class="font-bold text-brand-dark block">Copper Scrap</span>
+                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹400/kg</span>
+                </div>
+                <b class="text-brand-dark text-sm">₹160.00 / kg</b>
+            </div>
+            <div class="flex justify-between items-center border-b border-brand-border pb-2">
+                <div>
+                    <span class="font-bold text-brand-dark block">E-Waste (Cables / Devices)</span>
+                    <span class="text-[10px] text-brand-grayText">Wholesale factory: ₹40/kg</span>
+                </div>
+                <b class="text-brand-dark text-sm">₹16.00 / kg</b>
+            </div>
+            <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-200 text-[11px] text-gray-600 space-y-1">
+                <p>• <b>Mixed / Non-segregated waste:</b> ₹0 Payout (₹15 pickup fee)</p>
+                <p>• <b>General segregated wet/dry trash:</b> ₹0 Payout (FREE ₹0 pickup)</p>
+            </div>
         </div>
         <button onclick="closeModal('modal-rates')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm hover:opacity-90 active:scale-95 transition-all">Close</button>
     </div>
@@ -1883,7 +1877,7 @@
     </div>
 </div>
 
-<!-- Green Points Redemption Modal -->
+<!-- Green Points & Eco-Impact Modal -->
 <div id="modal-wallet-redeem" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm">
     <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-wallet-redeem-content">
         <div class="flex justify-between items-center mb-4">
@@ -1892,7 +1886,7 @@
                     ⭐
                 </div>
                 <div>
-                    <h3 class="text-base font-extrabold text-brand-dark leading-tight">Redeem Green Points</h3>
+                    <h3 class="text-base font-extrabold text-brand-dark leading-tight">Green Eco Points</h3>
                     <p class="text-[11px] font-semibold text-brand-grayText">Available: <span id="redeem-pts-avail" class="text-amber-700 font-bold">0 pts</span></p>
                 </div>
             </div>
@@ -1901,37 +1895,39 @@
             </button>
         </div>
 
-        <form onsubmit="handleWalletRedeemSubmit(event)" class="space-y-4">
-            <div class="bg-amber-50/60 border border-amber-200/60 rounded-2xl p-3 text-center">
-                <p class="text-[11px] font-bold text-amber-900 mb-0.5">Instant 1:1 Value Conversion</p>
-                <p class="text-xs text-amber-800 font-medium">1 Green Eco Point = <b class="font-extrabold text-amber-900">₹1.00 Cash</b> in your wallet</p>
+        <div class="space-y-3.5">
+            <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5 text-center">
+                <p class="text-xs font-bold text-amber-900 mb-1">🌿 Non-Monetary Impact Score</p>
+                <p class="text-[11px] text-amber-800 font-medium leading-relaxed">
+                    Points reflect verified kilograms of waste diverted and CO₂ offset. <b>Points cannot be converted into cash</b>.
+                </p>
             </div>
 
-            <div>
-                <label class="block text-[11px] font-bold text-brand-grayText uppercase tracking-wider mb-1.5">Points to Convert</label>
-                <input type="number" id="redeem-pts-input" step="10" min="10" required placeholder="50" oninput="updateRedeemCalculation()"
-                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-2.5 text-base font-black text-brand-dark focus:outline-none focus:border-brand-dark shadow-xs transition-colors">
-                
-                <div class="flex items-center gap-1.5 mt-2">
-                    <button type="button" onclick="setRedeemQuickPts(50)" class="flex-1 py-1 text-[11px] font-bold bg-brand-bg border border-brand-border rounded-lg text-brand-dark hover:bg-gray-100 transition-colors cursor-pointer">50 pts</button>
-                    <button type="button" onclick="setRedeemQuickPts(100)" class="flex-1 py-1 text-[11px] font-bold bg-brand-bg border border-brand-border rounded-lg text-brand-dark hover:bg-gray-100 transition-colors cursor-pointer">100 pts</button>
-                    <button type="button" onclick="setRedeemQuickPts('max')" class="flex-1 py-1 text-[11px] font-bold bg-amber-100/70 border border-amber-300 rounded-lg text-amber-900 hover:bg-amber-200 transition-colors cursor-pointer">All Points</button>
+            <div class="bg-brand-bg rounded-2xl p-3.5 border border-brand-border space-y-2 text-xs">
+                <div class="flex items-start gap-2">
+                    <span class="text-emerald-700 font-bold">💵</span>
+                    <p class="text-brand-dark font-medium leading-snug">
+                        <b>How Real Cash is Earned:</b> When you submit segregated recyclables, you receive <b>40% of the wholesale factory recycling rate</b> directly into your wallet.
+                    </p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-emerald-700 font-bold">🏦</span>
+                    <p class="text-brand-dark font-medium leading-snug">
+                        <b>UPI Withdrawal:</b> Your cash balance can be withdrawn anytime to your bank account or UPI ID.
+                    </p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-emerald-700 font-bold">🏆</span>
+                    <p class="text-brand-dark font-medium leading-snug">
+                        <b>Eco Badges:</b> Accumulate points to climb the community leaderboard and unlock Eco-Warrior certificates!
+                    </p>
                 </div>
             </div>
 
-            <!-- Preview Cash Credited -->
-            <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
-                <span class="text-xs font-bold text-emerald-900">Cash Added to Wallet:</span>
-                <span id="redeem-cash-calculated" class="text-base font-black text-emerald-700">₹50.00</span>
-            </div>
-
-            <p id="redeem-msg" class="text-red-600 text-xs text-center font-bold min-h-[16px]"></p>
-
-            <button type="submit" id="btn-redeem-submit" class="w-full bg-emerald-800 text-white font-extrabold py-3.5 rounded-full text-xs shadow-md hover:bg-emerald-900 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-                <span>Convert to Cash</span>
-                <i class="ph-bold ph-sparkle text-xs text-yellow-300"></i>
+            <button onclick="closeModal('modal-wallet-redeem')" class="w-full bg-brand-dark text-white font-extrabold py-3.5 rounded-full text-xs shadow-md hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer">
+                Understood
             </button>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -2155,7 +2151,7 @@
         </div>
         <div class="space-y-3.5 text-xs text-brand-dark font-medium leading-relaxed">
             <div class="text-center py-2 flex flex-col items-center">
-                <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-16 h-16 rounded-[20px] mb-2 cursor-pointer shadow-md shadow-emerald-950/15 object-cover active:scale-90 hover:scale-105 select-none" title="Tap to spin Circular logo!">
+                <img src="logo.png" class="w-16 h-16 rounded-[20px] mb-2 shadow-md shadow-emerald-950/15 object-cover select-none" alt="circular.">
                 <h2 class="text-2xl font-black text-brand-dark tracking-tight">circular.</h2>
                 <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-700 mt-0.5">By Terra Technologies</p>
                 <span class="inline-block bg-brand-light text-brand-dark text-[10px] font-extrabold px-3 py-1 rounded-full mt-2 border border-brand-border">Version 2.4.0 (Patiala Edition)</span>
@@ -2234,30 +2230,6 @@
 </div>
 
 <script>
-    // ─── Brand Logo Interactive Anticlockwise Spin ───────────────────────────
-    let brandLogoRotation = 0;
-    function spinLogo(el) {
-        brandLogoRotation -= 360; // Anticlockwise
-        const img = (el && el.tagName === 'IMG') ? el : (el && el.querySelector ? el.querySelector('img') : null);
-        if (img) {
-            img.style.transform = `rotate(${brandLogoRotation}deg)`;
-        }
-    }
-
-    // ─── Brand Logo Step 1 -> Step 2 -> Step 3 Interactive Replay ────────────
-    function triggerLogoAssembly(el) {
-        const squircle = (el && el.querySelector) ? el.querySelector('.main-logo-squircle') : el;
-        if (!squircle) return;
-        const arcs = squircle.querySelectorAll('.brand-arc-group');
-        
-        squircle.classList.remove('main-logo-squircle');
-        arcs.forEach((arc, i) => arc.classList.remove(`brand-arc-${i+1}`));
-        void squircle.offsetWidth; // force browser reflow
-        
-        squircle.classList.add('main-logo-squircle');
-        arcs.forEach((arc, i) => arc.classList.add(`brand-arc-${i+1}`));
-    }
-
     // ─── Config ──────────────────────────────────────────────────────────────
     const API_BASE   = window.location.protocol.startsWith('http') 
         ? `${window.location.origin}/api` 
@@ -2265,17 +2237,17 @@
     const SESSION_KEY = 'circular_user';
 
     const bizRates = {
-        "Cardboard":              "₹10 / kg",
-        "Paper":                  "₹12 / kg",
-        "Scrap Metals":           "₹25 - ₹420 / kg",
-        "Copper":                 "₹380 / kg",
-        "Iron":                   "₹30 / kg",
-        "Aluminium":              "₹130 / kg",
-        "Brass":                  "₹300 / kg",
-        "Hard Plastics":          "₹15 / kg",
-        "Cloth / Textile":        "₹5 / kg",
-        "Vegetable / Fruit Bulk": "Compost / Bio-energy",
-        "Others":                 "Price on inspection"
+        "Cardboard":              "₹7.60 / kg (40% factory rate)",
+        "Paper":                  "₹8.00 / kg (40% factory rate)",
+        "Scrap Metals":           "₹14 - ₹160 / kg (40% factory rate)",
+        "Copper":                 "₹160.00 / kg (40% of ₹400)",
+        "Iron":                   "₹14.00 / kg (40% of ₹35)",
+        "Aluminium":              "₹44.00 / kg (40% of ₹110)",
+        "Brass":                  "₹112.00 / kg (40% of ₹280)",
+        "Hard Plastics":          "₹10.00 / kg (40% of ₹25)",
+        "Cloth / Textile":        "₹2.00 / kg (40% of ₹5)",
+        "Vegetable / Fruit Bulk": "₹0 Payout (Compost / Bio-energy)",
+        "Others":                 "40% of verified recycling unit rate"
     };
 
     // ─── Settings Storage & Helpers ──────────────────────────────────────────
@@ -3606,13 +3578,14 @@
             ['What is the QR code for?', 'Tap "Show QR" on your active pickup so the collector can scan and verify the request at your doorstep.']
         ]},
         { title: 'Segregation & Fees', roles: ['Household'], items: [
-            ['Why is there a fee for non-segregated waste?', 'Mixed waste takes extra time and effort to sort manually. Keeping biodegradable wet waste and dry recyclables separated avoids the ₹30 fee.'],
+            ['What are the pickup fees?', 'Segregated collection is 100% FREE (₹0). Non-segregated mixed waste incurs a ₹15 sorting fee. Instant immediate pickup (within 45 mins) incurs an additional ₹30 convenience fee.'],
+            ['Why is there a ₹15 fee for non-segregated waste?', 'Mixed waste requires manual sorting at our local Segregation Hub. Keeping dry recyclables and wet kitchen waste segregated avoids the ₹15 fee.'],
             ['What items count as Dry Recyclables?', 'Clean cardboard, newspapers, plastic bottles, tins, cans, and scrap metals.'],
             ['What items count as Biodegradable Wet Waste?', 'Kitchen peels, food scraps, cooked leftovers, and fruit residue.']
         ]},
-        { title: 'Scrap Payouts & Rates', roles: ['Household', 'Business'], items: [
-            ['Do households get paid for recyclables?', 'Yes! When you have more than 2kg of dry recyclables or scrap metal, the collector pays you market scrap value at pickup.'],
-            ['How are commercial scrap rates decided?', 'Rates are based on live scrap market rates (e.g. Copper ₹380/kg, Aluminium ₹130/kg, Cartons ₹10/kg) and updated regularly.']
+        { title: 'Scrap Payouts & Points', roles: ['Household', 'Business'], items: [
+            ['How are scrap payouts calculated?', 'For segregated dry recyclables, you receive 40% of the factory wholesale recycling rate directly in your cash wallet upon doorstep weigh-in. Non-segregated and normal household garbage receive ₹0 payout.'],
+            ['Can Green Points be converted to wallet cash?', 'No. Green Points are non-monetary environmental impact badges that reflect your CO₂ reduction. Real cash in your wallet comes exclusively from 40% scrap sales payouts and can be withdrawn via UPI anytime.']
         ]},
         { title: 'Volunteers & Recyclers', roles: ['Recycler'], items: [
             ['What waste will I receive?', 'Biodegradable organic waste and compostable matter dropped off in your area.'],
@@ -3819,8 +3792,8 @@
             icon: 'ph-fill ph-coins',
             iconColor: 'bg-amber-100 text-amber-800',
             title: 'Green Points & Cash Wallet ⭐',
-            desc: 'Earn +50 Green Points and immediate doorstep cash payouts every time you segregate scrap. Convert points to cash UPI withdrawals or redeem for eco-discounts.',
-            pill: '💵 100 Pts = ₹10 Real Cash Transfer'
+            desc: 'Earn real doorstep cash payouts (40% of factory recycling rate) for verified scrap, withdrawable to UPI. Earn Green Points to build your community Eco-Badge & CO₂ impact karma.',
+            pill: '⭐ Points = Impact Score • Wallet = 40% Scrap Cash'
         },
         {
             badge: 'Feature 4 of 4 • Transparency',
@@ -4452,80 +4425,12 @@
         }
     }
 
-    // ── Redeem Points Modal Actions ──
+    // ── Green Points Info Modal Action ──
     function openRedeemModal() {
         const pts = appState.points || 0;
-        document.getElementById('redeem-pts-avail').textContent = `${pts} pts`;
-        document.getElementById('redeem-pts-input').value = pts >= 50 ? 50 : pts;
-        document.getElementById('redeem-pts-input').max = pts;
-        updateRedeemCalculation();
-        document.getElementById('redeem-msg').textContent = '';
+        const availEl = document.getElementById('redeem-pts-avail');
+        if (availEl) availEl.textContent = `${pts} pts`;
         openModal('modal-wallet-redeem');
-    }
-
-    function setRedeemQuickPts(val) {
-        const pts = appState.points || 0;
-        const input = document.getElementById('redeem-pts-input');
-        if (val === 'max') {
-            input.value = pts;
-        } else {
-            input.value = Math.min(pts, val);
-        }
-        updateRedeemCalculation();
-    }
-
-    function updateRedeemCalculation() {
-        const pts = parseInt(document.getElementById('redeem-pts-input').value, 10) || 0;
-        const cash = pts * 1.0;
-        document.getElementById('redeem-cash-calculated').textContent = `₹${cash.toFixed(2)}`;
-    }
-
-    async function handleWalletRedeemSubmit(e) {
-        e.preventDefault();
-        const pts = parseInt(document.getElementById('redeem-pts-input').value, 10);
-        const availPts = appState.points || 0;
-        const msgEl = document.getElementById('redeem-msg');
-        const btn = document.getElementById('btn-redeem-submit');
-
-        if (isNaN(pts) || pts < 10) {
-            msgEl.textContent = 'Minimum 10 Green Points required to convert.';
-            return;
-        }
-        if (pts > availPts) {
-            msgEl.textContent = `You only have ${availPts} points available.`;
-            return;
-        }
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-base"></i> Converting...';
-
-        try {
-            const res = await fetch(`${API_BASE}/wallet/redeem-points`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: appState.user.id,
-                    points: pts
-                })
-            });
-
-            const data = await res.json();
-            if (!res.ok) {
-                msgEl.textContent = data.error || 'Conversion failed.';
-                btn.disabled = false;
-                btn.innerHTML = 'Convert to Cash';
-                return;
-            }
-
-            closeModal('modal-wallet-redeem');
-            toast(`🎉 Converted ${pts} pts to ₹${pts.toFixed(2)} wallet balance!`);
-            await loadWalletData();
-        } catch (err) {
-            msgEl.textContent = 'Network error while redeeming points.';
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Convert to Cash';
-        }
     }
 
     // ─── Support Our Mission (UPI Donation) ───────────────────────────────────
@@ -4600,12 +4505,49 @@
     }
 
     // ─── Household Pickup ─────────────────────────────────────────────────────
+    function calculatePickupFees() {
+        const seg = document.getElementById('hh-seg-toggle')?.checked ?? true;
+        const timeRadio = document.querySelector('input[name="hh-time"]:checked');
+        const timeVal = timeRadio ? timeRadio.value : 'Immediate Pickup';
+        const isInstant = timeVal.includes('Immediate');
+
+        const segFee = seg ? 0 : 15;
+        const instantFee = isInstant ? 30 : 0;
+        const totalFee = segFee + instantFee;
+
+        const totalBadge = document.getElementById('hh-fee-total-badge');
+        const segText = document.getElementById('hh-fee-seg-text');
+        const timeText = document.getElementById('hh-fee-time-text');
+
+        if (segText) {
+            segText.innerHTML = seg 
+                ? '<span class="text-emerald-700 font-bold">₹0 (Segregated Free)</span>' 
+                : '<span class="text-red-600 font-bold">+₹15 (Mixed Waste Sorting)</span>';
+        }
+        if (timeText) {
+            timeText.innerHTML = isInstant 
+                ? '<span class="text-amber-700 font-bold">+₹30 (Instant Priority)</span>' 
+                : '<span class="text-emerald-700 font-bold">₹0 (Scheduled Slot)</span>';
+        }
+        if (totalBadge) {
+            if (totalFee === 0) {
+                totalBadge.className = 'text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300';
+                totalBadge.textContent = '₹0 (FREE)';
+            } else {
+                totalBadge.className = 'text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300';
+                totalBadge.textContent = `₹${totalFee} Doorstep Fee`;
+            }
+        }
+        return { segFee, instantFee, totalFee };
+    }
+
     function updateHHCatState() {
         const seg = document.getElementById('hh-seg-toggle')?.checked;
         const warning = document.getElementById('hh-seg-warning');
         if (warning) {
             warning.classList.toggle('hidden', !!seg);
         }
+        calculatePickupFees();
     }
 
     async function submitHHPickup(e) {
@@ -4630,7 +4572,8 @@
             }
         }
 
-        const segLabel = seg ? '[Segregated]' : '[Mixed Waste + ₹30 fee]';
+        const fees = calculatePickupFees();
+        const segLabel = seg ? '[Segregated (₹0 fee)]' : '[Mixed Waste + ₹15 fee]';
         const finalItems = `${cats.join(', ')} ${segLabel}`;
 
         const time = document.querySelector('input[name="hh-time"]:checked')?.value || 'Immediate Pickup';
@@ -4640,7 +4583,16 @@
             const res = await fetch(`${API_BASE}/pickups`, {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ user_id: appState.user.id, role: 'Household', items: finalItems, time_slot: time, quantity: qty })
+                body:    JSON.stringify({ 
+                    user_id: appState.user.id, 
+                    role: 'Household', 
+                    items: finalItems, 
+                    time_slot: time, 
+                    quantity: qty,
+                    pickup_fee: fees.totalFee,
+                    is_segregated: !!seg,
+                    is_instant: time.includes('Immediate')
+                })
             });
             const data = await res.json();
             if (!res.ok) return alert(data.error || 'Failed.');

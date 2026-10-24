@@ -224,69 +224,13 @@ router.post('/withdraw', async (req, res) => {
 
 // ─────────────────────────────────────────────
 // POST /api/wallet/redeem-points
-// Converts Green Points into instant wallet cash
-// 1 Point = ₹1.00 INR
+// Policy: Green Points are non-monetary impact credentials.
+// They CANNOT be converted into real money in wallet.
 // ─────────────────────────────────────────────
 router.post('/redeem-points', async (req, res) => {
-    try {
-        const { user_id, points } = req.body;
-        const userId = parseInt(user_id, 10);
-        const ptsToRedeem = parseInt(points, 10);
-
-        if (!userId || isNaN(ptsToRedeem) || ptsToRedeem < 10) {
-            return res.status(400).json({ error: 'Minimum 10 Green Points required to redeem.' });
-        }
-
-        const db = await getDb();
-        const uStmt = db.prepare('SELECT id, name, points, wallet_balance FROM users WHERE id = ?');
-        uStmt.bind([userId]);
-        if (!uStmt.step()) {
-            uStmt.free();
-            return res.status(404).json({ error: 'User not found.' });
-        }
-        const user = uStmt.getAsObject();
-        uStmt.free();
-
-        const userPts = user.points || 0;
-        if (ptsToRedeem > userPts) {
-            return res.status(400).json({ 
-                error: `Insufficient Green Points. You have ${userPts} points available.` 
-            });
-        }
-
-        const cashValue = ptsToRedeem * 1.0; // 1 point = ₹1
-        const newPoints = userPts - ptsToRedeem;
-        const newBalance = (user.wallet_balance || 0.0) + cashValue;
-        const refId = 'RDM-' + Math.floor(100000 + Math.random() * 900000);
-
-        // Update user points & wallet balance
-        db.run('UPDATE users SET points = ?, wallet_balance = ? WHERE id = ?', [newPoints, newBalance, userId]);
-
-        // Record credit transaction
-        db.run(`
-            INSERT INTO transactions (user_id, type, title, description, amount, points, direction, status, reference_id, created_at)
-            VALUES (?, 'reward_cashback', 'Green Points Redeemed', ?, ?, ?, 'credit', 'Completed', ?, datetime('now', 'localtime'))
-        `, [
-            userId,
-            `Converted ${ptsToRedeem} Green Points into wallet balance`,
-            cashValue,
-            -ptsToRedeem,
-            refId
-        ]);
-
-        persist();
-
-        return res.json({
-            success: true,
-            message: `🎉 Successfully converted ${ptsToRedeem} points into ₹${cashValue.toFixed(2)} wallet cash!`,
-            balance: Math.round(newBalance * 100) / 100,
-            points: newPoints,
-            reference_id: refId
-        });
-    } catch (err) {
-        console.error('Wallet redeem error:', err);
-        return res.status(500).json({ error: 'Points redemption failed.', details: err.message });
-    }
+    return res.status(400).json({ 
+        error: 'Green Points are non-monetary environmental impact credentials and cannot be converted into cash in the wallet. Real wallet cash is earned exclusively through 40% scrap sales payouts and can be withdrawn via UPI.' 
+    });
 });
 
 module.exports = router;

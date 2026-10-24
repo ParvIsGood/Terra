@@ -233,8 +233,15 @@ router.patch('/:id/complete', async (req, res) => {
         pStmt.free();
 
         const measuredWeight = parseFloat(weight) || 10;
-        const isWetOnly = pickup.items.toLowerCase().includes('biodegradable') && !pickup.items.toLowerCase().includes('dry');
-        const payout = isWetOnly ? 0 : Math.round(measuredWeight * 10);
+        const itemsLower = (pickup.items || '').toLowerCase();
+        const isMixed = itemsLower.includes('mixed') || itemsLower.includes('unsegregated');
+        const isNormalOnly = (itemsLower.includes('biodegradable') || itemsLower.includes('wet') || itemsLower.includes('other')) && !itemsLower.includes('dry') && !itemsLower.includes('recyclable') && !itemsLower.includes('plastic') && !itemsLower.includes('metal') && !itemsLower.includes('cardboard');
+
+        // Rules:
+        // Rule 3: No payout for non-segregated mixed waste (₹0).
+        // Rule 4: No payout for normal segregated routine household waste (₹0).
+        // Rule 6: Segregated recyclables receive 40% of wholesale factory rate (~₹11.20/kg blended average).
+        const payout = (isMixed || isNormalOnly) ? 0 : Math.round(measuredWeight * 11.20);
         const ptsEarned = 50;
 
         db.run(`

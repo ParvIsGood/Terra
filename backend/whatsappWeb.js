@@ -95,6 +95,47 @@ function parseMaterialWeights(inputStr) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// 40% SCRAP PAYOUT FORMULA (40% of money received from recycling unit)
+// Rule 3: No payout for mixed waste (₹0)
+// Rule 4: No payout for normal domestic waste (₹0)
+// Rule 6: Segregated recyclables receive 40% of wholesale factory rate
+// ─────────────────────────────────────────────────────────────
+function calculateMaterialPayout(material, weight) {
+    const mat = (material || '').toLowerCase();
+    
+    // Check for mixed or non-segregated or wet waste (₹0 payout)
+    if (mat.includes('mixed') || mat.includes('unsegregated') || mat.includes('wet') || mat.includes('biodegradable') || mat.includes('trash') || mat.includes('kachra')) {
+        return 0; // ₹0 payout
+    }
+    
+    let factoryWholesale = 0;
+    if (mat.includes('cardboard') || mat.includes('gatta') || mat.includes('carton') || mat.includes('dabba')) {
+        factoryWholesale = 19.0; // 40% = ₹7.60/kg
+    } else if (mat.includes('paper') || mat.includes('raddi') || mat.includes('akhbar') || mat.includes('newspaper') || mat.includes('books')) {
+        factoryWholesale = 20.0; // 40% = ₹8.00/kg
+    } else if (mat.includes('plastic') || mat.includes('panni') || mat.includes('bottle')) {
+        factoryWholesale = 25.0; // 40% = ₹10.00/kg
+    } else if (mat.includes('copper') || mat.includes('tamba')) {
+        factoryWholesale = 400.0; // 40% = ₹160.00/kg
+    } else if (mat.includes('aluminium') || mat.includes('aluminum')) {
+        factoryWholesale = 110.0; // 40% = ₹44.00/kg
+    } else if (mat.includes('brass') || mat.includes('peetal')) {
+        factoryWholesale = 280.0; // 40% = ₹112.00/kg
+    } else if (mat.includes('metal') || mat.includes('iron') || mat.includes('loha') || mat.includes('steel') || mat.includes('tin')) {
+        factoryWholesale = 35.0; // 40% = ₹14.00/kg
+    } else if (mat.includes('e waste') || mat.includes('ewaste') || mat.includes('electronic') || mat.includes('wire') || mat.includes('cable')) {
+        factoryWholesale = 40.0; // 40% = ₹16.00/kg
+    } else if (mat.includes('glass') || mat.includes('sheesha') || mat.includes('kaanch')) {
+        factoryWholesale = 2.5; // 40% = ₹1.00/kg
+    } else {
+        factoryWholesale = 20.0; // default average dry recyclable
+    }
+
+    // 40% of money received from recycling unit
+    return Math.round(weight * (factoryWholesale * 0.40));
+}
+
+// ─────────────────────────────────────────────────────────────
 // AI-POWERED FUZZY WEIGHT PARSER (Groq LLM)
 // Corrects typos (plastoc, gata, lohaa) and parses spoken Hindi/Hinglish
 // ─────────────────────────────────────────────────────────────
@@ -1050,8 +1091,8 @@ async function startWhatsApp() {
                                     `${breakdownLines}\n` +
                                     `──────────────────\n` +
                                     `📦 *Total Weight:* *${totalWeight} kg*\n` +
-                                    `💵 *Scrap Amount:* *₹${payout}* (Wallet me add ho chuke hain)\n` +
-                                    `⭐ Green Points: *+${ptsEarned} pts*\n\n` +
+                                    `💵 *Scrap Amount (40% Factory Rate):* *₹${payout}* (Wallet me add ho chuke hain)\n` +
+                                    `⭐ Green Points: *+${ptsEarned} pts* (Impact Score - not cash)\n\n` +
                                     `Thank you for contributing to a cleaner, zero-waste environment! 🌍`
                                 ).catch(e => console.error('Error notifying customer of completion:', e));
                             }
@@ -1074,10 +1115,17 @@ async function startWhatsApp() {
                     if (parsedWeight.items.length > 0 && parsedWeight.totalWeight > 0) {
                         const { items: weightItems, totalWeight } = parsedWeight;
                         const weightSummaryStr = weightItems.map(it => `${it.material}: ${it.weight} kg`).join(', ');
-                        const payout = Math.round(totalWeight * 10);
+                        
+                        // Rule 6: 40% payout to household based on material and weight
+                        let calculatedPayout = 0;
                         const breakdownLines = weightItems
-                            .map(it => `• ${it.material}: *${it.weight} kg*`)
+                            .map(it => {
+                                const itmPayout = calculateMaterialPayout(it.material, it.weight);
+                                calculatedPayout += itmPayout;
+                                return `• ${it.material}: *${it.weight} kg* (₹${itmPayout})`;
+                            })
                             .join('\n');
+                        const payout = calculatedPayout;
 
                         // Save parsed data in session and ask confirmation
                         session.pendingParsed = {
@@ -1097,7 +1145,7 @@ async function startWhatsApp() {
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
                                 `📦 *कुल वजन (Total Weight):* *${totalWeight} kg*\n` +
-                                `💵 *अनुमानित भुगतान (Payout):* *₹${payout}*\n\n` +
+                                `💵 *Scrap Payout (40% Factory Rate):* *₹${payout}*\n\n` +
                                 `❓ *क्या मैं इसे कन्फर्म कर दूँ? (Should I confirm this?)*\n\n` +
                                 `1️⃣ *हाँ / YES* - कन्फर्म और कम्पलीट करने के लिए\n` +
                                 `2️⃣ *नहीं / NO* - दोबारा वजन बोलने/बदलने के लिए\n\n` +
@@ -1110,7 +1158,7 @@ async function startWhatsApp() {
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
                                 `📦 *Total Weight:* *${totalWeight} kg*\n` +
-                                `💵 *Estimated Payout:* *₹${payout}*\n\n` +
+                                `💵 *Scrap Payout (40% Factory Rate):* *₹${payout}*\n\n` +
                                 `❓ *Should I confirm and complete this pickup?*\n\n` +
                                 `1️⃣ Reply *YES* or *1* to Confirm & Complete\n` +
                                 `2️⃣ Reply *NO* or *2* to re-enter weight\n\n` +
@@ -1123,7 +1171,7 @@ async function startWhatsApp() {
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
                                 `📦 *Kul Weight (Total):* *${totalWeight} kg*\n` +
-                                `💵 *Estimated Payout:* *₹${payout}*\n\n` +
+                                `💵 *Scrap Payout (40% Factory Rate):* *₹${payout}*\n\n` +
                                 `❓ *Kya main ise confirm kar doon? (Should I confirm this?)*\n\n` +
                                 `1️⃣ Reply *HAAN*, *YES* ya *1* - Confirm & Complete karne ke liye\n` +
                                 `2️⃣ Reply *NAHI*, *NO* ya *2* - Dobara bolne/likhne ke liye\n\n` +
