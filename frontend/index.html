@@ -1137,7 +1137,7 @@
                 </button>
             </div>
 
-            <!-- Main Wallet Balance Card (Clean Light Studio Card) -->
+            <!-- Main Wallet Balance Card (Clean Light Studio Card - Pure Scrap Cash) -->
             <div class="rounded-3xl bg-white p-6 shadow-sm mb-4 border border-brand-border">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText flex items-center gap-1.5">
@@ -1148,44 +1148,21 @@
                     </span>
                 </div>
 
-                <div class="flex items-baseline gap-1.5 mb-4">
+                <div class="flex items-baseline gap-1.5 mb-2">
                     <span class="text-2xl font-black text-brand-dark">₹</span>
                     <span id="wallet-balance-display" class="text-4xl font-black tracking-tight text-brand-dark">0.00</span>
                 </div>
 
-                <!-- Green Points Row -->
-                <div class="flex items-center justify-between bg-brand-bg rounded-2xl p-3 px-3.5 mb-3 border border-brand-border">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-bold shrink-0">
-                            ⭐
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-brand-grayText uppercase tracking-wide">Green Eco Points</p>
-                            <p id="wallet-points-display" class="text-xs font-black text-brand-dark">0 pts</p>
-                        </div>
-                    </div>
-                    <button onclick="openPoints()" class="text-[11px] font-bold text-brand-dark bg-white hover:bg-gray-50 border border-brand-border px-3 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1 cursor-pointer shadow-2xs">
-                        <span>Impact Score</span>
-                        <i class="ph-bold ph-caret-right text-[10px] text-brand-grayText"></i>
-                    </button>
-                </div>
-
-                <p class="text-[10px] text-brand-grayText font-medium px-0.5 mb-4 flex items-center gap-1.5 leading-snug">
-                    <i class="ph-bold ph-info text-emerald-700 text-xs shrink-0"></i>
-                    <span>Balance is real cash earned from verified scrap pickups. Points are non-monetary impact score.</span>
+                <p class="text-[11px] text-brand-grayText font-medium px-0.5 mb-5 flex items-center gap-1.5 leading-relaxed">
+                    <i class="ph-bold ph-check-circle text-emerald-700 text-xs shrink-0"></i>
+                    <span>Real cash earned from doorstep scrap weigh-in. Transfer directly to UPI or Bank anytime.</span>
                 </p>
 
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-2.5">
-                    <button onclick="openWithdrawModal()" class="w-full bg-brand-dark hover:bg-brand-primary text-white font-extrabold py-3.5 px-3 rounded-2xl text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
-                        <i class="ph-bold ph-arrow-up-right text-sm"></i>
-                        <span>Withdraw Cash</span>
-                    </button>
-                    <button onclick="openPoints()" class="w-full bg-brand-light hover:bg-[#c5e1ce] text-brand-dark font-extrabold py-3.5 px-3 rounded-2xl text-xs border border-brand-border transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
-                        <i class="ph-bold ph-sparkle text-amber-700 text-sm"></i>
-                        <span>Points Sheet</span>
-                    </button>
-                </div>
+                <!-- Action Button (Full-width Primary Action) -->
+                <button onclick="openWithdrawModal()" class="w-full bg-brand-dark hover:bg-brand-primary text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="ph-bold ph-arrow-up-right text-sm"></i>
+                    <span>Withdraw Cash to UPI / Bank</span>
+                </button>
             </div>
 
             <!-- Metrics Summary Cards -->
@@ -1227,7 +1204,7 @@
                 <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
                     <button onclick="filterWalletTxns('all')" id="wallet-filter-all" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-bold bg-brand-dark text-white shrink-0 transition-all cursor-pointer">All</button>
                     <button onclick="filterWalletTxns('scrap_payout')" id="wallet-filter-scrap_payout" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-medium bg-white text-brand-grayText border border-brand-border hover:bg-gray-50 shrink-0 transition-all cursor-pointer">Scrap Payouts</button>
-                    <button onclick="filterWalletTxns('bonus')" id="wallet-filter-bonus" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-medium bg-white text-brand-grayText border border-brand-border hover:bg-gray-50 shrink-0 transition-all cursor-pointer">Rewards &amp; Bonus</button>
+                    <button onclick="filterWalletTxns('bonus')" id="wallet-filter-bonus" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-medium bg-white text-brand-grayText border border-brand-border hover:bg-gray-50 shrink-0 transition-all cursor-pointer">Bonus</button>
                     <button onclick="filterWalletTxns('withdrawal')" id="wallet-filter-withdrawal" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-medium bg-white text-brand-grayText border border-brand-border hover:bg-gray-50 shrink-0 transition-all cursor-pointer">Withdrawals</button>
                 </div>
             </div>
@@ -1872,59 +1849,6 @@
     </div>
 </div>
 
-<!-- Green Points & Eco-Impact Modal -->
-<div id="modal-wallet-redeem" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm">
-    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-wallet-redeem-content">
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center gap-2">
-                <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg">
-                    ⭐
-                </div>
-                <div>
-                    <h3 class="text-base font-extrabold text-brand-dark leading-tight">Green Eco Points</h3>
-                    <p class="text-[11px] font-semibold text-brand-grayText">Available: <span id="redeem-pts-avail" class="text-amber-700 font-bold">0 pts</span></p>
-                </div>
-            </div>
-            <button onclick="closeModal('modal-wallet-redeem')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200 cursor-pointer">
-                <i class="ph-bold ph-x text-sm"></i>
-            </button>
-        </div>
-
-        <div class="space-y-3.5">
-            <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5 text-center">
-                <p class="text-xs font-bold text-amber-900 mb-1">🌿 Non-Monetary Impact Score</p>
-                <p class="text-[11px] text-amber-800 font-medium leading-relaxed">
-                    Points reflect verified kilograms of waste diverted and CO₂ offset. <b>Points cannot be converted into cash</b>.
-                </p>
-            </div>
-
-            <div class="bg-brand-bg rounded-2xl p-3.5 border border-brand-border space-y-2 text-xs">
-                <div class="flex items-start gap-2">
-                    <span class="text-emerald-700 font-bold">💵</span>
-                    <p class="text-brand-dark font-medium leading-snug">
-                        <b>How Real Cash is Earned:</b> When you submit segregated recyclables, you receive <b>40% of the wholesale factory recycling rate</b> directly into your wallet.
-                    </p>
-                </div>
-                <div class="flex items-start gap-2">
-                    <span class="text-emerald-700 font-bold">🏦</span>
-                    <p class="text-brand-dark font-medium leading-snug">
-                        <b>UPI Withdrawal:</b> Your cash balance can be withdrawn anytime to your bank account or UPI ID.
-                    </p>
-                </div>
-                <div class="flex items-start gap-2">
-                    <span class="text-emerald-700 font-bold">🏆</span>
-                    <p class="text-brand-dark font-medium leading-snug">
-                        <b>Eco Badges:</b> Accumulate points to climb the community leaderboard and unlock Eco-Warrior certificates!
-                    </p>
-                </div>
-            </div>
-
-            <button onclick="closeModal('modal-wallet-redeem')" class="w-full bg-brand-dark text-white font-extrabold py-3.5 rounded-full text-xs shadow-md hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer">
-                Understood
-            </button>
-        </div>
-    </div>
-</div>
 
 <!-- Support Our Mission UPI QR Modal -->
 <div id="modal-support-mission" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-support-mission')">
@@ -4232,7 +4156,7 @@
                         <i class="ph ph-receipt"></i>
                     </div>
                     <p class="text-sm font-bold text-brand-dark mb-1">No transactions found</p>
-                    <p class="text-xs text-brand-grayText mb-4">Complete your doorstep recyclable pickup to earn cash and green points!</p>
+                    <p class="text-xs text-brand-grayText mb-4">Complete a doorstep recyclable pickup to receive real cash payouts!</p>
                     <button onclick="nav('schedule-hh')" class="bg-brand-dark text-white text-xs font-bold px-4 py-2.5 rounded-full hover:opacity-90 active:scale-95 transition-all cursor-pointer">
                         Schedule Pickup
                     </button>
@@ -4260,12 +4184,9 @@
             if (t.type === 'scrap_payout') {
                 iconHtml = '<div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-arrow-down-left"></i></div>';
                 typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-800 border border-emerald-200/60 px-1.5 py-0.5 rounded-md">Scrap Payout</span>';
-            } else if (t.type === 'bonus') {
+            } else if (t.type === 'bonus' || t.type === 'reward_cashback') {
                 iconHtml = '<div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-gift"></i></div>';
-                typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded-md">Community Bonus</span>';
-            } else if (t.type === 'reward_cashback') {
-                iconHtml = '<div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-sparkle"></i></div>';
-                typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-purple-50 text-purple-800 border border-purple-200/60 px-1.5 py-0.5 rounded-md">Points Redeemed</span>';
+                typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded-md">Welcome Bonus</span>';
             } else if (t.type === 'withdrawal') {
                 iconHtml = '<div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-arrow-up-right"></i></div>';
                 typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-blue-50 text-blue-800 border border-blue-200/60 px-1.5 py-0.5 rounded-md">Payout Transfer</span>';
@@ -4273,8 +4194,6 @@
                 iconHtml = '<div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-receipt"></i></div>';
                 typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-gray-50 text-gray-800 border border-gray-200/60 px-1.5 py-0.5 rounded-md">Transaction</span>';
             }
-
-            const pointsBadge = t.points ? `<span class="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full ml-1.5">⭐ ${t.points > 0 ? '+' : ''}${t.points} pts</span>` : '';
 
             const statusBadge = t.status === 'Completed'
                 ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full"><span class="w-1 h-1 rounded-full bg-emerald-500"></span> Completed</span>`
@@ -4293,7 +4212,6 @@
                                 <p class="text-[11px] text-brand-grayText font-medium line-clamp-2 leading-relaxed mb-1.5">${t.description || ''}</p>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <span class="text-[10px] text-gray-400 font-medium">${dateStr}</span>
-                                    ${pointsBadge}
                                 </div>
                             </div>
                         </div>
@@ -4418,14 +4336,6 @@
             btn.disabled = false;
             btn.innerHTML = 'Transfer Instantly';
         }
-    }
-
-    // ── Green Points Info Modal Action ──
-    function openRedeemModal() {
-        const pts = appState.points || 0;
-        const availEl = document.getElementById('redeem-pts-avail');
-        if (availEl) availEl.textContent = `${pts} pts`;
-        openModal('modal-wallet-redeem');
     }
 
     // ─── Support Our Mission (UPI Donation) ───────────────────────────────────
