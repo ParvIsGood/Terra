@@ -1,7 +1,7 @@
 const express    = require('express');
 const router     = express.Router();
 const { getDb, persist } = require('../database');
-const { sendWhatsAppAlert } = require('../whatsappWeb');
+const { sendWhatsAppAlert, dispatchPickup } = require('../whatsappWeb');
 
 // ─────────────────────────────────────────────
 // POST /api/pickups
@@ -19,31 +19,17 @@ router.post('/', async (req, res) => {
         const reqId  = `${prefix}-${Math.floor(1000 + Math.random() * 9000)}`;
         const pin    = String(Math.floor(1000 + Math.random() * 9000));
 
-        // Get user details
-        const userStmt = db.prepare('SELECT name, address, pincode FROM users WHERE id = ?');
+        // Get full customer details including phone
+        const userStmt = db.prepare('SELECT name, phone, address, pincode FROM users WHERE id = ?');
         userStmt.bind([user_id]);
         let customer = null;
         if (userStmt.step()) customer = userStmt.getAsObject();
         userStmt.free();
 
-        // Find an active collector (kabadiwala) in the area
-        let collectorId = null;
-        let collectorPhone = null;
-        let collectorName = null;
-
-        const collectorStmt = db.prepare('SELECT id, name, phone_number FROM collectors WHERE is_available = 1 ORDER BY id DESC LIMIT 1');
-        if (collectorStmt.step()) {
-            const assignedCollector = collectorStmt.getAsObject();
-            collectorId = assignedCollector.id;
-            collectorPhone = assignedCollector.phone_number;
-            collectorName = assignedCollector.name;
-            console.log(`📦 Auto-assigning pickup ${reqId} to collector: ${assignedCollector.name} (${assignedCollector.phone_number})`);
-        }
-        collectorStmt.free();
-
+        // Initially create pickup in 'Pending' status (unassigned until a collector accepts within 60s)
         db.run(
-            `INSERT INTO pickups (request_id, user_id, role, items, time_slot, quantity, collector_id, pin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [reqId, user_id, role, items, time_slot, quantity || null, collectorId, pin]
+            `INSERT INTO pickups (request_id, user_id, role, items, time_slot, quantity, collector_id, pin, status) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, 'Pending')`,
+            [reqId, user_id, role, items, time_slot, quantity || null, pin]
         );
         persist();
 
@@ -52,23 +38,9 @@ router.post('/', async (req, res) => {
         const pickup = stmt.getAsObject();
         stmt.free();
 
-        // 🚀 AUTOMATIC INSTANT WHATSAPP ALERT TO KABADIWALA
-        if (collectorPhone) {
-            const alertMessage = 
-                `🔔 *NAYA PICKUP ALERT! (New Request)*\n\n` +
-                `Namaste ${collectorName || 'Partner'} ji! Aapke area me naya waste pickup book hua hai:\n\n` +
-                `📋 *Details:*\n` +
-                `• Request ID: *#${reqId}*\n` +
-                `• Items: *${items}* (${quantity || 'Standard'})\n` +
-                `• Customer: *${customer?.name || 'Household'}*\n` +
-                `• Address: *${customer?.address || 'Local'}* (PIN: ${customer?.pincode || '—'})\n` +
-                `• Time Slot: *${time_slot}*\n\n` +
-                `📱 *Doorstep verification:* Doorstep par customer ke phone se QR code scan karein ya reply karein:\n` +
-                `*VERIFY ${reqId} ${pin}*\n\n` +
-                `Kripya time par pahunch kar waste collect karein! 🙏`;
-
-            sendWhatsAppAlert(collectorPhone, alertMessage)
-                .catch(err => console.error('Background alert error:', err));
+        // 🚀 Start 60-second sequential dispatch offer to available collectors
+        if (typeof dispatchPickup === 'function') {
+            dispatchPickup(pickup, customer).catch(err => console.error('Dispatch error:', err));
         }
 
         return res.status(201).json({ message: 'Pickup scheduled.', pickup });

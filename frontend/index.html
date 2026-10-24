@@ -170,12 +170,12 @@
                             </label>
                             <span class="text-[10px] text-emerald-600 font-semibold">Valid for 5 mins</span>
                         </div>
-                        <div class="flex gap-2">
-                            <input type="text" id="login-otp" maxlength="4" placeholder="• • • •"
-                                class="flex-1 bg-brand-bg border border-emerald-300 rounded-xl px-4 py-3 text-center font-bold tracking-[0.4em] text-lg focus:outline-none focus:border-emerald-600 shadow-sm">
+                        <div class="space-y-2">
+                            <input type="text" id="login-otp" maxlength="4" placeholder="• • • •" autocomplete="one-time-code" inputmode="numeric"
+                                class="w-full bg-brand-bg border border-emerald-300 rounded-xl px-4 py-3 text-center font-bold tracking-[0.4em] text-lg focus:outline-none focus:border-emerald-600 shadow-sm">
                             <button type="button" id="btn-login-verify-otp" onclick="verifyLoginOTP()"
-                                class="shrink-0 bg-emerald-600 text-white font-bold px-5 py-3 rounded-xl text-xs hover:bg-emerald-700 active:scale-[0.98] transition-all shadow-sm">
-                                Verify &amp; Login
+                                class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs hover:bg-emerald-700 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center gap-1.5">
+                                <i class="ph ph-check-circle text-base"></i> Verify &amp; Login
                             </button>
                         </div>
                     </div>
@@ -342,19 +342,19 @@
                     </div>
 
                     <!-- OTP Input Section -->
-                    <div id="reg-otp-section" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-3 space-y-2">
+                    <div id="reg-otp-section" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 space-y-2.5">
                         <div class="flex items-center justify-between">
                             <label class="block text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
                                 <i class="ph ph-chat-circle-dots"></i> Enter WhatsApp 4-Digit Code
                             </label>
                             <span class="text-[10px] text-emerald-600 font-semibold">Valid 5 mins</span>
                         </div>
-                        <div class="flex gap-2">
-                            <input type="text" id="reg-otp" maxlength="4" placeholder="• • • •"
-                                class="flex-1 bg-white border border-emerald-300 rounded-xl px-3 py-2 text-center font-bold tracking-[0.4em] text-base focus:outline-none focus:border-emerald-600 shadow-sm">
+                        <div class="space-y-2">
+                            <input type="text" id="reg-otp" maxlength="4" placeholder="• • • •" autocomplete="one-time-code" inputmode="numeric"
+                                class="w-full bg-white border border-emerald-300 rounded-xl px-4 py-2.5 text-center font-bold tracking-[0.4em] text-base focus:outline-none focus:border-emerald-600 shadow-sm">
                             <button type="button" id="btn-reg-verify-otp" onclick="verifyRegisterOTP()"
-                                class="bg-emerald-600 text-white font-bold px-4 rounded-xl shadow-sm text-xs hover:bg-emerald-700 active:scale-[0.98] transition-all whitespace-nowrap">
-                                Verify Code
+                                class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl shadow-sm text-xs hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
+                                <i class="ph ph-check-circle text-base"></i> Verify Code
                             </button>
                         </div>
                     </div>
@@ -391,9 +391,33 @@
 
                     <!-- Pincode -->
                     <div>
-                        <label class="block text-xs font-semibold text-brand-dark mb-1">Pincode</label>
-                        <input type="text" id="reg-pincode" required placeholder="e.g. 110020"
-                            class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-semibold text-brand-dark">Pincode (6-digit Indian PIN)</label>
+                            <span id="reg-pincode-count" class="text-[10px] font-bold text-brand-grayText">0/6</span>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="reg-pincode" required placeholder="e.g. 110020" maxlength="6" inputmode="numeric"
+                                oninput="handlePincodeInput(this, 'reg-pincode-status', 'reg-pincode-spinner', 'reg-pincode-count', 'reg-city', 'reg-state')"
+                                class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium pr-10">
+                            <span id="reg-pincode-spinner" class="hidden absolute right-3.5 top-3.5 text-brand-grayText">
+                                <i class="ph ph-circle-notch animate-spin text-base"></i>
+                            </span>
+                        </div>
+                        <div id="reg-pincode-status" class="text-[11px] font-semibold mt-1 min-h-[16px]"></div>
+                    </div>
+
+                    <!-- City & State (Auto-filled from PIN) -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-brand-dark mb-1">City / District</label>
+                            <input type="text" id="reg-city" placeholder="Auto-filled from PIN"
+                                class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-brand-dark mb-1">State</label>
+                            <input type="text" id="reg-state" placeholder="Auto-filled from PIN"
+                                class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium transition-colors">
+                        </div>
                     </div>
                 </div>
 
@@ -514,20 +538,35 @@
     </div>
 
     <!-- ==========================================
-         VIEW: RECYCLER EMAIL OUTRO
+         VIEW: RECYCLER EMAIL / PARTNER WITH US + UNIT LOGIN
          ========================================== -->
-    <div id="view-rec-email" class="view bg-brand-bg overflow-y-auto text-center">
-        <div class="px-6 py-8 my-auto w-full">
-            <div class="w-20 h-20 bg-brand-light text-brand-dark rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="ph ph-envelope-simple text-4xl"></i>
-            </div>
+    <div id="view-rec-email" class="view bg-brand-bg overflow-y-auto">
+        <div class="view-content px-6 pt-10 pb-12 text-center">
+            <button onclick="nav('rec-sub')" aria-label="Back" class="w-10 h-10 mb-5 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-brand-light transition-colors"><i class="ph-bold ph-arrow-left text-lg"></i></button>
             <h2 class="text-2xl font-extrabold text-brand-dark mb-4">Partner with us</h2>
-            <p class="text-brand-dark text-sm px-4 leading-relaxed bg-white p-6 rounded-2xl border border-brand-border shadow-sm">
-                Please email us at<br>
-                <a href="mailto:partnership@circular.com" class="font-bold text-lg mt-2 inline-block">partnership@circular.com</a><br><br>
-                for recycling unit partnerships. We will get back to you shortly.
-            </p>
-            <button onclick="handleLogout()" class="mt-8 text-sm font-semibold text-brand-grayText underline">Start over</button>
+            <div class="bg-white p-5 rounded-3xl border border-brand-border shadow-sm mb-5 text-center">
+                <p class="text-brand-grayText font-medium text-sm leading-relaxed mb-3">For industrial recycling units, please reach out to us directly to set up your integration.</p>
+                <a href="mailto:circularbyterra@gmail.com" class="font-bold text-base text-brand-dark underline underline-offset-4 block break-all hover:opacity-80">circularbyterra@gmail.com</a>
+            </div>
+            <div class="bg-white p-5 rounded-3xl border border-brand-border shadow-sm text-left">
+                <h3 class="text-lg font-extrabold text-brand-dark mb-3">Recycling unit login</h3>
+                <div class="flex bg-brand-bg rounded-full p-1 mb-4 border border-brand-border">
+                    <button id="ul-t-admin" onclick="uTab('admin')" class="flex-1 py-2 rounded-full text-xs font-bold bg-brand-dark text-white transition-all shadow-xs">Unit admin</button>
+                    <button id="ul-t-emp" onclick="uTab('emp')" class="flex-1 py-2 rounded-full text-xs font-bold text-brand-grayText transition-all">Employee</button>
+                </div>
+                <label id="ul-idl" class="block text-xs font-semibold text-brand-grayText mb-1 uppercase tracking-wider">Unit code</label>
+                <input id="ul-id" autocapitalize="characters" placeholder="e.g. RU-1001" class="w-full bg-brand-bg border border-brand-border rounded-2xl px-4 py-3 font-bold text-sm focus:outline-none focus:border-brand-dark mb-3">
+                <label class="block text-xs font-semibold text-brand-grayText mb-1 uppercase tracking-wider">Password</label>
+                <div class="relative mb-3">
+                    <input id="ul-pw" type="password" placeholder="••••••••" class="w-full bg-brand-bg border border-brand-border rounded-2xl pl-4 pr-12 py-3 font-bold text-sm focus:outline-none focus:border-brand-dark">
+                    <button type="button" onclick="uEye()" aria-label="Show or hide password" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-grayText hover:text-brand-dark"><i class="ph-bold ph-eye text-lg"></i></button>
+                </div>
+                <p id="ul-err" class="hidden text-xs font-bold text-red-600 mb-3"></p>
+                <button onclick="uLogin()" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full shadow-lg text-sm active:scale-[0.98] transition-all hover:opacity-90">Log in</button>
+                <p class="text-xs text-brand-grayText font-medium mt-3 text-center">Forgot password? Employees ask their unit admin. Admins email circularbyterra@gmail.com.</p>
+                <p class="text-[11px] text-brand-grayText font-medium mt-2 text-center border-t border-dashed border-brand-border pt-2">Demo: RU-1001 / unit@123 &middot; EMP-101 / emp@123</p>
+            </div>
+            <button onclick="nav('role')" class="text-brand-grayText font-bold text-xs mt-6 hover:text-brand-dark transition-colors">Start over</button>
         </div>
     </div>
 
@@ -963,6 +1002,13 @@
             </div>
             <p class="text-sm font-medium text-brand-grayText mb-5 leading-relaxed">Tap a category to see what goes in it and how to sort it properly.</p>
             <div id="seg-guide-list" class="space-y-3"></div>
+
+            <!-- Subscript Link -->
+            <div class="mt-8 pt-4 border-t border-brand-border/60 text-center">
+                <p class="text-[11px] text-brand-grayText font-medium leading-relaxed">
+                    For more information refer <a href="https://share.google/ek9B3BloMvGMxW7UR" target="_blank" rel="noopener noreferrer" class="font-bold text-emerald-700 underline underline-offset-2 hover:text-emerald-800 break-all">https://share.google/ek9B3BloMvGMxW7UR</a>
+                </p>
+            </div>
         </div>
     </div>
 
@@ -985,7 +1031,32 @@
          ========================================== -->
     <div id="view-pickups" class="view bg-brand-bg">
         <div class="view-content px-5 pt-8 pb-32">
-            <h1 class="text-2xl font-extrabold tracking-tight text-brand-dark mb-6">Activity &amp; Pickups</h1>
+            <h1 class="text-2xl font-extrabold tracking-tight text-brand-dark mb-4">Activity &amp; Pickups</h1>
+            
+            <!-- Activity Status Filter Banner -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mb-4 -mx-1 px-1">
+                <button type="button" onclick="setActivityFilter('all')" id="btn-filter-all"
+                    class="act-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-brand-dark text-white shadow-xs transition-all flex items-center gap-1.5 shrink-0">
+                    <span>All</span>
+                    <span id="act-cnt-all" class="bg-white/20 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button type="button" onclick="setActivityFilter('pending')" id="btn-filter-pending"
+                    class="act-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-brand-grayText border border-brand-border shadow-xs hover:bg-gray-50 transition-all flex items-center gap-1.5 shrink-0">
+                    <span>Pending</span>
+                    <span id="act-cnt-pending" class="bg-amber-100 text-amber-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button type="button" onclick="setActivityFilter('completed')" id="btn-filter-completed"
+                    class="act-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-brand-grayText border border-brand-border shadow-xs hover:bg-gray-50 transition-all flex items-center gap-1.5 shrink-0">
+                    <span>Completed</span>
+                    <span id="act-cnt-completed" class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button type="button" onclick="setActivityFilter('cancelled')" id="btn-filter-cancelled"
+                    class="act-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-brand-grayText border border-brand-border shadow-xs hover:bg-gray-50 transition-all flex items-center gap-1.5 shrink-0">
+                    <span>Cancelled</span>
+                    <span id="act-cnt-cancelled" class="bg-red-100 text-red-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+            </div>
+
             <div id="pickups-list" class="space-y-4"></div>
         </div>
     </div>
@@ -1124,9 +1195,99 @@
         </button>
     </div>
 
+    <!-- ==========================================
+         RECYCLING UNIT BOTTOM NAV
+         ========================================== -->
+    <div id="unit-nav" class="hidden absolute bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-brand-border flex justify-around items-center py-2 pb-6 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.03)]"></div>
+
+    <!-- Floating Terra AI Assistant Button -->
+    <button id="btn-terra-ai" onclick="openAIChat()" 
+        class="hidden absolute bottom-[96px] right-5 z-40 bg-gradient-to-tr from-emerald-800 to-emerald-600 text-white rounded-full py-2.5 px-3.5 shadow-xl shadow-emerald-950/25 hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 border border-emerald-400/40 backdrop-blur-xs"
+        title="Ask Terra AI">
+        <i class="ph-fill ph-sparkle text-base text-yellow-300 animate-pulse"></i>
+        <span class="text-[11px] font-black tracking-wide pr-0.5">Terra AI</span>
+    </button>
+
 </div>
 
 <!-- MODALS -->
+<!-- Modal: Terra AI Chatbot -->
+<div id="modal-ai-chat" class="modal fixed inset-0 z-50 items-end justify-center bg-brand-dark/40 backdrop-blur-sm" onclick="if(event.target===this) closeAIChat()">
+    <div class="bg-white w-full max-w-[420px] rounded-t-[32px] shadow-2xl flex flex-col h-[82vh] overflow-hidden transform transition-transform" id="modal-ai-chat-content">
+        <!-- Header -->
+        <div class="bg-brand-dark text-white px-5 py-4 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-600/60 border border-emerald-400/40 flex items-center justify-center text-yellow-300 text-xl shadow-inner">
+                    <i class="ph-fill ph-sparkle"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <h3 class="text-base font-extrabold tracking-tight">Terra AI</h3>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block"></span>
+                    </div>
+                    <p class="text-[11px] text-emerald-200 font-medium">Your Eco &amp; Waste Guide</p>
+                </div>
+            </div>
+            <button onclick="closeAIChat()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                <i class="ph-bold ph-x text-base"></i>
+            </button>
+        </div>
+
+        <!-- Quick Prompt Chips -->
+        <div class="bg-brand-bg px-4 py-2.5 border-b border-brand-border shrink-0">
+            <div class="flex gap-2 overflow-x-auto no-scrollbar py-0.5">
+                <button type="button" onclick="sendQuickPrompt('Where does a pizza box go?')" class="text-[11px] font-bold bg-white text-brand-dark border border-brand-border px-3 py-1.5 rounded-full shrink-0 shadow-xs hover:border-emerald-500 transition-colors">🍕 Pizza box disposal</button>
+                <button type="button" onclick="sendQuickPrompt('Check my pickup status')" class="text-[11px] font-bold bg-white text-brand-dark border border-brand-border px-3 py-1.5 rounded-full shrink-0 shadow-xs hover:border-emerald-500 transition-colors">📦 My pickup status</button>
+                <button type="button" onclick="sendQuickPrompt('How do scrap payouts work?')" class="text-[11px] font-bold bg-white text-brand-dark border border-brand-border px-3 py-1.5 rounded-full shrink-0 shadow-xs hover:border-emerald-500 transition-colors">💵 20% Payout info</button>
+                <button type="button" onclick="sendQuickPrompt('Where do expired medicines go?')" class="text-[11px] font-bold bg-white text-brand-dark border border-brand-border px-3 py-1.5 rounded-full shrink-0 shadow-xs hover:border-emerald-500 transition-colors">⚠️ Expired medicines</button>
+                <button type="button" onclick="sendQuickPrompt('Can I recycle milk pouches?')" class="text-[11px] font-bold bg-white text-brand-dark border border-brand-border px-3 py-1.5 rounded-full shrink-0 shadow-xs hover:border-emerald-500 transition-colors">🥛 Milk pouches</button>
+            </div>
+        </div>
+
+        <!-- Messages Body -->
+        <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3.5 text-xs bg-white">
+            <!-- Welcome message -->
+            <div class="flex items-start gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-brand-dark text-yellow-300 flex items-center justify-center text-sm shrink-0 mt-0.5">
+                    <i class="ph-fill ph-sparkle"></i>
+                </div>
+                <div class="bg-brand-bg text-brand-dark p-3.5 rounded-2xl rounded-tl-xs border border-brand-border max-w-[85%] leading-relaxed space-y-1.5">
+                    <p class="font-bold text-emerald-800">Namaste! I am Terra AI 🌿</p>
+                    <p>Ask me how to sort any item, check your pickup status, or tap the camera icon below to upload a photo of your waste for instant segregation tips!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Attachment Preview Pill (Hidden by default) -->
+        <div id="ai-image-preview-container" class="hidden px-4 py-2 bg-emerald-50 border-t border-emerald-100 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2">
+                <img id="ai-image-preview" src="" class="w-10 h-10 object-cover rounded-xl border border-emerald-300 shadow-xs">
+                <span class="text-[11px] font-bold text-emerald-900">Photo attached for analysis</span>
+            </div>
+            <button onclick="clearAIAttachedImage()" class="w-6 h-6 rounded-full bg-emerald-200 text-emerald-900 flex items-center justify-center hover:bg-emerald-300">
+                <i class="ph-bold ph-x text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Footer Input Bar -->
+        <div class="p-3.5 bg-brand-bg border-t border-brand-border shrink-0">
+            <form id="ai-chat-form" onsubmit="handleAIChatSubmit(event)" class="flex items-center gap-2">
+                <input type="file" id="ai-file-input" accept="image/*" class="hidden" onchange="handleAIImageSelect(event)">
+                <button type="button" onclick="document.getElementById('ai-file-input').click()" 
+                    class="w-10 h-10 rounded-xl bg-white border border-brand-border text-brand-grayText hover:text-emerald-700 hover:border-emerald-400 flex items-center justify-center shrink-0 shadow-xs transition-colors"
+                    title="Attach photo of waste">
+                    <i class="ph-bold ph-camera text-lg"></i>
+                </button>
+                <input type="text" id="ai-chat-input" placeholder="Ask about sorting or pickup..." 
+                    class="flex-1 bg-white border border-brand-border rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-600 shadow-xs">
+                <button type="submit" id="btn-ai-send"
+                    class="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-emerald-800 active:scale-95 transition-all">
+                    <i class="ph-bold ph-paper-plane-right text-base"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 <!-- Segregation Guide Modal -->
 <div id="modal-segregate" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/40 backdrop-blur-sm">
     <div class="bg-white rounded-3xl p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-segregate-content">
@@ -1227,9 +1388,32 @@
                     class="w-full bg-white border border-brand-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-dark shadow-sm resize-none"></textarea>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-brand-dark mb-1">Pincode</label>
-                <input type="text" id="address-pincode" required placeholder="e.g. 110020"
-                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm">
+                <div class="flex justify-between items-center mb-1">
+                    <label class="block text-xs font-semibold text-brand-dark">Pincode (6-digit Indian PIN)</label>
+                    <span id="address-pincode-count" class="text-[10px] font-bold text-brand-grayText">0/6</span>
+                </div>
+                <div class="relative">
+                    <input type="text" id="address-pincode" required placeholder="e.g. 110020" maxlength="6" inputmode="numeric"
+                        oninput="handlePincodeInput(this, 'address-pincode-status', 'address-pincode-spinner', 'address-pincode-count', 'address-city', 'address-state')"
+                        class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm pr-10 font-medium">
+                    <span id="address-pincode-spinner" class="hidden absolute right-3.5 top-3.5 text-brand-grayText">
+                        <i class="ph ph-circle-notch animate-spin text-base"></i>
+                    </span>
+                </div>
+                <div id="address-pincode-status" class="text-[11px] font-semibold mt-1 min-h-[16px]"></div>
+            </div>
+            <!-- City & State (Auto-filled from PIN) -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-brand-dark mb-1">City / District</label>
+                    <input type="text" id="address-city" placeholder="Auto-filled city"
+                        class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-brand-dark mb-1">State</label>
+                    <input type="text" id="address-state" placeholder="Auto-filled state"
+                        class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium transition-colors">
+                </div>
             </div>
             <label class="flex items-center gap-2.5 cursor-pointer pt-1">
                 <input type="checkbox" id="address-is-primary" class="w-4 h-4 accent-brand-dark rounded">
@@ -1264,9 +1448,32 @@
                     class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm">
             </div>
             <div>
-                <label class="block text-xs font-semibold text-brand-dark mb-1">Pincode</label>
-                <input type="text" id="edit-profile-pincode" required placeholder="e.g. 110020"
-                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm">
+                <div class="flex justify-between items-center mb-1">
+                    <label class="block text-xs font-semibold text-brand-dark">Pincode (6-digit Indian PIN)</label>
+                    <span id="edit-profile-pincode-count" class="text-[10px] font-bold text-brand-grayText">0/6</span>
+                </div>
+                <div class="relative">
+                    <input type="text" id="edit-profile-pincode" required placeholder="e.g. 110020" maxlength="6" inputmode="numeric"
+                        oninput="handlePincodeInput(this, 'edit-profile-pincode-status', 'edit-profile-pincode-spinner', 'edit-profile-pincode-count', 'edit-profile-city', 'edit-profile-state')"
+                        class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm pr-10 font-medium">
+                    <span id="edit-profile-pincode-spinner" class="hidden absolute right-3.5 top-3.5 text-brand-grayText">
+                        <i class="ph ph-circle-notch animate-spin text-base"></i>
+                    </span>
+                </div>
+                <div id="edit-profile-pincode-status" class="text-[11px] font-semibold mt-1 min-h-[16px]"></div>
+            </div>
+            <!-- City & State (Auto-filled from PIN) -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-brand-dark mb-1">City / District</label>
+                    <input type="text" id="edit-profile-city" placeholder="Auto-filled city"
+                        class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-brand-dark mb-1">State</label>
+                    <input type="text" id="edit-profile-state" placeholder="Auto-filled state"
+                        class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium transition-colors">
+                </div>
             </div>
             <p id="edit-profile-msg" class="text-red-600 text-xs text-center font-semibold min-h-[16px]"></p>
             <button type="submit" id="btn-save-profile" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm hover:opacity-90 active:scale-[0.98] transition-all">
@@ -1345,6 +1552,160 @@
             <button onclick="closeModal('modal-confirm')" class="flex-1 bg-brand-bg text-brand-dark font-bold py-3 rounded-full text-sm">No, Keep</button>
             <button onclick="confirmCancel()" class="flex-1 bg-red-600 text-white font-bold py-3 rounded-full text-sm shadow-md hover:bg-red-700">Yes, Cancel</button>
         </div>
+    </div>
+</div>
+
+<!-- Modal: Recycling Unit Pop Modal -->
+<div id="modal-u" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-u')">
+    <div id="modal-u-body" class="bg-white rounded-[32px] p-6 w-full max-w-[340px] shadow-2xl max-h-[90vh] overflow-y-auto"></div>
+</div>
+
+<!-- Modal: Terms & Conditions -->
+<div id="modal-terms" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-terms')">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl max-h-[85vh] overflow-y-auto relative transform transition-transform scale-95" id="modal-terms-content">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm">
+                    <i class="ph-bold ph-file-text"></i>
+                </div>
+                <h3 class="text-lg font-black text-brand-dark">Terms &amp; Conditions</h3>
+            </div>
+            <button onclick="closeModal('modal-terms')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200">
+                <i class="ph-bold ph-x text-base"></i>
+            </button>
+        </div>
+        <div class="space-y-3.5 text-xs text-brand-dark font-medium leading-relaxed">
+            <p class="font-bold text-sm text-brand-dark">Circular By Terra — User Agreement</p>
+            <p>Welcome to <b>Circular By Terra</b>. By accessing our platform, scheduling pickups, dropping off waste, or logging in as a partner or collector, you agree to these Terms &amp; Conditions.</p>
+            
+            <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border space-y-1">
+                <b class="text-brand-dark text-xs block">1. Waste Segregation &amp; Safety</b>
+                <p class="text-brand-grayText">Users agree to segregate recyclable and biodegradable materials properly. Hazardous materials, bio-medical waste, and contraband are strictly prohibited.</p>
+            </div>
+
+            <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border space-y-1">
+                <b class="text-brand-dark text-xs block">2. Fair Weight &amp; Pricing</b>
+                <p class="text-brand-grayText">Weight measurements are recorded on certified digital scales at collection or gate verification. Commercial scrap rates are indicative and finalized based on quality and dry weight.</p>
+            </div>
+
+            <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border space-y-1">
+                <b class="text-brand-dark text-xs block">3. Green Points &amp; Rewards</b>
+                <p class="text-brand-grayText">Green Points earned represent environmental contribution and certified CO₂ emission reductions. Points hold no cash value and are non-transferable.</p>
+            </div>
+
+            <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border space-y-1">
+                <b class="text-brand-dark text-xs block">4. Collector &amp; Partner Code of Conduct</b>
+                <p class="text-brand-grayText">All collectors (kabariwalas), recycling units, and households must treat each other with respect and maintain transparent handoffs verified by QR codes.</p>
+            </div>
+
+            <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border space-y-1">
+                <b class="text-brand-dark text-xs block">5. Scrap Payout &amp; Verification Schedule</b>
+                <p class="text-brand-grayText">When the weight is confirmed at the doorstep by the authorized kabadiwala, the household is paid <b>20%</b> of the actual amount. The remaining <b>20%</b> balance is paid after the load is weighed and confirmed in the authorized Recycling Unit.</p>
+            </div>
+
+            <p class="text-[11px] text-brand-grayText text-center pt-2">Last updated: October 2026 &middot; Circular By Terra Technologies</p>
+        </div>
+        <button onclick="closeModal('modal-terms')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-xs mt-5 hover:opacity-90 active:scale-95 transition-all">I Understand &amp; Agree</button>
+    </div>
+</div>
+
+<!-- Modal: Privacy Policy -->
+<div id="modal-privacy" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-privacy')">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl max-h-[85vh] overflow-y-auto relative transform transition-transform scale-95" id="modal-privacy-content">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-sm">
+                    <i class="ph-bold ph-shield-check"></i>
+                </div>
+                <h3 class="text-lg font-black text-brand-dark">Privacy Policy</h3>
+            </div>
+            <button onclick="closeModal('modal-privacy')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200">
+                <i class="ph-bold ph-x text-base"></i>
+            </button>
+        </div>
+        <div class="space-y-3.5 text-xs text-brand-dark font-medium leading-relaxed">
+            <p class="font-bold text-sm text-brand-dark">Your Privacy at Circular By Terra</p>
+            <p>We respect your privacy and protect your personal information with bank-grade standards.</p>
+
+            <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border space-y-1">
+                <b class="text-brand-dark text-xs block">1. Information We Collect</b>
+                <p class="text-brand-grayText">We collect only verified WhatsApp mobile numbers (for secure OTP login and pickup alerts), service address, and pincode to route authorized local collectors.</p>
+            </div>
+
+            <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border space-y-1">
+                <b class="text-brand-dark text-xs block">2. How Your Data is Used</b>
+                <p class="text-brand-grayText">Your address and phone are shared only with the assigned verified collector during active pickup time windows. We never sell or rent your personal information to third-party advertisers.</p>
+            </div>
+
+            <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border space-y-1">
+                <b class="text-brand-dark text-xs block">3. Data Security &amp; Control</b>
+                <p class="text-brand-grayText">All authentication tokens and communication channels are encrypted. You can request deletion of your account and personal records anytime from Settings.</p>
+            </div>
+
+            <p class="text-[11px] text-brand-grayText text-center pt-2">Questions? Contact us at <a href="mailto:circularbyterra@gmail.com" class="font-bold underline text-brand-dark">circularbyterra@gmail.com</a></p>
+        </div>
+        <button onclick="closeModal('modal-privacy')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-xs mt-5 hover:opacity-90 active:scale-95 transition-all">Close</button>
+    </div>
+</div>
+
+<!-- Modal: About Us (Circular By Terra) -->
+<div id="modal-about" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-about')">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl max-h-[85vh] overflow-y-auto relative transform transition-transform scale-95" id="modal-about-content">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-brand-light text-brand-dark flex items-center justify-center font-bold text-sm">
+                    <i class="ph-fill ph-plant"></i>
+                </div>
+                <h3 class="text-lg font-black text-brand-dark">About Us</h3>
+            </div>
+            <button onclick="closeModal('modal-about')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200">
+                <i class="ph-bold ph-x text-base"></i>
+            </button>
+        </div>
+        <div class="space-y-3.5 text-xs text-brand-dark font-medium leading-relaxed">
+            <div class="text-center py-2">
+                <h2 class="text-2xl font-black text-brand-dark tracking-tight">circular.</h2>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-700 mt-0.5">By Terra Technologies</p>
+                <span class="inline-block bg-brand-light text-brand-dark text-[10px] font-extrabold px-3 py-1 rounded-full mt-2 border border-brand-border">Version 2.4.0 (Patiala Edition)</span>
+            </div>
+
+            <div class="bg-brand-bg p-4 rounded-2xl border border-brand-border space-y-2 text-center">
+                <p class="font-bold text-sm text-brand-dark leading-snug">Smarter waste, cleaner cities.</p>
+                <p class="text-brand-grayText text-xs leading-relaxed">
+                    <b>Circular By Terra</b> is an integrated urban sustainability platform connecting households, commercial establishments, verified local scrap collectors (kabariwalas), and industrial recycling units into a single seamless circular loop.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <div class="flex items-center gap-2.5 bg-white p-3 rounded-2xl border border-brand-border shadow-xs">
+                    <i class="ph-fill ph-check-circle text-emerald-600 text-lg shrink-0"></i>
+                    <div>
+                        <b class="text-xs text-brand-dark block">Zero Waste to Landfills</b>
+                        <span class="text-[11px] text-brand-grayText">Diverting dry recyclables and organic compostables away from urban dumps.</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2.5 bg-white p-3 rounded-2xl border border-brand-border shadow-xs">
+                    <i class="ph-fill ph-users-three text-blue-600 text-lg shrink-0"></i>
+                    <div>
+                        <b class="text-xs text-brand-dark block">Dignity for Informal Recyclers</b>
+                        <span class="text-[11px] text-brand-grayText">Empowering collectors with WhatsApp direct alerts, guaranteed routes, and fair pay.</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2.5 bg-white p-3 rounded-2xl border border-brand-border shadow-xs">
+                    <i class="ph-fill ph-leaf text-emerald-600 text-lg shrink-0"></i>
+                    <div>
+                        <b class="text-xs text-brand-dark block">Trackable Carbon Impact</b>
+                        <span class="text-[11px] text-brand-grayText">Rewarding citizens with Green Points and verifiable CO₂ offset statistics.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center pt-3 border-t border-brand-border">
+                <p class="text-[11px] text-brand-grayText">Reach out for partnerships or queries:</p>
+                <a href="mailto:circularbyterra@gmail.com" class="text-xs font-bold text-brand-dark underline underline-offset-2">circularbyterra@gmail.com</a>
+            </div>
+        </div>
+        <button onclick="closeModal('modal-about')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-xs mt-4 hover:opacity-90 active:scale-95 transition-all">Close</button>
     </div>
 </div>
 
@@ -1471,15 +1832,37 @@
         return raw ? JSON.parse(raw) : null;
     }
 
+    async function syncUserProfile() {
+        if (!appState.user?.id) return;
+        try {
+            const res = await fetch(`${API_BASE}/users/${appState.user.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.user) {
+                    appState.user = { ...appState.user, ...data.user };
+                    if (data.user.points !== undefined) {
+                        appState.points = data.user.points;
+                    }
+                    saveSession(appState.user);
+                    applyUserToDOM();
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to sync user profile:', e);
+        }
+    }
+
     // ─── Boot ─────────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
         if (appState.settings.dark) applyDarkMode(true);
         const saved = loadSession();
         if (saved) {
             appState.user = saved;
+            if (saved.points !== undefined) appState.points = saved.points;
             applyUserToDOM();
             applyTheme(saved.role);
             returnToHome();
+            syncUserProfile();
         } else {
             nav('auth');
         }
@@ -1554,6 +1937,9 @@
         const target = document.getElementById(`view-${viewId}`);
         if (target) target.classList.add('active');
 
+        const unitNav = document.getElementById('unit-nav');
+        if (unitNav) unitNav.classList.add('hidden');
+
         const bottomNav  = document.getElementById('bottom-nav');
         const hideNavViews = ['auth', 'role', 'rec-sub', 'reg-common', 'onboarding-hh', 'reg-vol', 'reg-biz', 'onboarding-rec', 'rec-email', 'schedule-hh', 'schedule-biz', 'success', 'settings', 'faq', 'seg-guide'];
 
@@ -1562,6 +1948,16 @@
         } else {
             bottomNav.classList.remove('hidden');
             updateNavIcons(viewId);
+        }
+
+        const aiBtn = document.getElementById('btn-terra-ai');
+        const showAiViews = ['home-hh', 'home-biz', 'home-vol', 'pickups', 'profile', 'schedule-hh', 'schedule-biz', 'seg-guide'];
+        if (aiBtn) {
+            if (showAiViews.includes(viewId)) {
+                aiBtn.classList.remove('hidden');
+            } else {
+                aiBtn.classList.add('hidden');
+            }
         }
 
         renderPickupPanel();
@@ -1591,6 +1987,7 @@
         if (role === 'Household') nav('home-hh');
         else if (role === 'Business') nav('home-biz');
         else nav('home-vol');
+        syncUserProfile();
     }
 
     function updateNavIcons(viewId) {
@@ -1670,6 +2067,9 @@
         document.querySelectorAll('.user-role-display').forEach(el => el.textContent = u.role);
         if (u.phone) document.querySelectorAll('.user-phone-display').forEach(el => el.textContent = '+91 ' + u.phone.replace(/^91/, ''));
         if (u.hh_code) document.querySelectorAll('.user-hh-code').forEach(el => el.textContent = u.hh_code);
+        const pts = (u && u.points !== undefined) ? u.points : (appState.points !== undefined ? appState.points : 0);
+        appState.points = pts;
+        document.querySelectorAll('#home-pts-display').forEach(el => el.textContent = `${pts} pts`);
         
         // Profile Avatar & Card fields
         const av = document.getElementById('profile-avatar');
@@ -1951,6 +2351,98 @@
         }
     }
 
+    // ─── Indian Pincode Validation ──────────────────────────────────────────
+    async function handlePincodeInput(input, statusId, spinnerId, countId, cityInputId, stateInputId) {
+        if (!input) return;
+        // Automatically discard/strip alphabets, symbols, and non-digits
+        input.value = input.value.replace(/\D/g, '').slice(0, 6);
+        const pin = input.value;
+
+        if (countId) {
+            const countEl = document.getElementById(countId);
+            if (countEl) countEl.textContent = `${pin.length}/6`;
+        }
+
+        const statusEl = document.getElementById(statusId);
+        const spinnerEl = spinnerId ? document.getElementById(spinnerId) : null;
+        const cityEl = cityInputId ? document.getElementById(cityInputId) : null;
+        const stateEl = stateInputId ? document.getElementById(stateInputId) : null;
+
+        if (!statusEl) return;
+
+        if (pin.length === 0) {
+            statusEl.textContent = '';
+            statusEl.className = 'text-[11px] font-semibold mt-1 min-h-[16px]';
+            if (spinnerEl) spinnerEl.classList.add('hidden');
+            if (cityEl) cityEl.value = '';
+            if (stateEl) stateEl.value = '';
+            input.dataset.isValidPin = 'false';
+            return;
+        }
+
+        if (pin.startsWith('0')) {
+            statusEl.className = 'text-[11px] font-semibold mt-1 text-red-600 min-h-[16px]';
+            statusEl.textContent = '❌ Indian PIN codes cannot start with 0';
+            if (spinnerEl) spinnerEl.classList.add('hidden');
+            if (cityEl) cityEl.value = '';
+            if (stateEl) stateEl.value = '';
+            input.dataset.isValidPin = 'false';
+            return;
+        }
+
+        if (pin.length < 6) {
+            statusEl.className = 'text-[11px] font-semibold mt-1 text-brand-grayText min-h-[16px]';
+            statusEl.textContent = `Enter ${6 - pin.length} more digit${6 - pin.length === 1 ? '' : 's'}`;
+            if (spinnerEl) spinnerEl.classList.add('hidden');
+            if (cityEl) cityEl.value = '';
+            if (stateEl) stateEl.value = '';
+            input.dataset.isValidPin = 'false';
+            return;
+        }
+
+        // Full 6 digits entered: Validate against Indian postal registry via backend proxy
+        if (spinnerEl) spinnerEl.classList.remove('hidden');
+        statusEl.className = 'text-[11px] font-semibold mt-1 text-brand-grayText min-h-[16px]';
+        statusEl.textContent = 'Verifying PIN code in Indian postal directory…';
+
+        try {
+            const res = await fetch(`${API_BASE}/users/pincode-lookup/${pin}`);
+            if (input.value !== pin) return; // User changed input while waiting
+
+            const data = await res.json();
+            if (res.ok && data.valid) {
+                input.dataset.isValidPin = 'true';
+                statusEl.className = 'text-[11px] font-semibold mt-1 text-emerald-600 min-h-[16px] flex items-center gap-1';
+                statusEl.innerHTML = `<i class="ph-bold ph-check-circle text-emerald-600"></i> ${escapeHtml(data.city)}, ${escapeHtml(data.state)}`;
+
+                // Auto-fill City and State
+                if (cityEl && data.city) {
+                    cityEl.value = data.city;
+                    cityEl.classList.add('bg-emerald-50', 'border-emerald-500');
+                    setTimeout(() => cityEl.classList.remove('bg-emerald-50', 'border-emerald-500'), 1500);
+                }
+                if (stateEl && data.state) {
+                    stateEl.value = data.state;
+                    stateEl.classList.add('bg-emerald-50', 'border-emerald-500');
+                    setTimeout(() => stateEl.classList.remove('bg-emerald-50', 'border-emerald-500'), 1500);
+                }
+            } else {
+                input.dataset.isValidPin = 'false';
+                statusEl.className = 'text-[11px] font-semibold mt-1 text-red-600 min-h-[16px] flex items-center gap-1';
+                statusEl.innerHTML = `<i class="ph-bold ph-x-circle text-red-600"></i> ${escapeHtml(data.error || 'Invalid Indian PIN code (Not found in postal registry)')}`;
+                if (cityEl) cityEl.value = '';
+                if (stateEl) stateEl.value = '';
+            }
+        } catch (err) {
+            if (input.value !== pin) return;
+            input.dataset.isValidPin = 'false';
+            statusEl.className = 'text-[11px] font-semibold mt-1 text-red-600 min-h-[16px] flex items-center gap-1';
+            statusEl.innerHTML = `<i class="ph-bold ph-x-circle text-red-600"></i> Cannot verify PIN with server. Please try again.`;
+        } finally {
+            if (spinnerEl) spinnerEl.classList.add('hidden');
+        }
+    }
+
     // ─── Register ─────────────────────────────────────────────────────────────
     async function handleRegistration(e) {
         e.preventDefault();
@@ -1958,6 +2450,8 @@
         const dob      = document.getElementById('reg-dob').value;
         const address  = document.getElementById('reg-address').value.trim();
         const pincode  = document.getElementById('reg-pincode').value.trim();
+        const city     = (document.getElementById('reg-city')?.value || '').trim();
+        const state    = (document.getElementById('reg-state')?.value || '').trim();
         const role     = selectedRegistrationRole || 'Household';
         const msgEl    = document.getElementById('reg-msg');
 
@@ -1965,6 +2459,14 @@
             msgEl.className = 'form-msg text-red-600';
             msgEl.textContent = 'Please verify your WhatsApp mobile number with OTP first.';
             document.getElementById('reg-phone').focus();
+            return;
+        }
+
+        // Validate Indian PIN code
+        if (!/^[1-9][0-9]{5}$/.test(pincode) || document.getElementById('reg-pincode').dataset.isValidPin === 'false') {
+            msgEl.className = 'form-msg text-red-600';
+            msgEl.textContent = 'Please enter a valid 6-digit Indian PIN code registered with India Post.';
+            document.getElementById('reg-pincode').focus();
             return;
         }
 
@@ -1980,6 +2482,8 @@
                     dob,
                     address,
                     pincode,
+                    city,
+                    state,
                     role,
                     phone: verifiedRegisterPhone
                 })
@@ -2126,6 +2630,14 @@
         document.getElementById('address-modal-title').textContent = 'Add Another Address';
         document.getElementById('edit-address-msg').textContent = '';
         
+        const pinInput = document.getElementById('address-pincode');
+        if (pinInput) {
+            pinInput.value = '';
+            handlePincodeInput(pinInput, 'address-pincode-status', 'address-pincode-spinner', 'address-pincode-count', 'address-city', 'address-state');
+        }
+        if (document.getElementById('address-city')) document.getElementById('address-city').value = '';
+        if (document.getElementById('address-state')) document.getElementById('address-state').value = '';
+
         const m = document.getElementById('modal-address');
         const c = document.getElementById('modal-address-content');
         m.classList.add('active');
@@ -2138,10 +2650,17 @@
         document.getElementById('address-id').value = addr.id;
         document.getElementById('address-label').value = addr.label || 'Primary';
         document.getElementById('address-text').value = addr.address || '';
-        document.getElementById('address-pincode').value = addr.pincode || '';
         document.getElementById('address-is-primary').checked = !!addr.is_primary;
         document.getElementById('address-modal-title').textContent = 'Edit Address';
         document.getElementById('edit-address-msg').textContent = '';
+
+        const pinInput = document.getElementById('address-pincode');
+        if (pinInput) {
+            pinInput.value = addr.pincode || '';
+            handlePincodeInput(pinInput, 'address-pincode-status', 'address-pincode-spinner', 'address-pincode-count', 'address-city', 'address-state');
+        }
+        if (document.getElementById('address-city')) document.getElementById('address-city').value = addr.city || '';
+        if (document.getElementById('address-state')) document.getElementById('address-state').value = addr.state || '';
 
         const m = document.getElementById('modal-address');
         const c = document.getElementById('modal-address-content');
@@ -2155,9 +2674,17 @@
         const label = document.getElementById('address-label').value.trim();
         const address = document.getElementById('address-text').value.trim();
         const pincode = document.getElementById('address-pincode').value.trim();
+        const city = (document.getElementById('address-city')?.value || '').trim();
+        const state = (document.getElementById('address-state')?.value || '').trim();
         const is_primary = document.getElementById('address-is-primary').checked;
         const msgEl = document.getElementById('edit-address-msg');
         const btn = document.getElementById('btn-save-address');
+
+        if (!/^[1-9][0-9]{5}$/.test(pincode) || document.getElementById('address-pincode').dataset.isValidPin === 'false') {
+            msgEl.textContent = 'Please enter a valid 6-digit Indian PIN code registered with India Post.';
+            document.getElementById('address-pincode').focus();
+            return;
+        }
 
         btn.disabled = true;
         btn.textContent = 'Saving…';
@@ -2172,7 +2699,7 @@
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ label, address, pincode, is_primary })
+                body: JSON.stringify({ label, address, pincode, city, state, is_primary })
             });
             const data = await res.json();
             if (!res.ok) {
@@ -2183,6 +2710,8 @@
             if (is_primary) {
                 appState.user.address = address;
                 appState.user.pincode = pincode;
+                appState.user.city = city;
+                appState.user.state = state;
                 saveSession(appState.user);
                 applyUserToDOM();
             }
@@ -2202,8 +2731,15 @@
         if (!u) return;
         document.getElementById('edit-profile-name').value = u.name || '';
         document.getElementById('edit-profile-dob').value = u.dob || '';
-        document.getElementById('edit-profile-pincode').value = u.pincode || '';
         document.getElementById('edit-profile-msg').textContent = '';
+
+        const pinInput = document.getElementById('edit-profile-pincode');
+        if (pinInput) {
+            pinInput.value = u.pincode || '';
+            handlePincodeInput(pinInput, 'edit-profile-pincode-status', 'edit-profile-pincode-spinner', 'edit-profile-pincode-count', 'edit-profile-city', 'edit-profile-state');
+        }
+        if (document.getElementById('edit-profile-city')) document.getElementById('edit-profile-city').value = u.city || '';
+        if (document.getElementById('edit-profile-state')) document.getElementById('edit-profile-state').value = u.state || '';
 
         const m = document.getElementById('modal-edit-profile');
         const c = document.getElementById('modal-edit-profile-content');
@@ -2216,8 +2752,16 @@
         const name = document.getElementById('edit-profile-name').value.trim();
         const dob = document.getElementById('edit-profile-dob').value;
         const pincode = document.getElementById('edit-profile-pincode').value.trim();
+        const city = (document.getElementById('edit-profile-city')?.value || '').trim();
+        const state = (document.getElementById('edit-profile-state')?.value || '').trim();
         const msgEl = document.getElementById('edit-profile-msg');
         const btn = document.getElementById('btn-save-profile');
+
+        if (!/^[1-9][0-9]{5}$/.test(pincode) || document.getElementById('edit-profile-pincode').dataset.isValidPin === 'false') {
+            msgEl.textContent = 'Please enter a valid 6-digit Indian PIN code registered with India Post.';
+            document.getElementById('edit-profile-pincode').focus();
+            return;
+        }
 
         btn.disabled = true;
         btn.textContent = 'Saving…';
@@ -2227,7 +2771,7 @@
             const res = await fetch(`${API_BASE}/users/${appState.user.id}/profile`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, dob, pincode })
+                body: JSON.stringify({ name, dob, pincode, city, state })
             });
             const data = await res.json();
             if (!res.ok) {
@@ -2385,14 +2929,16 @@
                 </div>
             </div>
 
-            <!-- Support -->
+            <!-- Support & Legal -->
             <div class="mb-6">
-                <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Support</div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Support &amp; Legal</div>
                 <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                    ${renderSettingLink('About Circular By Terra', 'Mission, vision and story', "openModal('modal-about')", 'About ›')}
                     ${renderSettingLink('Help & FAQs', 'Questions, segregation rules & guides', "nav('faq')", 'FAQs ›')}
+                    ${renderSettingLink('Terms & Conditions', 'User agreement and service rules', "openModal('modal-terms')", 'Terms ›')}
+                    ${renderSettingLink('Privacy Policy', 'How we handle and secure your data', "openModal('modal-privacy')", 'Privacy ›')}
                     ${renderSettingLink('Contact support', 'Reach out to our helpline', "toast('Support helpline: +91 98765 43210')", 'Contact ›')}
                     ${renderSettingLink('Send feedback', 'Help us make Circular better', "toast('Feedback form opening soon')", 'Feedback ›')}
-                    ${renderSettingLink('Privacy & terms', 'Data policy and user terms', "toast('Terms & Privacy: Clean & Secure')", 'Legal ›')}
                     <button type="button" onclick="deleteAccount()" class="w-full flex items-center justify-between p-4 text-left hover:bg-red-50/50 transition-colors">
                         <div>
                             <p class="text-sm font-bold text-red-600">Delete account</p>
@@ -2620,6 +3166,8 @@
 
                     // Update app points
                     appState.points = (appState.points || 0) + 50;
+                    if (appState.user) appState.user.points = appState.points;
+                    saveSession(appState.user);
                     document.querySelectorAll('#home-pts-display').forEach(el => el.textContent = `${appState.points} pts`);
                     
                     // Reload pickups
@@ -2797,6 +3345,15 @@
 
     function renderPointsSheet() {
         const pts = appState.points || 0;
+        const co2Saved = Math.round(pts * 0.25 * 10) / 10;
+        const treesEquiv = Math.max(1, Math.round(co2Saved / 10));
+
+        // Calculate lifetime collected weight from house completed pickups
+        const completedPickups = (appState.pickups || []).filter(p => (p.status || '').toLowerCase() === 'completed');
+        const lifetimeWeight = completedPickups.reduce((sum, p) => sum + (parseFloat(p.actual_weight) || 0), 0);
+        const formattedLifetimeWeight = Math.round(lifetimeWeight * 10) / 10;
+        const pickupCount = completedPickups.length;
+
         const cards = POINT_MILESTONES.map(m => {
             const pct = m.pts === 0 ? 100 : Math.min(100, Math.round(pts / m.pts * 100));
             const done = pts >= m.pts;
@@ -2817,15 +3374,78 @@
                     <p class="text-5xl font-black tracking-tight">${pts}<span class="text-xl font-bold ml-1.5 text-brand-light">pts</span></p>
                 </div>
             </div>
-            <div class="px-6 pt-6">
-                <p class="text-sm font-semibold text-brand-dark leading-relaxed text-center mb-4">The more you segregate, the more points you earn. This is a pat on your back for contributing to the environment.</p>
-                <p class="text-xs font-bold text-brand-grayText mb-3 text-center">More successful pickups = more points</p>
+            <div class="px-6 pt-5 pb-6">
+                <!-- Lifetime House Waste Collected Box -->
+                <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 mb-3 text-left flex items-start gap-3 shadow-xs">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 text-xl shadow-xs">
+                        <i class="ph-fill ph-scales"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                            <span class="text-[11px] font-black uppercase tracking-wider text-amber-900">Total Waste Collected (Lifetime)</span>
+                            <span class="bg-amber-200 text-amber-950 text-[11px] font-black px-2.5 py-0.5 rounded-full">${formattedLifetimeWeight} kg</span>
+                        </div>
+                        <p class="text-xs font-semibold text-amber-950 mt-1 leading-snug">
+                            ${formattedLifetimeWeight > 0 
+                                ? `🏠 Total <b>${formattedLifetimeWeight} kg</b> of verified segregated recyclables collected from your doorstep across <b>${pickupCount} completed pickup${pickupCount > 1 ? 's' : ''}</b>!` 
+                                : `🏠 When our partner collects and weighs scrap at your doorstep, your house's lifetime collected weight will update here.`}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- CO2 Emissions Saved Encouraging Box -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4 text-left flex items-start gap-3 shadow-xs">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 text-xl shadow-xs">
+                        <i class="ph-fill ph-plant"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[11px] font-black uppercase tracking-wider text-emerald-800">CO₂ Emissions Prevented</span>
+                            <span class="bg-emerald-200 text-emerald-900 text-[10px] font-black px-2 py-0.5 rounded-full">${co2Saved} kg CO₂</span>
+                        </div>
+                        <p class="text-xs font-semibold text-emerald-950 mt-1 leading-snug">
+                            ${pts > 0 
+                                ? `🌿 Amazing effort! Your segregated waste has kept <b>${co2Saved} kg of CO₂</b> out of the atmosphere — equal to planting <b>${treesEquiv} young tree${treesEquiv > 1 ? 's' : ''}</b> in your city!` 
+                                : `🌱 Every 50 Green Points you earn prevents <b>~12.5 kg of CO₂</b> emissions. Keep segregating clean recyclables to watch your carbon savings grow!`}
+                        </p>
+                    </div>
+                </div>
+
+                <p class="text-xs font-semibold text-brand-dark leading-relaxed text-center mb-3">The more you segregate, the more points you earn. This is a pat on your back for contributing to the environment.</p>
+                <p class="text-[11px] font-bold text-brand-grayText mb-2.5 text-center">More successful pickups = more points</p>
                 <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar -mx-6 px-6 pb-2">${cards}</div>
-                <button onclick="closeModal('sheet-points')" class="w-full bg-brand-dark text-white font-bold py-4 rounded-full text-sm mt-5 active:scale-95 transition-transform">Got it</button>
+                <button onclick="closeModal('sheet-points')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm mt-4 active:scale-95 transition-transform hover:opacity-90">Got it</button>
             </div>`;
     }
 
-    function openPoints() { 
+    async function openPoints() { 
+        if (appState.user?.id) {
+            try {
+                const [uRes, pRes] = await Promise.all([
+                    fetch(`${API_BASE}/users/${appState.user.id}`),
+                    fetch(`${API_BASE}/pickups?user_id=${appState.user.id}`)
+                ]);
+                if (uRes.ok) {
+                    const uData = await uRes.json();
+                    if (uData.user?.points !== undefined) {
+                        appState.user.points = uData.user.points;
+                        appState.points = uData.user.points;
+                        saveSession(appState.user);
+                        document.querySelectorAll('#home-pts-display').forEach(el => el.textContent = `${appState.points} pts`);
+                    }
+                }
+                if (pRes.ok) {
+                    const pData = await pRes.json();
+                    if (pData.pickups) {
+                        appState.pickups = pData.pickups.map(p => ({
+                            id: p.request_id, dbId: p.id, items: p.items, time: p.time_slot, qty: p.quantity, status: p.status, pin: p.pin, actual_weight: p.actual_weight, material_weights: p.material_weights
+                        }));
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching fresh points or pickups:', e);
+            }
+        }
         renderPointsSheet(); 
         openModal('sheet-points'); 
     }
@@ -2967,6 +3587,23 @@
     }
 
     // ─── Activity / Pickups ───────────────────────────────────────────────────
+    let currentActivityFilter = 'all';
+
+    function setActivityFilter(filter) {
+        currentActivityFilter = filter;
+        const filters = ['all', 'pending', 'completed', 'cancelled'];
+        filters.forEach(f => {
+            const btn = document.getElementById(`btn-filter-${f}`);
+            if (!btn) return;
+            if (f === filter) {
+                btn.className = 'act-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-brand-dark text-white shadow-xs transition-all flex items-center gap-1.5 shrink-0';
+            } else {
+                btn.className = 'act-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-brand-grayText border border-brand-border shadow-xs hover:bg-gray-50 transition-all flex items-center gap-1.5 shrink-0';
+            }
+        });
+        renderPickups();
+    }
+
     async function loadPickupsFromDB() {
         if (!appState.user?.id) return;
         try {
@@ -2985,37 +3622,88 @@
 
     function renderPickups() {
         const list = document.getElementById('pickups-list');
+        if (!list) return;
         list.innerHTML = '';
 
-        if (appState.pickups.length === 0) {
-            list.innerHTML = `<div class="text-center py-10 opacity-50"><i class="ph ph-calendar-blank text-4xl mb-2"></i><p class="text-sm font-medium">No active pickups.</p></div>`;
+        const allCount       = appState.pickups.length;
+        const pendingCount   = appState.pickups.filter(p => !['completed', 'cancelled'].includes((p.status || '').toLowerCase())).length;
+        const completedCount = appState.pickups.filter(p => (p.status || '').toLowerCase() === 'completed').length;
+        const cancelledCount = appState.pickups.filter(p => (p.status || '').toLowerCase() === 'cancelled').length;
+
+        const cntAll = document.getElementById('act-cnt-all');
+        const cntPen = document.getElementById('act-cnt-pending');
+        const cntCom = document.getElementById('act-cnt-completed');
+        const cntCan = document.getElementById('act-cnt-cancelled');
+        if (cntAll) cntAll.textContent = allCount;
+        if (cntPen) cntPen.textContent = pendingCount;
+        if (cntCom) cntCom.textContent = completedCount;
+        if (cntCan) cntCan.textContent = cancelledCount;
+
+        const filtered = appState.pickups.filter(p => {
+            const st = (p.status || '').toLowerCase();
+            if (currentActivityFilter === 'pending')   return !['completed', 'cancelled'].includes(st);
+            if (currentActivityFilter === 'completed') return st === 'completed';
+            if (currentActivityFilter === 'cancelled') return st === 'cancelled';
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            const emptyMsgs = {
+                all: 'No pickups recorded yet.',
+                pending: 'No pending pickups right now.',
+                completed: 'No completed pickups yet.',
+                cancelled: 'No cancelled pickups.'
+            };
+            list.innerHTML = `
+                <div class="text-center py-12 bg-white rounded-3xl border border-brand-border p-6 shadow-xs">
+                    <div class="w-12 h-12 bg-brand-bg rounded-full flex items-center justify-center text-brand-dark mx-auto mb-3">
+                        <i class="ph ph-calendar-blank text-2xl"></i>
+                    </div>
+                    <p class="text-sm font-bold text-brand-dark">${emptyMsgs[currentActivityFilter] || 'No pickups found.'}</p>
+                    <p class="text-xs text-brand-grayText mt-1">Schedule a pickup from the Home tab anytime.</p>
+                </div>`;
             return;
         }
 
-        appState.pickups.forEach((p, i) => {
-            const isCompleted = (p.status || '').toLowerCase() === 'completed';
-            const badgeClass = isCompleted 
-                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
-                : 'bg-brand-light text-brand-dark';
-            const badgeIcon = isCompleted 
-                ? '<i class="ph-bold ph-check text-xs"></i> ' 
-                : '';
+        filtered.forEach((p, i) => {
+            const st = (p.status || '').toLowerCase();
+            const isCompleted = st === 'completed';
+            const isCancelled = st === 'cancelled';
 
-            const actionButtons = isCompleted ? `
-                <div class="flex items-center justify-between text-xs font-semibold text-emerald-800 bg-emerald-50 px-3.5 py-2.5 rounded-xl border border-emerald-200 mt-2">
-                    <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-base text-emerald-600"></i> Collected &amp; Verified</span>
-                    <span class="font-bold text-emerald-800">${p.actual_weight ? p.actual_weight + ' kg • ' : ''}+50 pts ⭐</span>
-                </div>
-            ` : `
-                <div class="flex gap-2 pt-3 border-t border-gray-100">
-                    <button onclick="openQRModal('${p.id}')" class="flex-1 bg-brand-dark text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all">
-                        <i class="ph-bold ph-qr-code text-sm"></i> Show QR
-                    </button>
-                    <button onclick="openActionSheet(${i})" class="flex-1 bg-white border border-brand-border text-brand-dark font-bold py-2.5 rounded-xl text-xs hover:bg-gray-50 active:scale-95 transition-all">
-                        Reschedule / Cancel
-                    </button>
-                </div>
-            `;
+            let badgeClass = 'bg-brand-light text-brand-dark';
+            let badgeIcon = '';
+            if (isCompleted) {
+                badgeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                badgeIcon = '<i class="ph-bold ph-check text-xs"></i> ';
+            } else if (isCancelled) {
+                badgeClass = 'bg-red-100 text-red-700 border border-red-200';
+                badgeIcon = '<i class="ph-bold ph-x text-xs"></i> ';
+            }
+
+            let actionButtons = '';
+            if (isCompleted) {
+                actionButtons = `
+                    <div class="flex items-center justify-between text-xs font-semibold text-emerald-800 bg-emerald-50 px-3.5 py-2.5 rounded-xl border border-emerald-200 mt-2">
+                        <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-base text-emerald-600"></i> Collected &amp; Verified</span>
+                        <span class="font-bold text-emerald-800">${p.actual_weight ? p.actual_weight + ' kg • ' : ''}+50 pts ⭐</span>
+                    </div>`;
+            } else if (isCancelled) {
+                actionButtons = `
+                    <div class="flex items-center justify-between text-xs font-semibold text-red-700 bg-red-50/70 px-3.5 py-2 rounded-xl border border-red-100 mt-2">
+                        <span class="flex items-center gap-1.5"><i class="ph-fill ph-prohibit text-base text-red-500"></i> Pickup Cancelled</span>
+                        <button onclick="nav(appState.user?.role === 'Business' ? 'schedule-biz' : 'schedule-hh')" class="text-xs font-bold text-brand-dark underline underline-offset-2">Re-schedule</button>
+                    </div>`;
+            } else {
+                actionButtons = `
+                    <div class="flex gap-2 pt-3 border-t border-gray-100">
+                        <button onclick="openQRModal('${p.id}')" class="flex-1 bg-brand-dark text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all">
+                            <i class="ph-bold ph-qr-code text-sm"></i> Show QR
+                        </button>
+                        <button onclick="openActionSheet(${i})" class="flex-1 bg-white border border-brand-border text-brand-dark font-bold py-2.5 rounded-xl text-xs hover:bg-gray-50 active:scale-95 transition-all">
+                            Reschedule / Cancel
+                        </button>
+                    </div>`;
+            }
 
             const card = document.createElement('div');
             card.className = 'bg-white rounded-2xl p-5 shadow-sm border border-brand-border';
@@ -3026,8 +3714,8 @@
                     </div>
                     <span class="text-xs font-semibold text-brand-grayText">#${p.id}</span>
                 </div>
-                <h3 class="font-bold text-brand-dark text-base leading-tight mb-1">${p.items}</h3>
-                <p class="text-xs text-brand-grayText mb-3 flex items-center gap-1.5"><i class="ph-fill ph-clock"></i> ${p.time}${p.qty ? ` • <i class="ph-fill ph-scales"></i> ${p.qty}` : ''}</p>
+                <h3 class="font-bold text-brand-dark text-base leading-tight mb-1">${escapeHtml(p.items)}</h3>
+                <p class="text-xs text-brand-grayText mb-3 flex items-center gap-1.5"><i class="ph-fill ph-clock"></i> ${escapeHtml(p.time)}${p.qty ? ` • <i class="ph-fill ph-scales"></i> ${escapeHtml(p.qty)}` : ''}</p>
                 ${actionButtons}`;
             list.appendChild(card);
         });
@@ -3145,6 +3833,612 @@
     }
 
     initPickupPanelGesture();
+
+    // ==========================================
+    // RECYCLING UNIT MODULE: ADMIN + EMPLOYEE INTERFACES
+    // ==========================================
+    const esc = escapeHtml;
+    const UT = ['Cardboard','Paper','Metals','Plastic','Cloth','Others'];
+    const U = {
+        s: null,
+        tab: 'admin',
+        d: null,
+        set: { load: true, mm: true },
+        unit: {
+            code: 'RU-1001',
+            pw: 'unit@123',
+            name: 'GreenLoop Recycling Unit',
+            addr: 'Plot 14, Industrial Area, Patiala',
+            phone: '+91 98765 43210',
+            types: UT.slice(0, 5)
+        },
+        emps: [
+            { id: 'EMP-101', name: 'Ravi Kumar', pw: 'emp@123', shift: 'Morning', phone: '98765 11111', on: true },
+            { id: 'EMP-102', name: 'Simran Kaur', pw: 'emp@123', shift: 'Evening', phone: '98765 22222', on: true }
+        ],
+        loads: [
+            { id: 'REQ-4821', src: 'Household HH-3091', col: 'Manpreet S.', slot: 'Today, 11:00 AM', today: 1, dec: { Cardboard: 12, Paper: 6 }, st: 'p' },
+            { id: 'REQ-4822', src: 'Business: Sharma Traders', col: 'Gurdeep S.', slot: 'Today, 1:30 PM', today: 1, dec: { Metals: 40, Plastic: 15 }, st: 'p' },
+            { id: 'REQ-4823', src: 'Household HH-2210', col: 'Manpreet S.', slot: 'Today, 4:00 PM', today: 1, dec: { Plastic: 8, Paper: 4 }, st: 'p' },
+            { id: 'REQ-4824', src: 'Business: City Kirana', col: 'Amit V.', slot: 'Tomorrow, 10:00 AM', dec: { Cardboard: 25 }, st: 'p' },
+            { id: 'REQ-4825', src: 'Household HH-1187', col: 'Amit V.', slot: 'Tomorrow, 12:00 PM', dec: { Cloth: 9, Others: 3 }, st: 'p' }
+        ],
+        recs: []
+    };
+
+    const uSum = o => Math.round(Object.values(o).reduce((a, b) => a + b, 0) * 10) / 10;
+    const uTime = d => d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    const uHome = () => U.s && U.s.role === 'admin' ? 'admin' : 'ehome';
+    const uKg = o => Object.entries(o).map(([t, k]) => chip_u(t + ' ' + k + ' kg')).join('');
+    const uEmpty = '<div class="text-sm font-medium text-brand-grayText text-center py-8">Nothing here yet.</div>';
+
+    const CARD_U = 'bg-white rounded-3xl border border-brand-border shadow-sm px-5';
+    const BTN_U = 'w-full min-h-[48px] rounded-full font-bold text-[15px] border-2 border-brand-dark active:scale-[0.98] transition-transform';
+    const LBL_U = 'block text-[11px] font-semibold uppercase tracking-wider text-brand-grayText mb-1.5';
+    const INP_U = 'w-full min-h-[48px] bg-brand-bg border border-brand-border rounded-2xl px-4 py-3 font-semibold text-[15px] text-brand-dark focus:outline-none focus:border-brand-dark';
+    const SEC_U = t => `<div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mt-6 mb-2 px-1">${t}</div>`;
+
+    function hdr_u(title, back, right) {
+        return `<div class="flex items-center justify-between mb-5">
+            <button onclick="${back}" aria-label="Back" class="w-11 h-11 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-sm border border-brand-border hover:bg-brand-light transition-colors"><i class="ph-bold ph-arrow-left text-lg"></i></button>
+            <h2 class="text-xl font-extrabold text-brand-dark">${title}</h2>
+            ${right || '<div class="w-11"></div>'}</div>`;
+    }
+    const avatar_u = u => `<div class="w-[84px] h-[84px] rounded-full bg-brand-dark text-white text-3xl font-extrabold flex items-center justify-center mx-auto">${esc(((u && u.name) || '?').trim().charAt(0).toUpperCase())}</div>`;
+    const infoRow_u = (k, v) => `<div class="flex justify-between items-center gap-4 py-3.5 border-b border-brand-border last:border-0 min-h-[48px]"><span class="text-[11px] font-semibold uppercase tracking-wider text-brand-grayText">${k}</span><span class="text-[15px] font-bold text-brand-dark text-right">${esc(v) || '—'}</span></div>`;
+    const chip_u = t => `<span class="inline-block text-xs font-bold bg-brand-light text-brand-dark px-3 py-1.5 rounded-full mr-1.5 mb-1.5">${esc(t)}</span>`;
+    function toggleRow_u(t, d, on, fn) {
+        const id = 'tg-u-' + t.replace(/\W+/g, '');
+        return `<div class="flex justify-between items-center gap-4 py-3.5 border-b border-brand-border last:border-0 min-h-[48px]">
+            <div><div class="text-[15px] font-bold text-brand-dark">${t}</div>${d ? `<div class="text-xs font-medium text-brand-grayText mt-0.5">${d}</div>` : ''}</div>
+            <div class="relative inline-block w-14 align-middle select-none shrink-0">
+                <input type="checkbox" id="${id}" aria-label="${t}" onchange="${fn}" class="toggle-checkbox absolute block w-7 h-7 rounded-full bg-white border-4 border-gray-300 appearance-none cursor-pointer transition-all duration-300 z-10" ${on ? 'checked' : ''}/>
+                <label for="${id}" class="toggle-label block overflow-hidden h-7 rounded-full bg-gray-300 cursor-pointer transition-colors duration-300"></label></div></div>`;
+    }
+    const linkRow_u = (t, d, fn, val) => `<button onclick="${fn}" class="w-full flex justify-between items-center gap-4 py-3.5 border-b border-brand-border last:border-0 min-h-[48px] text-left">
+        <div><div class="text-[15px] font-bold text-brand-dark">${t}</div>${d ? `<div class="text-xs font-medium text-brand-grayText mt-0.5">${d}</div>` : ''}</div>
+        <span class="text-[15px] font-bold text-brand-grayText shrink-0">${val || '›'}</span></button>`;
+
+    // Build unit views inside #app-root
+    ['admin','emps','log','ehome','ehist','scan','verify','done','profile','settings'].forEach(id => {
+        if (!document.getElementById('view-u-' + id)) {
+            const v = document.createElement('div');
+            v.id = 'view-u-' + id;
+            v.className = 'view bg-brand-bg overflow-y-auto';
+            v.innerHTML = '<div class="view-content px-6 pt-10 pb-28" id="u-' + id + '"></div>';
+            document.getElementById('app-root').appendChild(v);
+        }
+    });
+
+    const uModal = h => {
+        const modalBody = document.getElementById('modal-u-body');
+        if (modalBody) {
+            modalBody.innerHTML = h;
+            openModal('modal-u');
+        }
+    };
+
+    const U_TABS = {
+        admin: [['admin','Dashboard','ph-squares-four'],['emps','Employees','ph-users-three'],['log','Collections','ph-list-checks']],
+        emp:   [['ehome','Home','ph-house'],['ehist','History','ph-clock-counter-clockwise']]
+    };
+
+    function uGo(t) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        const targetView = document.getElementById('view-u-' + t);
+        if (targetView) targetView.classList.add('active');
+
+        // Hide regular bottom-nav
+        const bNav = document.getElementById('bottom-nav');
+        if (bNav) bNav.classList.add('hidden');
+
+        const tabs = U_TABS[U.s ? U.s.role : 'admin'], bar = document.getElementById('unit-nav');
+        if (bar && tabs && tabs.some(x => x[0] === t)) {
+            bar.innerHTML = tabs.map(x => `<button onclick="uGo('${x[0]}')" class="flex flex-col items-center gap-1 w-24 py-2 ${x[0] === t ? 'text-brand-dark' : 'text-brand-grayText'}"><i class="${x[0] === t ? 'ph-fill' : 'ph'} ${x[2]} text-2xl"></i><span class="text-[11px] ${x[0] === t ? 'font-bold' : 'font-medium'}">${x[1]}</span></button>`).join('');
+            bar.classList.remove('hidden');
+        } else if (bar) {
+            bar.classList.add('hidden');
+        }
+
+        const container = document.getElementById('u-' + t);
+        if (container && U_R[t]) container.innerHTML = U_R[t]();
+        if (t === 'verify') uBan();
+    }
+
+    // --- Login (Partner with us page) ---
+    function uTab(t) {
+        U.tab = t;
+        const btnAdmin = document.getElementById('ul-t-admin');
+        const btnEmp = document.getElementById('ul-t-emp');
+        const lblId = document.getElementById('ul-idl');
+        const errEl = document.getElementById('ul-err');
+
+        if (btnAdmin) btnAdmin.className = 'flex-1 py-2 rounded-full text-xs font-bold transition-all shadow-xs ' + (t === 'admin' ? 'bg-brand-dark text-white' : 'text-brand-grayText');
+        if (btnEmp) btnEmp.className = 'flex-1 py-2 rounded-full text-xs font-bold transition-all ' + (t === 'emp' ? 'bg-brand-dark text-white' : 'text-brand-grayText');
+        if (lblId) lblId.innerText = t === 'admin' ? 'Unit code' : 'Employee ID';
+        if (errEl) errEl.classList.add('hidden');
+    }
+
+    function uEye() {
+        const i = document.getElementById('ul-pw');
+        if (i) i.type = i.type === 'password' ? 'text' : 'password';
+    }
+
+    function uLogin() {
+        const idInput = document.getElementById('ul-id');
+        const pwInput = document.getElementById('ul-pw');
+        const er = document.getElementById('ul-err');
+        const id = idInput ? idInput.value.trim().toUpperCase() : '';
+        const pw = pwInput ? pwInput.value : '';
+
+        let ok = null, msg = 'Incorrect ID or password.';
+        if (U.tab === 'admin') {
+            if (id === U.unit.code && pw === U.unit.pw) ok = { role: 'admin', id, name: U.unit.name };
+        } else {
+            const e = U.emps.find(x => x.id === id && x.pw === pw);
+            if (e && !e.on) msg = 'This account is disabled. Contact your unit admin.';
+            else if (e) ok = { role: 'emp', id, name: e.name };
+        }
+        if (!ok) {
+            if (er) {
+                er.innerText = msg;
+                er.classList.remove('hidden');
+            }
+            return;
+        }
+        if (er) er.classList.add('hidden');
+        U.s = ok;
+        if (pwInput) pwInput.value = '';
+        applyTheme('rec');
+        uGo(uHome());
+    }
+
+    function uLogout() {
+        U.s = null;
+        U.d = null;
+        ['ul-id','ul-pw'].forEach(i => {
+            const el = document.getElementById(i);
+            if (el) el.value = '';
+        });
+        const unitNav = document.getElementById('unit-nav');
+        if (unitNav) unitNav.classList.add('hidden');
+        previewTheme('hh');
+        nav('role');
+    }
+
+    // --- Shared pieces ---
+    function uHead() {
+        const n = (U.s && U.s.role === 'admin' ? 'Admin' : (U.s ? U.s.name.split(' ')[0] : 'User'));
+        return `<div class="flex justify-between items-center gap-3 mb-6">
+            <button onclick="uGo('profile')" aria-label="Open profile" class="w-12 h-12 shrink-0 bg-white rounded-full border border-brand-border shadow-sm flex items-center justify-center text-brand-dark hover:bg-brand-light transition-colors"><i class="ph-bold ph-user text-xl"></i></button>
+            <div class="flex-1 min-w-0"><h1 class="text-xl font-extrabold text-brand-dark truncate">Hi, ${esc(n)}</h1><p class="text-[11px] font-bold text-brand-grayText truncate">${esc(U.unit.name)}</p></div>
+            <button onclick="uGo('settings')" aria-label="Open settings" class="w-12 h-12 shrink-0 bg-white rounded-full border border-brand-border shadow-sm flex items-center justify-center text-brand-dark hover:bg-brand-light transition-colors"><i class="ph-bold ph-gear-six text-xl"></i></button></div>`;
+    }
+
+    const uTitle = t => `<h2 class="text-2xl font-extrabold text-brand-dark mb-4">${t}</h2>`;
+    const uLoad = l => `<div class="${CARD_U} py-4 mb-3"><div class="flex justify-between gap-2"><b class="text-[15px] text-brand-dark">${l.id}</b><span class="text-xs font-bold text-brand-grayText">${l.slot}</span></div>
+        <div class="text-xs font-medium text-brand-grayText mt-0.5 mb-2">${esc(l.src)} &middot; Collector ${esc(l.col)}</div>${uKg(l.dec)}</div>`;
+    const uRec = r => `<div class="${CARD_U} py-4 mb-3"><div class="flex justify-between items-start gap-2"><div><b class="text-[15px] text-brand-dark">${r.load}</b><div class="text-xs font-medium text-brand-grayText mt-0.5">${esc(r.src)} &middot; ${esc(r.en)} &middot; ${uTime(r.at)}</div></div>
+        <span class="text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${r.mm ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}">${r.mm ? 'Mismatch' : 'Matched'}</span></div>
+        <div class="mt-2">${uKg(r.act)}</div><div class="text-xs font-bold text-brand-dark">Total ${r.total} kg</div>${r.remark ? `<div class="text-xs font-medium text-brand-grayText mt-1">Note: ${esc(r.remark)}</div>` : ''}</div>`;
+
+    // --- Screens ---
+    const U_R = {
+        admin() {
+            const td = U.loads.filter(l => l.today), pend = U.loads.filter(l => l.st === 'p');
+            const exp = {}, rcv = {};
+            td.forEach(l => Object.entries(l.dec).forEach(([t,k]) => exp[t] = (exp[t] || 0) + k));
+            U.recs.forEach(r => Object.entries(r.act).forEach(([t,k]) => rcv[t] = (rcv[t] || 0) + k));
+            const stat = (v, l) => `<div class="${CARD_U} py-4 flex-1 text-center"><div class="text-xl font-extrabold text-brand-dark">${v}</div><div class="text-[10px] font-bold uppercase tracking-wider text-brand-grayText mt-0.5">${l}</div></div>`;
+            const bars = UT.filter(t => exp[t] || rcv[t]).map(t => {
+                const e = exp[t] || 0, r = Math.round((rcv[t] || 0) * 10) / 10;
+                return `<div class="py-2.5"><div class="flex justify-between text-sm font-bold text-brand-dark mb-1"><span>${t}</span><span class="text-xs text-brand-grayText">${r} / ${e} kg</span></div><div class="h-2.5 bg-brand-bg rounded-full overflow-hidden"><div class="h-full bg-brand-dark rounded-full" style="width:${e ? Math.min(100, r / e * 100) : 100}%"></div></div></div>`;
+            }).join('');
+            return uHead() + `<div class="flex gap-3">${stat(uSum(exp) + ' kg', 'Expected today')}${stat(uSum(rcv) + ' kg', 'Received')}${stat(td.filter(l => l.st === 'p').length, 'Pending today')}</div>`
+                + SEC_U('Waste by type &middot; today') + `<div class="${CARD_U}">${bars || '<div class="py-4 text-sm text-brand-grayText text-center">No deliveries today.</div>'}</div>`
+                + SEC_U('Incoming deliveries') + (pend.map(uLoad).join('') || uEmpty);
+        },
+        emps() {
+            return uHead() + uTitle('Employees') + `<button onclick="uAddEmp()" class="${BTN_U} bg-brand-dark text-white mb-4 shadow-sm hover:opacity-90 flex items-center justify-center gap-2"><i class="ph-bold ph-user-plus text-lg"></i> Add employee</button>`
+                + U.emps.map((e, i) => `<div class="${CARD_U} py-4 mb-3"><div class="flex justify-between items-start gap-2"><div><b class="text-[15px] text-brand-dark">${esc(e.name)}</b><div class="text-xs font-medium text-brand-grayText mt-0.5">${e.id} &middot; ${e.shift} shift &middot; ${esc(e.phone)}</div></div>
+                    <span class="text-[10px] font-bold px-2 py-1 rounded-full ${e.on ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">${e.on ? 'Active' : 'Disabled'}</span></div>
+                    <div class="flex gap-4 mt-3"><button onclick="uReset(${i})" class="text-[13px] font-bold text-brand-dark underline min-h-[40px] hover:opacity-80">Reset password</button><button onclick="uToggleEmp(${i})" class="text-[13px] font-bold ${e.on ? 'text-red-600' : 'text-brand-dark'} underline min-h-[40px] hover:opacity-80">${e.on ? 'Disable' : 'Enable'}</button></div></div>`).join('');
+        },
+        log() { return uHead() + uTitle('Collections') + (U.recs.map(uRec).join('') || uEmpty); },
+        ehome() {
+            const mine = U.recs.filter(r => r.emp === (U.s ? U.s.id : '')), pend = U.loads.filter(l => l.st === 'p' && l.today).length;
+            return uHead() + `<div class="bg-brand-dark text-white rounded-3xl p-6 shadow-card mb-4"><h3 class="text-xl font-extrabold mb-1">Scan collector QR</h3><p class="text-sm font-medium text-brand-light mb-4">Scan the load at the gate, then verify its weight and type.</p>
+                <button onclick="uGo('scan')" class="w-full bg-white text-brand-dark font-bold py-3.5 rounded-full flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md"><i class="ph-bold ph-qr-code text-xl"></i> Scan now</button></div>
+                <div class="flex gap-3"><div class="${CARD_U} py-4 flex-1 text-center"><div class="text-xl font-extrabold text-brand-dark">${mine.length}</div><div class="text-[10px] font-bold uppercase tracking-wider text-brand-grayText">Verified</div></div>
+                <div class="${CARD_U} py-4 flex-1 text-center"><div class="text-xl font-extrabold text-brand-dark">${uSum(Object.fromEntries(mine.map((r, i) => [i, r.total])))} kg</div><div class="text-[10px] font-bold uppercase tracking-wider text-brand-grayText">Total weight</div></div>
+                <div class="${CARD_U} py-4 flex-1 text-center"><div class="text-xl font-extrabold text-brand-dark">${pend}</div><div class="text-[10px] font-bold uppercase tracking-wider text-brand-grayText">Due today</div></div></div>`
+                + SEC_U('Recent verifications') + (mine.slice(0, 3).map(uRec).join('') || uEmpty);
+        },
+        ehist() { return uHead() + uTitle('History') + (U.recs.filter(r => r.emp === (U.s ? U.s.id : '')).map(uRec).join('') || uEmpty); },
+        scan() {
+            return hdr_u('Scan QR', "uGo('ehome')") + `<div class="relative h-64 rounded-3xl bg-brand-dark flex items-center justify-center mb-4 overflow-hidden"><i class="ph-bold ph-qr-code text-[120px] text-white/25"></i>
+                <div class="absolute inset-8 border-2 border-white/60 rounded-2xl animate-pulse"></div></div>
+                <p class="text-sm font-medium text-brand-grayText text-center mb-4">Point the camera at the collector's QR code.</p>
+                <button onclick="uSimScan()" class="${BTN_U} bg-brand-dark text-white hover:opacity-90">Simulate scan</button>
+                ${SEC_U('Or enter the request ID')}<div class="flex gap-2"><input id="u-man" placeholder="REQ-4821" class="${INP_U} flex-1 uppercase"><button onclick="uPick(document.getElementById('u-man').value.trim().toUpperCase())" class="px-5 rounded-2xl bg-brand-light text-brand-dark font-bold hover:bg-brand-bg transition-colors">Find</button></div>`;
+        },
+        verify() {
+            const l = U.loads.find(x => x.id === U.d.id), opts = v => UT.map(t => `<option ${t === v ? 'selected' : ''}>${t}</option>`).join('');
+            return hdr_u('Verify load', "uGo('scan')") + uLoad(l) + SEC_U('Actual waste received')
+                + U.d.rows.map((r, i) => `<div class="flex gap-2 mb-2"><select onchange="uRow(${i},'t',this.value)" class="${INP_U} flex-1">${opts(r.t)}</select>
+                    <input type="number" step="0.1" min="0" inputmode="decimal" placeholder="kg" value="${esc(r.kg)}" oninput="uRow(${i},'kg',this.value)" class="${INP_U} w-24">
+                    <button onclick="uDel(${i})" aria-label="Remove" class="w-11 text-red-600 hover:opacity-80"><i class="ph-bold ph-x text-lg"></i></button></div>`).join('')
+                + `<button onclick="uAddRow()" class="${BTN_U} bg-transparent text-brand-dark border-dashed mt-1 hover:bg-white/50">+ Add another type</button>
+                   <div id="u-ban" class="mt-4"></div>
+                   <label class="${LBL_U} mt-4" for="u-rem">Remarks (optional)</label><textarea id="u-rem" rows="2" oninput="U.d.remark=this.value" class="${INP_U} resize-none">${esc(U.d.remark)}</textarea>
+                   <button onclick="uSubmit()" class="${BTN_U} bg-brand-dark text-white mt-5 hover:opacity-90">Confirm &amp; verify</button>`;
+        },
+        done() {
+            const r = U.recs[0] || { load: 'REQ-4821', total: 18, mm: false };
+            return `<div class="text-center pt-10"><div class="w-20 h-20 bg-brand-light text-brand-dark rounded-full flex items-center justify-center mx-auto mb-5"><i class="ph-bold ph-check text-4xl"></i></div>
+                <h2 class="text-2xl font-extrabold text-brand-dark mb-1">Load verified</h2><p class="text-sm font-medium text-brand-grayText mb-6">${r.load} &middot; ${r.total} kg recorded${r.mm ? ' (differs from declared)' : ''}</p></div>
+                ${uRec(r)}<button onclick="uGo('scan')" class="${BTN_U} bg-brand-dark text-white mt-4 hover:opacity-90">Scan next load</button><button onclick="uGo('ehome')" class="${BTN_U} bg-transparent text-brand-dark mt-3 hover:bg-white/50">Back to home</button>`;
+        },
+        profile() {
+            const adm = U.s && U.s.role === 'admin', e = adm ? null : (U.s ? U.emps.find(x => x.id === U.s.id) : null);
+            const rows = adm ? infoRow_u('Unit code', U.unit.code) + infoRow_u('Address', U.unit.addr) + infoRow_u('Contact', U.unit.phone) + infoRow_u('Employees', U.emps.length)
+                : infoRow_u('Employee ID', e ? e.id : '') + infoRow_u('Unit', U.unit.name) + infoRow_u('Shift', e ? e.shift : '') + infoRow_u('Phone', e ? e.phone : '') + infoRow_u('Loads verified', e ? U.recs.filter(r => r.emp === e.id).length : 0);
+            return hdr_u('Profile', "uGo(uHome())") + `<div class="text-center mb-5">${avatar_u(adm ? U.unit : (e || { name: 'User' }))}<div class="text-[22px] font-extrabold text-brand-dark mt-3">${esc(adm ? U.unit.name : (e ? e.name : 'User'))}</div>
+                <span class="inline-block text-xs font-bold bg-brand-light text-brand-dark px-3 py-1.5 rounded-full mt-2">${adm ? 'Recycling Unit Admin' : 'Unit Employee'}</span></div><div class="${CARD_U}">${rows}</div>`
+                + (adm ? SEC_U('Accepted waste types') + `<div class="${CARD_U} py-3.5">${U.unit.types.map(chip_u).join('')}</div>` : '')
+                + `<button onclick="uLogout()" class="${BTN_U} bg-transparent text-red-600 border-red-300 mt-6 hover:bg-red-50">Log Out</button>`;
+        },
+        settings() {
+            const adm = U.s && U.s.role === 'admin';
+            return hdr_u('Settings', "uGo(uHome())") + SEC_U('Notifications') + `<div class="${CARD_U}">${toggleRow_u('New load alerts', 'When a delivery is on its way', U.set.load, "U.set.load = this.checked")}${adm ? toggleRow_u('Mismatch alerts', 'When a verified weight differs', U.set.mm, "U.set.mm = this.checked") : ''}</div>`
+                + SEC_U('Preferences') + `<div class="${CARD_U}">${linkRow_u('Language', '', "toast('More languages coming soon')", 'English ›')}${linkRow_u('Weight unit', '', "toast('Weights are recorded in kg')", 'kg')}</div>`
+                + SEC_U('About & Legal') + `<div class="${CARD_U}">${linkRow_u('About Circular By Terra', 'Mission and story', "openModal('modal-about')")}${linkRow_u('Terms &amp; Conditions', 'User agreement', "openModal('modal-terms')")}${linkRow_u('Privacy Policy', 'Data security', "openModal('modal-privacy')")}</div>`
+                + `<button onclick="uLogout()" class="${BTN_U} bg-transparent text-red-600 border-red-300 mt-6 hover:bg-red-50">Log Out</button>`;
+        }
+    };
+
+    // --- Admin: employee accounts ---
+    const uPw = () => Array.from({ length: 6 }, () => 'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 31)]).join('');
+    function uCreds(title, e) {
+        uModal(`<h3 class="text-xl font-extrabold text-brand-dark mb-1">${title}</h3><p class="text-xs font-medium text-brand-grayText mb-4">Share these with the employee. The password is shown only now.</p>
+            <div class="bg-brand-bg rounded-2xl p-4 text-sm font-bold text-brand-dark mb-5 border border-brand-border"><div>ID: ${e.id}</div><div class="mt-1">Temporary password: <span class="text-emerald-700">${e.pw}</span></div></div>
+            <button onclick="closeModal('modal-u')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full hover:opacity-90">Done</button>`);
+    }
+    function uAddEmp() {
+        uModal(`<h3 class="text-xl font-extrabold text-brand-dark mb-4">Add employee</h3>
+            <label class="${LBL_U}" for="ne-n">Full name</label><input id="ne-n" placeholder="e.g. Jaswinder Singh" class="${INP_U} mb-3">
+            <label class="${LBL_U}" for="ne-p">Phone</label><input id="ne-p" type="tel" placeholder="e.g. 98765 43210" class="${INP_U} mb-3">
+            <label class="${LBL_U}" for="ne-s">Shift</label><select id="ne-s" class="${INP_U} mb-5"><option>Morning</option><option>Afternoon</option><option>Evening</option></select>
+            <button onclick="uCreateEmp()" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full mb-2 hover:opacity-90">Create account</button><button onclick="closeModal('modal-u')" class="w-full text-brand-grayText font-bold text-sm py-2 hover:text-brand-dark">Cancel</button>`);
+    }
+    function uCreateEmp() {
+        const n = document.getElementById('ne-n')?.value.trim();
+        if (!n) { toast('Enter the employee name'); return; }
+        const p = document.getElementById('ne-p')?.value.trim() || '—';
+        const s = document.getElementById('ne-s')?.value || 'Morning';
+        const e = { id: 'EMP-' + (Math.max(100, ...U.emps.map(x => +x.id.slice(4))) + 1), name: n, pw: uPw(), shift: s, phone: p, on: true };
+        U.emps.push(e); uGo('emps'); uCreds('Account created', e);
+    }
+    function uReset(i) {
+        if (U.emps[i]) {
+            U.emps[i].pw = uPw();
+            uCreds('Password reset', U.emps[i]);
+        }
+    }
+    function uToggleEmp(i) {
+        if (U.emps[i]) {
+            U.emps[i].on = !U.emps[i].on;
+            uGo('emps');
+        }
+    }
+
+    // --- Employee: scan & verify ---
+    function uSimScan() {
+        const l = U.loads.find(x => x.st === 'p');
+        if (!l) { toast('No pending loads available'); return; }
+        uPick(l.id);
+    }
+    function uPick(id) {
+        const l = U.loads.find(x => x.id === id);
+        if (!l) { toast('No load found for ' + (id || 'that ID')); return; }
+        if (l.st === 'v') { toast(id + ' is already verified'); return; }
+        U.d = { id, rows: Object.keys(l.dec).map(t => ({ t, kg: '' })), remark: '' };
+        uGo('verify');
+    }
+    function uRow(i, k, v) {
+        if (U.d && U.d.rows[i]) {
+            U.d.rows[i][k] = v;
+            uBan();
+        }
+    }
+    function uAddRow() {
+        if (U.d) {
+            U.d.rows.push({ t: 'Others', kg: '' });
+            uGo('verify');
+        }
+    }
+    function uDel(i) {
+        if (U.d) {
+            U.d.rows.splice(i, 1);
+            uGo('verify');
+        }
+    }
+    function uActual() {
+        const a = {};
+        if (U.d && U.d.rows) {
+            U.d.rows.forEach(r => {
+                const k = parseFloat(r.kg);
+                if (k > 0) a[r.t] = Math.round(((a[r.t] || 0) + k) * 10) / 10;
+            });
+        }
+        return a;
+    }
+    function uDiffs() {
+        if (!U.d) return [];
+        const l = U.loads.find(x => x.id === U.d.id);
+        if (!l) return [];
+        const d = l.dec || {}, a = uActual();
+        return UT.filter(t => Math.abs((a[t] || 0) - (d[t] || 0)) > Math.max(0.5, 0.1 * (d[t] || 0)))
+                 .map(t => `${t}: ${a[t] || 0} kg vs ${d[t] || 0} declared`);
+    }
+    function uBan() {
+        const el = document.getElementById('u-ban');
+        if (!el) return;
+        if (!Object.keys(uActual()).length) { el.innerHTML = ''; return; }
+        const df = uDiffs();
+        el.innerHTML = df.length
+            ? `<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-3 text-xs font-bold leading-relaxed"><i class="ph-fill ph-warning"></i> Differs from declared weight<br>${df.join('<br>')}</div>`
+            : `<div class="bg-green-50 border border-green-200 text-green-800 rounded-2xl p-3 text-xs font-bold"><i class="ph-fill ph-check-circle"></i> Matches the declared load</div>`;
+    }
+    function uSubmit() {
+        const a = uActual();
+        if (!Object.keys(a).length) { toast('Enter the weight for at least one type'); return; }
+        const l = U.loads.find(x => x.id === U.d.id);
+        if (!l) return;
+        const e = U.s;
+        U.recs.unshift({
+            id: 'VR-' + (1001 + U.recs.length),
+            load: l.id,
+            src: l.src,
+            emp: e ? e.id : 'EMP-101',
+            en: e ? e.name : 'Staff',
+            act: a,
+            total: uSum(a),
+            mm: uDiffs().length > 0,
+            remark: (U.d.remark || '').trim(),
+            at: new Date()
+        });
+        l.st = 'v';
+        U.d = null;
+        uGo('done');
+    }
+
+    // ─── Terra AI Chatbot Client ──────────────────────────────────────────────
+    let aiAttachedImageBase64 = null;
+    let aiAttachedMimeType = null;
+
+    function openAIChat() {
+        openModal('modal-ai-chat');
+        setTimeout(() => {
+            const inp = document.getElementById('ai-chat-input');
+            if (inp) inp.focus();
+            scrollAIChatToBottom();
+        }, 150);
+    }
+
+    function closeAIChat() {
+        closeModal('modal-ai-chat');
+    }
+
+    function scrollAIChatToBottom() {
+        const box = document.getElementById('ai-chat-messages');
+        if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    function handleAIImageSelect(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 15 * 1024 * 1024) {
+            toast('Please select an image smaller than 15MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const rawData = evt.target.result;
+            // Normalize and compress via canvas to standard JPEG
+            const img = new Image();
+            img.onload = function() {
+                const maxDim = 1024;
+                let w = img.width;
+                let h = img.height;
+                if (w > maxDim || h > maxDim) {
+                    if (w > h) {
+                        h = Math.round((h * maxDim) / w);
+                        w = maxDim;
+                    } else {
+                        w = Math.round((w * maxDim) / h);
+                        h = maxDim;
+                    }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+
+                aiAttachedImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                aiAttachedMimeType = 'image/jpeg';
+
+                const preview = document.getElementById('ai-image-preview');
+                const container = document.getElementById('ai-image-preview-container');
+                if (preview && container) {
+                    preview.src = aiAttachedImageBase64;
+                    container.classList.remove('hidden');
+                }
+            };
+            img.onerror = function() {
+                // Fallback if image canvas loading fails
+                aiAttachedImageBase64 = rawData;
+                aiAttachedMimeType = file.type || 'image/jpeg';
+                const preview = document.getElementById('ai-image-preview');
+                const container = document.getElementById('ai-image-preview-container');
+                if (preview && container) {
+                    preview.src = aiAttachedImageBase64;
+                    container.classList.remove('hidden');
+                }
+            };
+            img.src = rawData;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function clearAIAttachedImage() {
+        aiAttachedImageBase64 = null;
+        aiAttachedMimeType = null;
+        const fileInput = document.getElementById('ai-file-input');
+        if (fileInput) fileInput.value = '';
+        const container = document.getElementById('ai-image-preview-container');
+        if (container) container.classList.add('hidden');
+    }
+
+    function sendQuickPrompt(promptText) {
+        const inp = document.getElementById('ai-chat-input');
+        if (inp) {
+            inp.value = promptText;
+            handleAIChatSubmit(new Event('submit'));
+        }
+    }
+
+    function formatAIMarkdown(text) {
+        if (!text) return '';
+        let escaped = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Bold: **text**
+        escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Italic: *text*
+        escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        // Bullet points
+        escaped = escaped.replace(/^[•\-\*]\s+(.*)$/gm, '<li class="ml-3 list-disc">$1</li>');
+        // URLs to clickable links
+        escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="font-bold underline text-emerald-700 hover:text-emerald-900 break-all">$1</a>');
+        // Newlines to <br>
+        escaped = escaped.replace(/\n/g, '<br>');
+        return escaped;
+    }
+
+    async function handleAIChatSubmit(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        const inp = document.getElementById('ai-chat-input');
+        const text = inp ? inp.value.trim() : '';
+        const imageToSend = aiAttachedImageBase64;
+        const mimeToSend = aiAttachedMimeType;
+
+        if (!text && !imageToSend) return;
+
+        const box = document.getElementById('ai-chat-messages');
+        if (!box) return;
+
+        // Append user bubble
+        let userContent = '';
+        if (imageToSend) {
+            userContent += `<img src="${imageToSend}" class="w-36 h-36 object-cover rounded-xl border border-white/30 mb-2 shadow-xs">`;
+        }
+        if (text) {
+            userContent += `<p class="leading-relaxed font-semibold">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+        }
+
+        const userBubble = document.createElement('div');
+        userBubble.className = 'flex items-start justify-end gap-2 text-right';
+        userBubble.innerHTML = `
+            <div class="bg-emerald-700 text-white p-3.5 rounded-2xl rounded-tr-xs shadow-xs max-w-[85%] text-left">
+                ${userContent}
+            </div>
+            <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                ${(appState.user?.name || 'U').charAt(0).toUpperCase()}
+            </div>
+        `;
+        box.appendChild(userBubble);
+
+        // Reset input and attached image preview
+        if (inp) inp.value = '';
+        clearAIAttachedImage();
+        scrollAIChatToBottom();
+
+        // Thinking placeholder
+        const thinkingId = 'ai-thinking-' + Date.now();
+        const thinkingBubble = document.createElement('div');
+        thinkingBubble.id = thinkingId;
+        thinkingBubble.className = 'flex items-start gap-2.5';
+        thinkingBubble.innerHTML = `
+            <div class="w-7 h-7 rounded-full bg-brand-dark text-yellow-300 flex items-center justify-center text-sm shrink-0 mt-0.5">
+                <i class="ph-fill ph-sparkle"></i>
+            </div>
+            <div class="bg-brand-bg text-brand-grayText p-3 rounded-2xl rounded-tl-xs border border-brand-border flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-bounce"></span>
+                <span class="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
+                <span class="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                <span class="text-[11px] font-bold text-emerald-800 ml-1">Terra is thinking…</span>
+            </div>
+        `;
+        box.appendChild(thinkingBubble);
+        scrollAIChatToBottom();
+
+        try {
+            const res = await fetch(`${API_BASE}/ai/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    imageBase64: imageToSend,
+                    mimeType: mimeToSend,
+                    userId: appState.user?.id || null
+                })
+            });
+
+            const data = await res.json();
+            const replyText = data.reply || "I'm having trouble analyzing this right now. Please try again.";
+
+            // Remove thinking placeholder
+            const thinkingEl = document.getElementById(thinkingId);
+            if (thinkingEl) thinkingEl.remove();
+
+            // Append AI response bubble
+            const aiBubble = document.createElement('div');
+            aiBubble.className = 'flex items-start gap-2.5';
+            aiBubble.innerHTML = `
+                <div class="w-7 h-7 rounded-full bg-brand-dark text-yellow-300 flex items-center justify-center text-sm shrink-0 mt-0.5">
+                    <i class="ph-fill ph-sparkle"></i>
+                </div>
+                <div class="bg-brand-bg text-brand-dark p-3.5 rounded-2xl rounded-tl-xs border border-brand-border max-w-[85%] leading-relaxed space-y-1">
+                    <div>${formatAIMarkdown(replyText)}</div>
+                </div>
+            `;
+            box.appendChild(aiBubble);
+            scrollAIChatToBottom();
+
+        } catch (err) {
+            const thinkingEl = document.getElementById(thinkingId);
+            if (thinkingEl) thinkingEl.remove();
+
+            const errBubble = document.createElement('div');
+            errBubble.className = 'flex items-start gap-2.5';
+            errBubble.innerHTML = `
+                <div class="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center text-xs shrink-0 mt-0.5">
+                    <i class="ph-bold ph-warning"></i>
+                </div>
+                <div class="bg-red-50 text-red-900 p-3 rounded-2xl rounded-tl-xs border border-red-200 text-xs">
+                    Cannot connect to Terra AI right now. Please check if the server is running.
+                </div>
+            `;
+            box.appendChild(errBubble);
+            scrollAIChatToBottom();
+        }
+    }
 </script>
 </body>
 </html>

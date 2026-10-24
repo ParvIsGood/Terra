@@ -2,12 +2,215 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = requi
 const pino   = require('pino');
 const QRCode = require('qrcode');
 const path   = require('path');
+const fs     = require('fs');
 const { getDb, persist } = require('./database');
 
 let sock = null;
 let qrCodeDataUrl = null;
 let isReady = false;
 const pendingVerifications = {};
+const activeDispatches = {}; // Keyed by requestId (e.g. 'REQ-1234')
+
+function parseMaterialWeights(inputStr) {
+    if (!inputStr) return { items: [], totalWeight: 0 };
+    let text = inputStr.trim();
+    // Normalize space separation between number and next word: e.g. "10 plastic" -> "10, plastic"
+    text = text.replace(/(\d+(?:\.\d+)?\s*(?:kg|kgs|kilo|kilos)?)\s+([a-zA-Z\u0900-\u097F])/gi, "$1, $2");
+
+    const categories = [
+        { key: "Cardboard", regex: /(?:cardboard|gatta|carton|dabba)/i },
+        { key: "Paper", regex: /(?:paper|raddi|newspaper|akhbar|book|books)/i },
+        { key: "Plastic", regex: /(?:plastic|bottle|bottles|polythene|panni)/i },
+        { key: "Metals", regex: /(?:metal|metals|loha|steel|aluminium|iron|tin|taamba)/i },
+        { key: "Glass", regex: /(?:glass|kaanch|kanch|sheesha)/i },
+        { key: "Cloth", regex: /(?:cloth|kapda|clothes|fabric)/i },
+        { key: "Biodegradable", regex: /(?:bio|biodegradable|wet|gila|organic|food)/i },
+        { key: "Dry Waste", regex: /(?:dry|sukha)/i },
+        { key: "Others", regex: /(?:other|others|kachra)/i }
+    ];
+
+    const segments = text.split(/[,;\n\+]|\band\b|\baur\b|&/i).map(s => s.trim()).filter(Boolean);
+    const parsed = [];
+    let matchedTotal = 0;
+
+    for (const seg of segments) {
+        const numMatch = seg.match(/(\d+(?:\.\d+)?)/);
+        if (!numMatch) continue;
+        const weight = parseFloat(numMatch[1]);
+        if (isNaN(weight) || weight <= 0) continue;
+
+        let matchedCat = null;
+        for (const cat of categories) {
+            if (cat.regex.test(seg)) {
+                matchedCat = cat.key;
+                break;
+            }
+        }
+
+        if (matchedCat) {
+            const existing = parsed.find(p => p.material === matchedCat);
+            if (existing) {
+                existing.weight = Math.round((existing.weight + weight) * 10) / 10;
+            } else {
+                parsed.push({ material: matchedCat, weight });
+            }
+            matchedTotal += weight;
+        }
+    }
+
+    if (parsed.length === 0) {
+        const singleNumMatch = text.match(/(\d+(?:\.\d+)?)/);
+        if (singleNumMatch) {
+            const w = parseFloat(singleNumMatch[1]);
+            if (!isNaN(w) && w > 0) {
+                parsed.push({ material: "Recyclables (Total)", weight: w });
+                matchedTotal = w;
+            }
+        }
+    }
+
+    const totalWeight = Math.round(matchedTotal * 10) / 10;
+    return { items: parsed, totalWeight };
+}
+
+function resolvePhoneAndLid(rawId) {
+    if (!rawId) return { phone: '', lid: '', jid: '' };
+    const clean = rawId.replace(/[@a-z\._]/gi, '').trim();
+
+    // 1. Check if clean is an LID that has a reverse mapping to phone
+    const reverseFile = path.join(AUTH_FOLDER, `lid-mapping-${clean}_reverse.json`);
+    if (fs.existsSync(reverseFile)) {
+        try {
+            const mappedPhone = JSON.parse(fs.readFileSync(reverseFile, 'utf8'));
+            const cleanPhone = mappedPhone.replace(/\D/g, '');
+            return { phone: `+${cleanPhone}`, lid: clean, jid: `${clean}@lid` };
+        } catch (e) {}
+    }
+
+    // 2. Check if clean is a phone that has a direct mapping to LID
+    const directFile = path.join(AUTH_FOLDER, `lid-mapping-${clean}.json`);
+    if (fs.existsSync(directFile)) {
+        try {
+            const mappedLid = JSON.parse(fs.readFileSync(directFile, 'utf8'));
+            const cleanLid = mappedLid.replace(/\D/g, '');
+            return { phone: `+${clean}`, lid: cleanLid, jid: `${clean}@s.whatsapp.net` };
+        } catch (e) {}
+    }
+
+    // 3. Fallback: if raw was an @lid JID
+    if (rawId.includes('@lid')) {
+        return { phone: `+${clean}`, lid: clean, jid: rawId };
+    }
+
+    return { phone: `+${clean}`, lid: '', jid: `${clean}@s.whatsapp.net` };
+}
+
+// ─────────────────────────────────────────────────────────────
+// SEQUENTIAL 60-SECOND KABADIWALA DISPATCH SYSTEM
+// ─────────────────────────────────────────────────────────────
+async function dispatchPickup(pickup, customer) {
+    const reqId = pickup.request_id;
+    console.log(`[Dispatch] Starting 60s sequential dispatch for #${reqId}...`);
+
+    try {
+        const db = await getDb();
+        const stmt = db.prepare(`
+            SELECT id, name, phone_number 
+            FROM collectors 
+            WHERE is_available = 1 AND onboarding_step = 'COMPLETED'
+            ORDER BY id ASC
+        `);
+        const candidates = [];
+        while (stmt.step()) candidates.push(stmt.getAsObject());
+        stmt.free();
+
+        if (candidates.length === 0) {
+            console.log(`[Dispatch] No available active collectors found for #${reqId}`);
+            if (customer?.phone) {
+                sendWhatsAppAlert(customer.phone,
+                    `⏳ *circular. Order Scheduled (#${reqId})*\n\n` +
+                    `Hi *${customer.name || 'there'}*,\n` +
+                    `Aapka pickup request receive ho gaya hai! Hamare partners abhi busy hain, jaise hi partner free hoga, hum assign kar denge.`
+                ).catch(e => console.error(e));
+            }
+            return;
+        }
+
+        // Clear existing timer if any
+        if (activeDispatches[reqId] && activeDispatches[reqId].timer) {
+            clearTimeout(activeDispatches[reqId].timer);
+        }
+
+        activeDispatches[reqId] = {
+            pickupId: pickup.id,
+            requestId: reqId,
+            customer: customer,
+            items: pickup.items,
+            time_slot: pickup.time_slot,
+            quantity: pickup.quantity,
+            pin: pickup.pin,
+            candidates: candidates,
+            currentIndex: 0,
+            timer: null
+        };
+
+        await offerPickupToCurrentCandidate(reqId);
+    } catch (err) {
+        console.error('[Dispatch] Error starting dispatch:', err);
+    }
+}
+
+async function offerPickupToCurrentCandidate(reqId) {
+    const dispatch = activeDispatches[reqId];
+    if (!dispatch) return;
+
+    if (dispatch.currentIndex >= dispatch.candidates.length) {
+        console.log(`[Dispatch] All candidate collectors declined or timed out for #${reqId}`);
+        if (dispatch.customer?.phone) {
+            sendWhatsAppAlert(dispatch.customer.phone,
+                `⏳ *circular. Update for #${reqId}*\n\n` +
+                `Hi *${dispatch.customer.name || 'there'}*,\n` +
+                `Nearby partners abhi dusre orders me vyast hain. Aapka pickup priority queue me hai, agle available partner ko assign kiya jayega.`
+            ).catch(e => console.error(e));
+        }
+        delete activeDispatches[reqId];
+        return;
+    }
+
+    const currentCollector = dispatch.candidates[dispatch.currentIndex];
+    const collectorPhone = currentCollector.phone_number;
+
+    console.log(`[Dispatch] Offering #${reqId} to collector #${currentCollector.id} (${currentCollector.name}) with 60s timeout...`);
+
+    const offerMsg = 
+        `🔔 *NAYA PICKUP OFFER! (New Request)* 🔔\n\n` +
+        `Namaste *${currentCollector.name || 'Partner'}* ji!\n` +
+        `Aapke area me naya pickup book hua hai:\n\n` +
+        `• Order ID: *#${dispatch.requestId}*\n` +
+        `• Customer: *${dispatch.customer?.name || 'Resident'}*\n` +
+        `• Address: *${dispatch.customer?.address || 'Local'}* (PIN: ${dispatch.customer?.pincode || '—'})\n` +
+        `• Items: *${dispatch.items}* (${dispatch.quantity || 'Standard'})\n` +
+        `• Time Slot: *${dispatch.time_slot}*\n\n` +
+        `⏱️ *Aapke paas accept karne ke liye 60 SECONDS hain!*\n\n` +
+        `Accept karne ke liye reply karein:\n` +
+        `👉 *ACCEPT*\n\n` +
+        `Reject karne ke liye reply karein:\n` +
+        `👉 *REJECT*`;
+
+    await sendWhatsAppAlert(collectorPhone, offerMsg);
+
+    // 60-second countdown timer
+    dispatch.timer = setTimeout(async () => {
+        console.log(`[Dispatch] 60s timeout elapsed for collector ${currentCollector.name} on #${reqId}`);
+        
+        sendWhatsAppAlert(collectorPhone,
+            `⏱️ *Time Expired!* #${dispatch.requestId} ka 60-second samay pura ho gaya. Yeh offer agle partner ko forward kar di gayi hai.`
+        ).catch(e => console.error(e));
+
+        dispatch.currentIndex++;
+        offerPickupToCurrentCandidate(reqId);
+    }, 60000);
+}
 
 const AUTH_FOLDER = path.join(__dirname, '.baileys_auth');
 
@@ -69,11 +272,11 @@ async function startWhatsApp() {
                 // Ignore groups or status broadcasts
                 if (remoteJid.includes('@g.us') || remoteJid === 'status@broadcast') continue;
 
-                // Extract sender phone
-                const rawSender = remoteJid.replace('@s.whatsapp.net', '');
-                const cleanDigits = rawSender.replace(/\D/g, '');
+                // Extract sender phone with LID support
+                const resolved = resolvePhoneAndLid(remoteJid);
+                const phone = resolved.phone || `+${remoteJid.replace(/\D/g, '')}`;
+                const cleanDigits = phone.replace(/\D/g, '');
                 if (!cleanDigits || cleanDigits.length < 8) continue;
-                const phone = `+${cleanDigits}`;
 
                 // Extract message body text
                 const text = (
@@ -85,9 +288,9 @@ async function startWhatsApp() {
                 const lowerBody = text.toLowerCase();
                 const db = await getDb();
 
-                // Look up in database (check with and without + prefix)
-                const stmt = db.prepare('SELECT * FROM collectors WHERE REPLACE(phone_number, "+", "") = ? OR phone_number = ?');
-                stmt.bind([cleanDigits, phone]);
+                // Look up in database (check by clean digits, +phone, or LID if available)
+                const stmt = db.prepare('SELECT * FROM collectors WHERE REPLACE(phone_number, "+", "") = ? OR phone_number = ? OR phone_number = ?');
+                stmt.bind([cleanDigits, phone, `+${resolved.lid || ''}`]);
                 let collector = null;
                 if (stmt.step()) collector = stmt.getAsObject();
                 stmt.free();
@@ -95,6 +298,102 @@ async function startWhatsApp() {
                 const reply = async (replyText) => {
                     await sock.sendMessage(remoteJid, { text: replyText });
                 };
+
+                // ── 0. PICKUP ACCEPT / REJECT HANDLER (60s Dispatch System) ─────
+                const acceptMatch = text.match(/^\s*(?:ACCEPT(?:[_\s]+([A-Za-z0-9\-_]+))?|1|YES|HAAN?)\s*$/i);
+                const rejectMatch = text.match(/^\s*(?:REJECT(?:[_\s]+([A-Za-z0-9\-_]+))?|2|NO|NAHI?)\s*$/i);
+
+                if (acceptMatch || rejectMatch) {
+                    const specifiedReqId = (acceptMatch ? acceptMatch[1] : rejectMatch[1])?.trim().toUpperCase();
+                    let targetDispatch = null;
+
+                    if (specifiedReqId && activeDispatches[specifiedReqId]) {
+                        targetDispatch = activeDispatches[specifiedReqId];
+                    } else {
+                        // Find active dispatch where this collector is the candidate
+                        targetDispatch = Object.values(activeDispatches).find(d => {
+                            const cur = d.candidates[d.currentIndex];
+                            if (!cur) return false;
+                            const curDigits = cur.phone_number.replace(/\D/g, '');
+                            return (
+                                curDigits === cleanDigits ||
+                                cur.phone_number === phone ||
+                                (resolved.lid && curDigits === resolved.lid)
+                            );
+                        });
+                    }
+
+                    if (!targetDispatch) {
+                        await reply(`⚠️ Yeh pickup offer expire ho chuki hai ya kisi aur partner ko assign ho chuki hai.`);
+                        continue;
+                    }
+
+                    const currentCandidate = targetDispatch.candidates[targetDispatch.currentIndex];
+                    const candDigits = currentCandidate ? currentCandidate.phone_number.replace(/\D/g, '') : '';
+                    const isCandidate = currentCandidate && (
+                        candDigits === cleanDigits ||
+                        currentCandidate.phone_number === phone ||
+                        (resolved.lid && candDigits === resolved.lid)
+                    );
+
+                    if (!isCandidate) {
+                        await reply(`⚠️ Yeh offer abhi aapke number ke liye active nahi hai.`);
+                        continue;
+                    }
+
+                    if (acceptMatch) {
+                        // Clear 60-second timer
+                        if (targetDispatch.timer) clearTimeout(targetDispatch.timer);
+
+                        const assignedCollector = currentCandidate;
+                        const pickupId = targetDispatch.pickupId;
+                        const reqId = targetDispatch.requestId;
+
+                        // Assign collector in SQLite database
+                        db.run(`
+                            UPDATE pickups 
+                            SET collector_id = ?, 
+                                collector_phone = ?, 
+                                status = 'Assigned' 
+                            WHERE id = ?
+                        `, [assignedCollector.id, assignedCollector.phone_number, pickupId]);
+                        persist();
+
+                        // Confirmation to Collector
+                        await reply(
+                            `🎉 *Pickup Accepted!* 🎉\n\n` +
+                            `Order *#${reqId}* aapko successfully assign kar diya gaya hai.\n\n` +
+                            `• Customer: *${targetDispatch.customer?.name || 'Resident'}*\n` +
+                            `• Address: *${targetDispatch.customer?.address || 'Local'}* (PIN: ${targetDispatch.customer?.pincode || '—'})\n` +
+                            `• Items: *${targetDispatch.items}*\n` +
+                            `• Time Slot: *${targetDispatch.time_slot}*\n\n` +
+                            `📍 Doorstep par pahunch kar customer ke app se QR code scan karein.\n\n` +
+                            `Kripya time par pahunch kar waste collect karein! Dhanyawad 🙏`
+                        );
+
+                        // Alert to Customer on WhatsApp
+                        if (targetDispatch.customer?.phone) {
+                            sendWhatsAppAlert(targetDispatch.customer.phone,
+                                `🌿 *circular. Collection Partner Assigned!* 🌿\n\n` +
+                                `Hi *${targetDispatch.customer.name || 'there'}*,\n` +
+                                `Aapke pickup *#${reqId}* ke liye verified collection partner (*${assignedCollector.name || 'Authorized Partner'}*) assign ho gaye hain!\n\n` +
+                                `Wo aapke address par nikal rahe hain. Pickup status app screen par track kar sakte hain. 🌍`
+                            ).catch(e => console.error(e));
+                        }
+
+                        delete activeDispatches[reqId];
+                        continue;
+                    } else if (rejectMatch) {
+                        if (targetDispatch.timer) clearTimeout(targetDispatch.timer);
+
+                        await reply(`Aapne #${targetDispatch.requestId} decline kar diya hai. Dhanyawad.`);
+
+                        // Cascade to next collector in queue
+                        targetDispatch.currentIndex++;
+                        offerPickupToCurrentCandidate(targetDispatch.requestId);
+                        continue;
+                    }
+                }
 
                 // ── A. DOORSTEP QR CODE VERIFICATION ─────────────────
                 // Check if message is a VERIFY / CONFIRM scan from QR:
@@ -140,26 +439,17 @@ async function startWhatsApp() {
                         continue;
                     }
 
-                    // 2. IMMEDIATE COMPLETION: Mark as Completed in SQLite so Household interface flips to Completed instantly!
+                    // 2. DOORSTEP VERIFICATION INITIATED (Status remains In-Progress / Weight Pending until collector enters kg)
                     const ptsEarned = 50;
                     db.run(`
                         UPDATE pickups 
-                        SET status = 'Completed', 
-                            collector_phone = ?, 
-                            collector_id = COALESCE(collector_id, ?),
-                            completed_at = datetime('now', 'localtime')
+                        SET collector_phone = ?, 
+                            collector_id = COALESCE(collector_id, ?)
                         WHERE id = ?
                     `, [phone, collector.id, pickup.id]);
-
-                    db.run(`
-                        UPDATE users 
-                        SET points = COALESCE(points, 0) + ? 
-                        WHERE id = ?
-                    `, [ptsEarned, pickup.user_id]);
-
                     persist();
 
-                    // Save session in case collector wants to reply with measured weight for cash payout calculation
+                    // Save session in pendingVerifications with all details & booked waste items
                     pendingVerifications[phone] = {
                         pickupId: pickup.id,
                         requestId: pickup.request_id,
@@ -168,72 +458,97 @@ async function startWhatsApp() {
                         customerPhone: pickup.customer_phone,
                         items: pickup.items,
                         role: pickup.role,
+                        ptsEarned: ptsEarned,
                         timestamp: Date.now()
                     };
 
                     await reply(
-                        `✅ *Doorstep Verified & Completed!* 🎉\n\n` +
+                        `🔍 *Doorstep Verification In-Progress!* ⚖️\n\n` +
                         `• Order ID: *#${pickup.request_id}*\n` +
                         `• Customer: *${pickup.customer_name || 'Resident'}*\n` +
-                        `• Address: ${pickup.customer_address || ''} (${pickup.customer_pincode || ''})\n` +
-                        `• Items: *${pickup.items}*\n` +
-                        `• Status: 🟢 *Completed*\n\n` +
-                        `Customer ke app screen par pickup *Completed* mark ho gaya hai aur *+${ptsEarned} Green Points* credit ho gaye hain!\n\n` +
-                        `⚖️ *Optional:* Agar aapne weight naapa hai, toh weight (kg) likh kar bhejein (jaise: *14 kg* ya *12*) taaki cash receipt generate ho sake.`
+                        `• Address: ${pickup.customer_address || ''} (${pickup.customer_pincode || ''})\n\n` +
+                        `📋 *Customer Waste in this Pickup:*\n` +
+                        `👉 *${pickup.items}*\n\n` +
+                        `⚖️ *Kripya inka weight (kg) naapein aur reply karein:*\n` +
+                        `• Jaise: *Cardboard 10, Plastic 4, Paper 5*\n` +
+                        `• ya: *Gatta 8 kg, Loha 2 kg*\n` +
+                        `• ya Kul weight: *15 kg*\n\n` +
+                        `⚠️ *Note:* Weight enter karne ke baad hi pickup *Officially Complete* hoga aur customer ko Green Points credit honge.`
                     );
-
-                    // Notify customer on WhatsApp right away
-                    if (pickup.customer_phone) {
-                        const custMsg = 
-                            `🌿 *circular. Pickup Completed!* 🌿\n\n` +
-                            `Hi *${pickup.customer_name || 'there'}*,\n` +
-                            `Aapka pickup *#${pickup.request_id}* collection partner (*${collector.name || 'Authorized Collector'}*) dwara collect kar liya gaya hai!\n\n` +
-                            `⭐ Green Points: *+${ptsEarned} pts* (App me add ho chuke hain)\n\n` +
-                            `Thank you for contributing to a cleaner environment! 🌍`;
-
-                        sendWhatsAppAlert(pickup.customer_phone, custMsg)
-                            .catch(e => console.error('Error notifying customer of completion:', e));
-                    }
 
                     continue;
                 }
 
-                // ── B. OPTIONAL WEIGHT RECEIPT UPDATE ────────────
+                // ── B. MATERIAL-WISE WEIGHT VERIFICATION & OFFICIAL COMPLETION ────────────
                 if (pendingVerifications[phone]) {
                     const session = pendingVerifications[phone];
-                    const weightMatch = text.match(/(\d+(?:\.\d+)?)/);
+                    const parsedWeight = parseMaterialWeights(text);
 
-                    if (weightMatch) {
-                        const measuredWeight = parseFloat(weightMatch[1]);
-                        const isWetOnly = session.items.toLowerCase().includes('biodegradable') && !session.items.toLowerCase().includes('dry');
-                        const ratePerKg = isWetOnly ? 0 : 10;
-                        const payout = Math.round(measuredWeight * ratePerKg);
+                    if (parsedWeight.items.length > 0 && parsedWeight.totalWeight > 0) {
+                        const { items: weightItems, totalWeight } = parsedWeight;
+                        const weightSummaryStr = weightItems.map(it => `${it.material}: ${it.weight} kg`).join(', ');
+                        const ptsEarned = session.ptsEarned || 50;
 
+                        // NOW officially complete the pickup in SQLite & record verified weights
                         db.run(`
                             UPDATE pickups 
-                            SET actual_weight = ?, 
-                                payout_amount = ? 
+                            SET status = 'Completed',
+                                actual_weight = ?, 
+                                material_weights = ?,
+                                completed_at = datetime('now', 'localtime')
                             WHERE id = ?
-                        `, [measuredWeight, payout, session.pickupId]);
+                        `, [totalWeight, weightSummaryStr, session.pickupId]);
+
+                        // NOW award Green Points to user
+                        db.run(`
+                            UPDATE users 
+                            SET points = COALESCE(points, 0) + ? 
+                            WHERE id = ?
+                        `, [ptsEarned, session.userId]);
+
                         persist();
                         delete pendingVerifications[phone];
 
+                        const breakdownLines = weightItems
+                            .map(it => `• ${it.material}: *${it.weight} kg*`)
+                            .join('\n');
+
+                        // Confirmation to Collector
                         await reply(
-                            `💵 *Cash Payout Receipt Generated!*\n\n` +
-                            `• Order: *#${session.requestId}*\n` +
-                            `• Total Weight: *${measuredWeight} kg*\n` +
-                            (payout > 0 ? `• Customer ko Cash Pay karein: *₹${payout}*\n\n` : '\n') +
-                            `Receipt customer ko WhatsApp par bhej di gayi hai. Dhanyawad!`
+                            `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
+                            `• Order ID: *#${session.requestId}*\n` +
+                            `• Customer: *${session.customerName}*\n\n` +
+                            `*Segregated Weight Breakdown:*\n` +
+                            `${breakdownLines}\n` +
+                            `──────────────────\n` +
+                            `📦 *Total Weight:* *${totalWeight} kg*\n\n` +
+                            `Pickup status *Completed* mark ho gaya hai aur customer ko *+${ptsEarned} Green Points* credit kar diye gaye hain. Dhanyawad!`
                         );
 
-                        if (session.customerPhone && payout > 0) {
+                        // Official completion & weight alert to Customer on WhatsApp
+                        if (session.customerPhone) {
                             sendWhatsAppAlert(session.customerPhone,
-                                `💵 *circular. Cash Receipt for #${session.requestId}*\n\n` +
-                                `• Weighed Scrap: *${measuredWeight} kg*\n` +
-                                `• Total Cash Payout: *₹${payout}*\n\n` +
-                                `Cash collector dwara handover kar diya gaya hai.`
-                            ).catch(e => console.error(e));
+                                `🌿 *circular. Pickup Completed!* 🌿\n\n` +
+                                `Hi *${session.customerName}*,\n` +
+                                `Aapka pickup *#${session.requestId}* collection partner dwara successfully collect kar liya gaya hai!\n\n` +
+                                `*Verified Waste Collected:*\n` +
+                                `${breakdownLines}\n` +
+                                `──────────────────\n` +
+                                `📦 *Total Weight:* *${totalWeight} kg*\n\n` +
+                                `⭐ Green Points: *+${ptsEarned} pts* (App me add ho chuke hain)\n\n` +
+                                `Thank you for contributing to a cleaner, zero-waste environment! 🌍`
+                            ).catch(e => console.error('Error notifying customer of completion:', e));
                         }
+                        continue;
+                    } else if (text && !text.startsWith('#') && text.toLowerCase() !== 'duty' && text.toLowerCase() !== 'status') {
+                        // Gentle reminder if message is received during active weighing
+                        await reply(
+                            `⚖️ *Order #${session.requestId} ke liye weight pending hai!*\n\n` +
+                            `Customer ka booked waste: *${session.items}*\n\n` +
+                            `Kripya measured weight (kg) likh kar bhejein:\n` +
+                            `• Jaise: *Cardboard 8, Plastic 3*\n` +
+                            `• ya total: *12 kg*`
+                        );
                         continue;
                     }
                 }
@@ -444,21 +759,28 @@ async function startWhatsApp() {
 // ─────────────────────────────────────────────────────────────
 // OUTBOUND NOTIFIER: Sends instant alert when customer schedules
 // ─────────────────────────────────────────────────────────────
-async function sendWhatsAppAlert(phoneNumber, message) {
+async function sendWhatsAppAlert(target, message) {
     if (!isReady || !sock) {
         console.warn('⚠️ WhatsApp client not ready. Cannot send alert.');
         return { success: false, reason: 'Client not ready' };
     }
 
     try {
-        const cleanDigits = phoneNumber.replace(/\D/g, '');
-        const jid = `${cleanDigits}@s.whatsapp.net`;
+        let jid = target;
+        if (!target.includes('@')) {
+            const resolved = resolvePhoneAndLid(target);
+            if (resolved.phone) {
+                jid = `${resolved.phone.replace(/\D/g, '')}@s.whatsapp.net`;
+            } else {
+                jid = `${target.replace(/\D/g, '')}@s.whatsapp.net`;
+            }
+        }
 
         await sock.sendMessage(jid, { text: message });
-        console.log(`✅ WhatsApp alert successfully sent to ${phoneNumber}!`);
+        console.log(`✅ WhatsApp alert successfully sent to ${jid} (target: ${target})!`);
         return { success: true };
     } catch (err) {
-        console.error(`❌ Failed to send WhatsApp alert to ${phoneNumber}:`, err.message);
+        console.error(`❌ Failed to send WhatsApp alert to ${target}:`, err.message);
         return { success: false, error: err.message };
     }
 }
@@ -477,5 +799,6 @@ startWhatsApp();
 
 module.exports = {
     sendWhatsAppAlert,
+    dispatchPickup,
     getStatus
 };

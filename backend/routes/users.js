@@ -3,16 +3,100 @@ const bcrypt   = require('bcryptjs');
 const router   = express.Router();
 const { getDb, persist } = require('../database');
 
+const pincodeLookup = require('india-pincode-lookup');
+
+function toTitleCase(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/(?:^|\s|-|\/)\S/g, c => c.toUpperCase());
+}
+
+function isValidIndianPincode(pin) {
+    if (!pin) return false;
+    return /^[1-9][0-9]{5}$/.test(String(pin).trim());
+}
+
+function lookupIndianPincode(pin) {
+    const cleanPin = String(pin || '').trim();
+    if (!/^[1-9][0-9]{5}$/.test(cleanPin)) {
+        return { valid: false, error: 'Indian PIN codes must be exactly 6 digits and cannot start with 0.' };
+    }
+
+    try {
+        const results = pincodeLookup.lookup(cleanPin);
+        if (results && results.length > 0) {
+            const first = results[0];
+            const district = toTitleCase(first.districtName || first.taluk || '');
+            const state = toTitleCase(first.stateName || '');
+            const office = toTitleCase(first.officeName || '');
+
+            return {
+                valid: true,
+                pincode: cleanPin,
+                city: district || office,
+                state: state,
+                office: office
+            };
+        }
+    } catch (e) {
+        console.error('Pincode lookup error:', e);
+    }
+
+    return { valid: false, error: 'Invalid PIN: Not found in official Indian postal registry.' };
+}
+
+// ─────────────────────────────────────────────
+// GET /api/users/pincode-lookup/:pin
+// ─────────────────────────────────────────────
+router.get('/pincode-lookup/:pin', (req, res) => {
+    const result = lookupIndianPincode(req.params.pin);
+    if (!result.valid) {
+        return res.status(404).json(result);
+    }
+    return res.json(result);
+});
+
+// ─────────────────────────────────────────────
+// GET /api/users/:id
+// ─────────────────────────────────────────────
+router.get('/:id', async (req, res) => {
+    try {
+        const db = await getDb();
+        const stmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, phone, bio, saved_materials, points FROM users WHERE id = ?');
+        stmt.bind([req.params.id]);
+        if (!stmt.step()) {
+            stmt.free();
+            return res.status(404).json({ error: 'User not found.' });
+        }
+        const user = stmt.getAsObject();
+        stmt.free();
+        return res.json({ user });
+    } catch (err) {
+        return res.status(500).json({ error: 'Database error.', details: err.message });
+    }
+});
+
 // ─────────────────────────────────────────────
 // POST /api/users/register
 // Body: { name, email, password, dob, address, pincode, role, hh_code? }
 // ─────────────────────────────────────────────
 router.post('/register', async (req, res) => {
-    const { name, phone, dob, address, pincode, role, hh_code } = req.body;
+    const { name, phone, dob, address, pincode, city, state, role, hh_code } = req.body;
 
     if (!name || !phone || !dob || !address || !pincode || !role) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
+
+    if (!isValidIndianPincode(pincode)) {
+        return res.status(400).json({ error: 'Please enter a valid 6-digit Indian PIN code (cannot start with 0 or contain letters).' });
+    }
+
+    const pinCheck = await lookupIndianPincode(pincode);
+    if (!pinCheck.valid) {
+        return res.status(400).json({ error: pinCheck.error || 'Invalid Indian PIN code (Not found in postal directory).' });
+    }
+
+    const resolvedCity = city ? city.trim() : (pinCheck.city || null);
+    const resolvedState = state ? state.trim() : (pinCheck.state || null);
 
     const validRoles = ['Household', 'Business', 'Recycler'];
     if (!validRoles.includes(role)) {
@@ -45,14 +129,14 @@ router.post('/register', async (req, res) => {
         const defaultPasswordHash = 'WHATSAPP_OTP_AUTH';
 
         db.run(
-            `INSERT INTO users (name, email, password_hash, dob, address, pincode, role, hh_code, phone)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name.trim(), generatedEmail, defaultPasswordHash, dob, address.trim(), pincode.trim(), role, hh_code || null, cleanPhone]
+            `INSERT INTO users (name, email, password_hash, dob, address, pincode, city, state, role, hh_code, phone)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name.trim(), generatedEmail, defaultPasswordHash, dob, address.trim(), pincode.trim(), resolvedCity, resolvedState, role, hh_code || null, cleanPhone]
         );
         persist();
 
         // Fetch the newly created user (without password)
-        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, role, hh_code, phone, created_at FROM users ORDER BY id DESC LIMIT 1`);
+        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, city, state, role, hh_code, phone, created_at FROM users ORDER BY id DESC LIMIT 1`);
         stmt.step();
         const user = stmt.getAsObject();
         stmt.free();
@@ -60,8 +144,8 @@ router.post('/register', async (req, res) => {
         // Seed default Primary address
         try {
             db.run(
-                `INSERT INTO addresses (user_id, label, address, pincode, is_primary) VALUES (?, 'Primary', ?, ?, 1)`,
-                [user.id, address.trim(), pincode.trim()]
+                `INSERT INTO addresses (user_id, label, address, pincode, city, state, is_primary) VALUES (?, 'Primary', ?, ?, ?, ?, 1)`,
+                [user.id, address.trim(), pincode.trim(), resolvedCity, resolvedState]
             );
             persist();
         } catch (e) {}
@@ -114,17 +198,23 @@ router.post('/login', async (req, res) => {
 // PATCH /api/users/:id/address
 // ─────────────────────────────────────────────
 router.patch('/:id/address', async (req, res) => {
-    const { address, pincode } = req.body;
+    const { address, pincode, city, state } = req.body;
     if (!address || !pincode) {
         return res.status(400).json({ error: 'Address and pincode are required.' });
+    }
+    if (!isValidIndianPincode(pincode)) {
+        return res.status(400).json({ error: 'Please enter a valid 6-digit Indian PIN code.' });
     }
 
     try {
         const db = await getDb();
-        db.run(`UPDATE users SET address = ?, pincode = ? WHERE id = ?`, [address.trim(), pincode.trim(), req.params.id]);
+        db.run(
+            `UPDATE users SET address = ?, pincode = ?, city = COALESCE(?, city), state = COALESCE(?, state) WHERE id = ?`,
+            [address.trim(), pincode.trim(), city ? city.trim() : null, state ? state.trim() : null, req.params.id]
+        );
         persist();
 
-        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, role, hh_code, phone FROM users WHERE id = ?`);
+        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, city, state, role, hh_code, phone FROM users WHERE id = ?`);
         stmt.bind([req.params.id]);
         if (!stmt.step()) { stmt.free(); return res.status(404).json({ error: 'User not found.' }); }
         const user = stmt.getAsObject();
@@ -205,12 +295,15 @@ router.get('/:id/addresses', async (req, res) => {
 
 // ─────────────────────────────────────────────
 // POST /api/users/:id/addresses
-// Body: { label, address, pincode, is_primary }
+// Body: { label, address, pincode, city, state, is_primary }
 // ─────────────────────────────────────────────
 router.post('/:id/addresses', async (req, res) => {
-    const { label, address, pincode, is_primary } = req.body;
+    const { label, address, pincode, city, state, is_primary } = req.body;
     if (!address) {
         return res.status(400).json({ error: 'Address is required.' });
+    }
+    if (pincode && !isValidIndianPincode(pincode)) {
+        return res.status(400).json({ error: 'Please enter a valid 6-digit Indian PIN code.' });
     }
 
     try {
@@ -218,12 +311,15 @@ router.post('/:id/addresses', async (req, res) => {
         const primaryFlag = is_primary ? 1 : 0;
         if (primaryFlag === 1) {
             db.run(`UPDATE addresses SET is_primary = 0 WHERE user_id = ?`, [req.params.id]);
-            db.run(`UPDATE users SET address = ?, pincode = ? WHERE id = ?`, [address.trim(), (pincode || '').trim(), req.params.id]);
+            db.run(
+                `UPDATE users SET address = ?, pincode = ?, city = COALESCE(?, city), state = COALESCE(?, state) WHERE id = ?`,
+                [address.trim(), (pincode || '').trim(), city ? city.trim() : null, state ? state.trim() : null, req.params.id]
+            );
         }
 
         db.run(
-            `INSERT INTO addresses (user_id, label, address, pincode, is_primary) VALUES (?, ?, ?, ?, ?)`,
-            [req.params.id, (label || 'Other').trim(), address.trim(), (pincode || '').trim(), primaryFlag]
+            `INSERT INTO addresses (user_id, label, address, pincode, city, state, is_primary) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [req.params.id, (label || 'Other').trim(), address.trim(), (pincode || '').trim(), city ? city.trim() : null, state ? state.trim() : null, primaryFlag]
         );
         persist();
 
@@ -240,23 +336,29 @@ router.post('/:id/addresses', async (req, res) => {
 
 // ─────────────────────────────────────────────
 // PUT /api/users/:id/addresses/:addressId
-// Body: { label, address, pincode, is_primary }
+// Body: { label, address, pincode, city, state, is_primary }
 // ─────────────────────────────────────────────
 router.put('/:id/addresses/:addressId', async (req, res) => {
-    const { label, address, pincode, is_primary } = req.body;
+    const { label, address, pincode, city, state, is_primary } = req.body;
+    if (pincode && !isValidIndianPincode(pincode)) {
+        return res.status(400).json({ error: 'Please enter a valid 6-digit Indian PIN code.' });
+    }
     try {
         const db = await getDb();
         const primaryFlag = is_primary ? 1 : 0;
         if (primaryFlag === 1) {
             db.run(`UPDATE addresses SET is_primary = 0 WHERE user_id = ?`, [req.params.id]);
             if (address) {
-                db.run(`UPDATE users SET address = ?, pincode = ? WHERE id = ?`, [address.trim(), (pincode || '').trim(), req.params.id]);
+                db.run(
+                    `UPDATE users SET address = ?, pincode = ?, city = COALESCE(?, city), state = COALESCE(?, state) WHERE id = ?`,
+                    [address.trim(), (pincode || '').trim(), city ? city.trim() : null, state ? state.trim() : null, req.params.id]
+                );
             }
         }
 
         db.run(
-            `UPDATE addresses SET label = COALESCE(?, label), address = COALESCE(?, address), pincode = COALESCE(?, pincode), is_primary = ? WHERE id = ? AND user_id = ?`,
-            [label ? label.trim() : null, address ? address.trim() : null, pincode ? pincode.trim() : null, primaryFlag, req.params.addressId, req.params.id]
+            `UPDATE addresses SET label = COALESCE(?, label), address = COALESCE(?, address), pincode = COALESCE(?, pincode), city = COALESCE(?, city), state = COALESCE(?, state), is_primary = ? WHERE id = ? AND user_id = ?`,
+            [label ? label.trim() : null, address ? address.trim() : null, pincode ? pincode.trim() : null, city ? city.trim() : null, state ? state.trim() : null, primaryFlag, req.params.addressId, req.params.id]
         );
         persist();
 
@@ -268,19 +370,22 @@ router.put('/:id/addresses/:addressId', async (req, res) => {
 
 // ─────────────────────────────────────────────
 // PATCH /api/users/:id/profile
-// Body: { name, dob, pincode }
+// Body: { name, dob, pincode, city, state }
 // ─────────────────────────────────────────────
 router.patch('/:id/profile', async (req, res) => {
-    const { name, dob, pincode } = req.body;
+    const { name, dob, pincode, city, state, bio, saved_materials } = req.body;
+    if (pincode && !isValidIndianPincode(pincode)) {
+        return res.status(400).json({ error: 'Please enter a valid 6-digit Indian PIN code.' });
+    }
     try {
         const db = await getDb();
         db.run(
-            `UPDATE users SET name = COALESCE(?, name), dob = COALESCE(?, dob), pincode = COALESCE(?, pincode) WHERE id = ?`,
-            [name ? name.trim() : null, dob ? dob.trim() : null, pincode ? pincode.trim() : null, req.params.id]
+            `UPDATE users SET name = COALESCE(?, name), dob = COALESCE(?, dob), pincode = COALESCE(?, pincode), city = COALESCE(?, city), state = COALESCE(?, state), bio = COALESCE(?, bio), saved_materials = COALESCE(?, saved_materials) WHERE id = ?`,
+            [name ? name.trim() : null, dob ? dob.trim() : null, pincode ? pincode.trim() : null, city ? city.trim() : null, state ? state.trim() : null, bio ? bio.trim() : null, saved_materials ? saved_materials.trim() : null, req.params.id]
         );
         persist();
 
-        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, role, hh_code, phone FROM users WHERE id = ?`);
+        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, city, state, role, hh_code, phone FROM users WHERE id = ?`);
         stmt.bind([req.params.id]);
         stmt.step();
         const user = stmt.getAsObject();

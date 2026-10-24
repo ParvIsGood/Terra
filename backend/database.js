@@ -111,6 +111,10 @@ async function getDb() {
     } catch (e) {}
 
     try {
+        db.run(`ALTER TABLE pickups ADD COLUMN material_weights TEXT`);
+    } catch (e) {}
+
+    try {
         db.run(`ALTER TABLE pickups ADD COLUMN payout_amount REAL`);
     } catch (e) {}
 
@@ -124,6 +128,20 @@ async function getDb() {
 
     try {
         db.run(`ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0`);
+    } catch (e) {}
+
+    try {
+        db.run(`ALTER TABLE users ADD COLUMN city TEXT`);
+    } catch (e) {}
+    try {
+        db.run(`ALTER TABLE users ADD COLUMN state TEXT`);
+    } catch (e) {}
+
+    try {
+        db.run(`ALTER TABLE addresses ADD COLUMN city TEXT`);
+    } catch (e) {}
+    try {
+        db.run(`ALTER TABLE addresses ADD COLUMN state TEXT`);
     } catch (e) {}
 
     persist();
