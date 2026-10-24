@@ -113,6 +113,17 @@
         .modal { display: none; opacity: 0; transition: opacity 0.2s ease; }
         .modal.active { display: flex; opacity: 1; }
 
+        /* Voice equalizer wave animations */
+        @keyframes voiceWave {
+            0%, 100% { height: 8px; }
+            50% { height: 28px; }
+        }
+        .voice-bar-1 { animation: voiceWave 0.8s ease-in-out infinite; }
+        .voice-bar-2 { animation: voiceWave 0.6s ease-in-out infinite 0.15s; }
+        .voice-bar-3 { animation: voiceWave 0.9s ease-in-out infinite 0.3s; }
+        .voice-bar-4 { animation: voiceWave 0.7s ease-in-out infinite 0.1s; }
+        .voice-bar-5 { animation: voiceWave 0.85s ease-in-out infinite 0.25s; }
+
         /* Error / success message */
         .form-msg { font-size: 0.75rem; font-weight: 600; text-align: center; margin-top: 8px; min-height: 18px; }
 
@@ -630,7 +641,7 @@
             </div>
 
             <!-- Segregation Guide Card -->
-            <div onclick="openSegGuide()" class="bg-white rounded-2xl p-4 border border-brand-border shadow-sm flex items-center justify-between cursor-pointer hover:border-brand-dark/30 transition-colors">
+            <div onclick="openSegGuide()" class="bg-white rounded-2xl p-4 border border-brand-border shadow-sm flex items-center justify-between cursor-pointer hover:border-brand-dark/30 transition-colors mb-3">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-brand-light rounded-xl flex items-center justify-center text-brand-dark shrink-0">
                         <i class="ph-fill ph-book-open text-xl"></i>
@@ -641,6 +652,25 @@
                     </div>
                 </div>
                 <i class="ph-bold ph-caret-right text-brand-grayText"></i>
+            </div>
+
+            <!-- 24/7 AI Voice Hotline Card -->
+            <div onclick="startVoiceCall()" class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-brand-dark rounded-2xl p-4 text-white shadow-sm flex items-center justify-between cursor-pointer hover:opacity-95 transition-all active:scale-[0.99] border border-emerald-700/50">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 bg-emerald-500/20 border border-emerald-400/40 rounded-xl flex items-center justify-center text-emerald-300 shrink-0 shadow-inner">
+                        <i class="ph-fill ph-phone-call text-xl animate-pulse"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-extrabold text-white">24/7 Voice Hotline</p>
+                            <span class="text-[9px] font-black uppercase tracking-wider bg-emerald-400/25 text-emerald-200 border border-emerald-400/40 px-2 py-0.5 rounded-full">Free • Live</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-100/80 font-medium">Talk to Terra AI in Hindi or English</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-emerald-300 shrink-0 transition-colors">
+                    <i class="ph-bold ph-phone text-sm"></i>
+                </div>
             </div>
         </div>
     </div>
@@ -676,6 +706,25 @@
                     <button onclick="nav('schedule-biz')" class="bg-white text-brand-dark px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-gray-50 active:scale-95 transition-transform shadow-sm">
                         Schedule Request <i class="ph-bold ph-arrow-right"></i>
                     </button>
+                </div>
+            </div>
+
+            <!-- 24/7 AI Voice Hotline Card (Business) -->
+            <div onclick="startVoiceCall()" class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-brand-dark rounded-2xl p-4 text-white shadow-sm flex items-center justify-between cursor-pointer hover:opacity-95 transition-all active:scale-[0.99] border border-emerald-700/50">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 bg-emerald-500/20 border border-emerald-400/40 rounded-xl flex items-center justify-center text-emerald-300 shrink-0 shadow-inner">
+                        <i class="ph-fill ph-phone-call text-xl animate-pulse"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-extrabold text-white">24/7 Voice Hotline</p>
+                            <span class="text-[9px] font-black uppercase tracking-wider bg-emerald-400/25 text-emerald-200 border border-emerald-400/40 px-2 py-0.5 rounded-full">Free • Live</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-100/80 font-medium">Talk to Terra AI in Hindi or English</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-emerald-300 shrink-0 transition-colors">
+                    <i class="ph-bold ph-phone text-sm"></i>
                 </div>
             </div>
         </div>
@@ -1383,9 +1432,15 @@
                     <p class="text-[11px] text-emerald-200 font-medium">Your Eco &amp; Waste Guide</p>
                 </div>
             </div>
-            <button onclick="closeAIChat()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
-                <i class="ph-bold ph-x text-base"></i>
-            </button>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="closeAIChat(); setTimeout(startVoiceCall, 200);" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 text-[11px] font-bold transition-all active:scale-95 shadow-xs cursor-pointer">
+                    <i class="ph-fill ph-phone-call text-xs"></i>
+                    <span>Voice Call</span>
+                </button>
+                <button onclick="closeAIChat()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
+                    <i class="ph-bold ph-x text-base"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Quick Prompt Chips -->
@@ -1441,6 +1496,89 @@
                 </button>
             </form>
         </div>
+    </div>
+</div>
+
+<!-- Modal: 24/7 AI Voice Call Hotline -->
+<div id="modal-voice-call" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="w-full max-w-[400px] h-[88vh] max-h-[720px] bg-gradient-to-b from-[#0c2417] via-[#07170e] to-[#040d08] text-white rounded-[36px] shadow-2xl flex flex-col justify-between p-6 relative overflow-hidden border border-emerald-500/30 transform transition-transform scale-95" id="modal-voice-call-content">
+        
+        <!-- Top Status Bar -->
+        <div class="flex items-center justify-between w-full pt-1 shrink-0">
+            <div class="flex items-center gap-2 bg-emerald-950/70 border border-emerald-500/30 px-3 py-1.5 rounded-full backdrop-blur-md shadow-inner">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[10px] font-bold tracking-wider uppercase text-emerald-300">Live AI Hotline • 100% Free</span>
+            </div>
+            <!-- Language Switcher Pill -->
+            <button type="button" onclick="toggleVoiceLang()" id="btn-voice-lang-toggle" class="bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 rounded-full text-[11px] font-bold text-emerald-200 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs">
+                <i class="ph ph-globe text-sm"></i>
+                <span id="voice-lang-label">हिन्दी</span>
+            </button>
+        </div>
+
+        <!-- Center Stage: Avatar, Waves & Status -->
+        <div class="flex flex-col items-center justify-center text-center my-auto py-2 w-full">
+            <!-- Pulsing Rings Container -->
+            <div class="relative mb-5 flex items-center justify-center">
+                <div id="voice-pulse-ring-1" class="absolute -inset-4 rounded-full border-2 border-emerald-400 animate-ping opacity-75"></div>
+                <div id="voice-pulse-ring-2" class="absolute -inset-8 rounded-full border border-emerald-500/40 animate-pulse"></div>
+                <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-emerald-800 to-emerald-500 border-2 border-emerald-300/80 shadow-2xl shadow-emerald-500/30 flex items-center justify-center relative z-10">
+                    <i class="ph-fill ph-sparkle text-4xl text-yellow-300 drop-shadow"></i>
+                </div>
+            </div>
+
+            <!-- Name and Status -->
+            <h2 class="text-2xl font-black tracking-tight text-white mb-1">Terra AI</h2>
+            <div class="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-300/90 mb-1">
+                <span id="voice-call-status">Calling...</span>
+                <span id="voice-call-timer-dot" class="hidden w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span id="voice-call-timer" class="font-mono text-xs"></span>
+            </div>
+            <p id="voice-call-subtext" class="text-[11px] text-white/50 max-w-[260px] h-4 truncate">Connecting to voice server...</p>
+
+            <!-- Audio Equalizer Bars (animated during speech) -->
+            <div id="voice-sound-waves" class="flex items-center justify-center gap-1.5 h-8 my-3 opacity-0 transition-opacity duration-300">
+                <div class="w-1 bg-emerald-400 rounded-full voice-bar-1"></div>
+                <div class="w-1 bg-emerald-300 rounded-full voice-bar-2"></div>
+                <div class="w-1 bg-emerald-400 rounded-full voice-bar-3"></div>
+                <div class="w-1 bg-emerald-300 rounded-full voice-bar-4"></div>
+                <div class="w-1 bg-emerald-400 rounded-full voice-bar-5"></div>
+            </div>
+
+            <!-- Live Transcript Card -->
+            <div class="w-full max-w-[320px] bg-white/5 border border-white/10 rounded-2xl p-3.5 backdrop-blur-md min-h-[82px] flex flex-col justify-center text-left transition-all shadow-inner">
+                <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400/80 mb-1">
+                    <i class="ph-bold ph-chats-circle"></i>
+                    <span>Live Transcript</span>
+                </div>
+                <p id="voice-call-transcript" class="text-xs text-white/90 font-medium leading-relaxed italic line-clamp-3">
+                    "Dialing Terra AI waste assistant..."
+                </p>
+            </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="w-full pb-2 shrink-0">
+            <div class="flex items-center justify-around max-w-[280px] mx-auto">
+                <!-- Mute Button -->
+                <button type="button" onclick="toggleVoiceMute()" id="btn-voice-mute" class="w-13 h-13 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex flex-col items-center justify-center text-white transition-all active:scale-95 cursor-pointer">
+                    <i id="icon-voice-mute" class="ph-bold ph-microphone text-xl text-white"></i>
+                    <span id="label-voice-mute" class="text-[9px] font-bold mt-0.5 text-white/70">Mute</span>
+                </button>
+
+                <!-- End Call Button (Big Red) -->
+                <button type="button" onclick="endVoiceCall()" class="w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 shadow-xl shadow-red-950/70 border-2 border-red-400/50 flex items-center justify-center text-white text-3xl transition-all active:scale-90 hover:scale-105 cursor-pointer" title="End Call">
+                    <i class="ph-bold ph-phone-disconnect"></i>
+                </button>
+
+                <!-- Switch to Text Chat -->
+                <button type="button" onclick="switchToTextChat()" class="w-13 h-13 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex flex-col items-center justify-center text-white transition-all active:scale-95 cursor-pointer">
+                    <i class="ph-bold ph-chat-teardrop-text text-xl text-white"></i>
+                    <span class="text-[9px] font-bold mt-0.5 text-white/70">Chat</span>
+                </button>
+            </div>
+        </div>
+
     </div>
 </div>
 <!-- Segregation Guide Modal -->
@@ -5673,6 +5811,425 @@
             box.appendChild(errBubble);
             scrollAIChatToBottom();
         }
+    }
+
+    // ─── Terra AI Live Voice Call Hotline (100% Free) ───────────────────────
+    let voiceCallActive = false;
+    let voiceRecognition = null;
+    let voiceTimerInterval = null;
+    let voiceCallSeconds = 0;
+    let voiceAudioCtx = null;
+    let voiceRingtoneTimer = null;
+    let voiceIsMuted = false;
+    let voiceSelectedLang = 'hi-IN'; // 'hi-IN' handles Hindi & Hinglish effortlessly
+    let voiceIsSpeaking = false;
+    let voiceIsThinking = false;
+    let voiceSilenceTimer = null;
+    let voiceCurrentTranscript = '';
+
+    function formatCallDuration(sec) {
+        const m = Math.floor(sec / 60).toString().padStart(2, '0');
+        const s = (sec % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function setVoiceStatus(status, subtext = '') {
+        const stEl = document.getElementById('voice-call-status');
+        const subEl = document.getElementById('voice-call-subtext');
+        if (stEl) stEl.textContent = status;
+        if (subEl) subEl.textContent = subtext;
+    }
+
+    function setVoiceVisualizer(state) { // 'ringing' | 'connected' | 'listening' | 'speaking' | 'thinking'
+        const ring1 = document.getElementById('voice-pulse-ring-1');
+        const ring2 = document.getElementById('voice-pulse-ring-2');
+        const waves = document.getElementById('voice-sound-waves');
+
+        if (!ring1 || !ring2) return;
+
+        if (state === 'speaking') {
+            ring1.className = 'absolute -inset-4 rounded-full border-2 border-emerald-400 animate-ping opacity-75';
+            ring2.className = 'absolute -inset-8 rounded-full border-2 border-emerald-400/40 animate-pulse';
+            if (waves) waves.classList.remove('opacity-0');
+        } else if (state === 'listening') {
+            ring1.className = 'absolute -inset-3 rounded-full border-2 border-emerald-400 animate-pulse opacity-90';
+            ring2.className = 'absolute -inset-6 rounded-full border border-emerald-400/30';
+            if (waves) waves.classList.add('opacity-0');
+        } else if (state === 'ringing') {
+            ring1.className = 'absolute -inset-4 rounded-full border-2 border-yellow-400 animate-ping opacity-50';
+            ring2.className = 'absolute -inset-8 rounded-full border border-yellow-400/30 animate-pulse';
+            if (waves) waves.classList.add('opacity-0');
+        } else if (state === 'thinking') {
+            ring1.className = 'absolute -inset-3 rounded-full border-2 border-yellow-300 animate-spin opacity-60';
+            ring2.className = 'absolute -inset-6 rounded-full border border-yellow-400/20';
+            if (waves) waves.classList.add('opacity-0');
+        } else {
+            ring1.className = 'hidden';
+            ring2.className = 'hidden';
+            if (waves) waves.classList.add('opacity-0');
+        }
+    }
+
+    function playRingtone() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            voiceAudioCtx = new AudioContext();
+
+            function playBurst() {
+                if (!voiceCallActive || !voiceAudioCtx) return;
+                const now = voiceAudioCtx.currentTime;
+                const osc1 = voiceAudioCtx.createOscillator();
+                const osc2 = voiceAudioCtx.createOscillator();
+                const gain = voiceAudioCtx.createGain();
+
+                osc1.type = 'sine';
+                osc2.type = 'sine';
+                osc1.frequency.setValueAtTime(400, now);
+                osc2.frequency.setValueAtTime(450, now);
+
+                gain.gain.setValueAtTime(0.06, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(voiceAudioCtx.destination);
+
+                osc1.start(now);
+                osc2.start(now);
+                osc1.stop(now + 1.2);
+                osc2.stop(now + 1.2);
+
+                voiceRingtoneTimer = setTimeout(() => {
+                    if (voiceCallActive && !voiceTimerInterval) playBurst();
+                }, 2800);
+            }
+            playBurst();
+        } catch (e) {
+            console.warn('Web Audio dial tone could not play', e);
+        }
+    }
+
+    function stopRingtone() {
+        if (voiceRingtoneTimer) clearTimeout(voiceRingtoneTimer);
+        voiceRingtoneTimer = null;
+        if (voiceAudioCtx) {
+            try { voiceAudioCtx.close(); } catch (e) {}
+            voiceAudioCtx = null;
+        }
+    }
+
+    function toggleVoiceLang() {
+        if (voiceSelectedLang === 'hi-IN') {
+            voiceSelectedLang = 'en-IN';
+            document.getElementById('voice-lang-label').textContent = 'English';
+            toast('Voice hotline language switched to English');
+        } else {
+            voiceSelectedLang = 'hi-IN';
+            document.getElementById('voice-lang-label').textContent = 'हिन्दी';
+            toast('Voice hotline language switched to Hindi (हिन्दी)');
+        }
+
+        if (voiceRecognition && voiceCallActive) {
+            try {
+                voiceRecognition.lang = voiceSelectedLang;
+            } catch (e) {}
+        }
+    }
+
+    function toggleVoiceMute() {
+        voiceIsMuted = !voiceIsMuted;
+        const icon = document.getElementById('icon-voice-mute');
+        const label = document.getElementById('label-voice-mute');
+        const btn = document.getElementById('btn-voice-mute');
+
+        if (voiceIsMuted) {
+            if (icon) icon.className = 'ph-bold ph-microphone-slash text-xl text-red-400';
+            if (label) {
+                label.textContent = 'Muted';
+                label.className = 'text-[9px] font-bold mt-0.5 text-red-400';
+            }
+            if (btn) btn.classList.add('border-red-400/50', 'bg-red-500/20');
+            toast('Microphone muted');
+        } else {
+            if (icon) icon.className = 'ph-bold ph-microphone text-xl text-white';
+            if (label) {
+                label.textContent = 'Mute';
+                label.className = 'text-[9px] font-bold mt-0.5 text-white/70';
+            }
+            if (btn) btn.classList.remove('border-red-400/50', 'bg-red-500/20');
+            toast('Microphone unmuted');
+        }
+    }
+
+    function switchToTextChat() {
+        endVoiceCall();
+        setTimeout(openAIChat, 250);
+    }
+
+    function cleanSpokenText(raw) {
+        if (!raw) return '';
+        return raw
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/#{1,6}\s+/g, '')
+            .replace(/`{1,3}[^`]*`{1,3}/g, '')
+            .replace(/https?:\/\/[^\s]+/g, '')
+            .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function speakVoiceResponse(text) {
+        if (!voiceCallActive) return;
+        const clean = cleanSpokenText(text);
+        if (!clean) {
+            resumeVoiceListening();
+            return;
+        }
+
+        if (!window.speechSynthesis) {
+            resumeVoiceListening();
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(clean);
+        utterance.lang = voiceSelectedLang;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.05;
+
+        // Try to pick Hindi or Indian English voice
+        const voices = window.speechSynthesis.getVoices() || [];
+        if (voices.length > 0) {
+            if (voiceSelectedLang.startsWith('hi')) {
+                const hiVoice = voices.find(v => v.lang && (v.lang.toLowerCase().includes('hi-in') || v.lang.toLowerCase().includes('hi_in') || v.name.toLowerCase().includes('hindi')));
+                if (hiVoice) utterance.voice = hiVoice;
+                else {
+                    const enInVoice = voices.find(v => v.lang && (v.lang.toLowerCase().includes('en-in') || v.lang.toLowerCase().includes('en_in')));
+                    if (enInVoice) utterance.voice = enInVoice;
+                }
+            } else {
+                const enInVoice = voices.find(v => v.lang && (v.lang.toLowerCase().includes('en-in') || v.lang.toLowerCase().includes('en_in')));
+                if (enInVoice) utterance.voice = enInVoice;
+                else {
+                    const enVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+                    if (enVoice) utterance.voice = enVoice;
+                }
+            }
+        }
+
+        voiceIsSpeaking = true;
+        setVoiceStatus('Speaking…', 'Terra AI is talking');
+        setVoiceVisualizer('speaking');
+
+        const transcriptEl = document.getElementById('voice-call-transcript');
+        if (transcriptEl) transcriptEl.textContent = `Terra: "${clean}"`;
+
+        utterance.onend = function() {
+            if (!voiceCallActive) return;
+            voiceIsSpeaking = false;
+            resumeVoiceListening();
+        };
+
+        utterance.onerror = function() {
+            if (!voiceCallActive) return;
+            voiceIsSpeaking = false;
+            resumeVoiceListening();
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function resumeVoiceListening() {
+        if (!voiceCallActive) return;
+        setVoiceStatus('Listening…', 'Speak now / Aap boliye');
+        setVoiceVisualizer('listening');
+        voiceCurrentTranscript = '';
+
+        if (voiceRecognition && !voiceIsMuted) {
+            try {
+                voiceRecognition.start();
+            } catch (e) {
+                // Already started or restarting
+            }
+        }
+    }
+
+    async function sendVoiceQueryToBackend(userMessage) {
+        if (!voiceCallActive || !userMessage || !userMessage.trim()) return;
+        voiceIsThinking = true;
+        setVoiceStatus('Thinking…', 'Finding the best answer');
+        setVoiceVisualizer('thinking');
+
+        const transcriptEl = document.getElementById('voice-call-transcript');
+        if (transcriptEl) transcriptEl.textContent = `You: "${userMessage}"`;
+
+        try {
+            const res = await fetch(`${API_BASE}/ai/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: userMessage,
+                    userId: appState.user?.id || null,
+                    isVoiceCall: true
+                })
+            });
+            const data = await res.json();
+            voiceIsThinking = false;
+
+            const reply = data.reply || (voiceSelectedLang === 'hi-IN' ? 'Ji zaroor, main aapki poori madad karunga.' : 'Certainly, I am here to help you.');
+            speakVoiceResponse(reply);
+        } catch (err) {
+            voiceIsThinking = false;
+            console.error('Voice backend query failed', err);
+            speakVoiceResponse(voiceSelectedLang === 'hi-IN' 
+                ? 'Network issue ki wajah se contact nahi ho paaya. Kripya dubara boliye.' 
+                : 'Could not connect right now. Please speak again.');
+        }
+    }
+
+    function initVoiceRecognition() {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {
+            return null;
+        }
+
+        const rec = new SpeechRec();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.lang = voiceSelectedLang;
+
+        rec.onresult = function(event) {
+            if (!voiceCallActive || voiceIsSpeaking || voiceIsThinking || voiceIsMuted) return;
+
+            let interim = '';
+            let final = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    final += event.results[i][0].transcript;
+                } else {
+                    interim += event.results[i][0].transcript;
+                }
+            }
+
+            const current = (final || interim).trim();
+            if (current) {
+                voiceCurrentTranscript = current;
+                const transcriptEl = document.getElementById('voice-call-transcript');
+                if (transcriptEl) transcriptEl.textContent = `You: "${current}"`;
+
+                if (voiceSilenceTimer) clearTimeout(voiceSilenceTimer);
+                // Trigger query after 1.1s of user silence
+                voiceSilenceTimer = setTimeout(() => {
+                    if (voiceCallActive && !voiceIsSpeaking && !voiceIsThinking && voiceCurrentTranscript) {
+                        const toSend = voiceCurrentTranscript;
+                        voiceCurrentTranscript = '';
+                        try { rec.stop(); } catch (e) {}
+                        sendVoiceQueryToBackend(toSend);
+                    }
+                }, 1100);
+            }
+        };
+
+        rec.onerror = function(event) {
+            console.warn('Voice recognition notice:', event.error);
+            if (event.error === 'not-allowed') {
+                toast('Microphone permission required for AI voice call.');
+                endVoiceCall();
+            }
+        };
+
+        rec.onend = function() {
+            if (voiceCallActive && !voiceIsSpeaking && !voiceIsThinking && !voiceIsMuted) {
+                try { rec.start(); } catch (e) {}
+            }
+        };
+
+        return rec;
+    }
+
+    function startVoiceCall() {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {
+            toast('Live Voice Call requires Chrome, Safari, or Edge with speech support.');
+            openAIChat();
+            return;
+        }
+
+        voiceCallActive = true;
+        voiceCallSeconds = 0;
+        voiceIsMuted = false;
+        voiceIsSpeaking = false;
+        voiceIsThinking = false;
+        voiceCurrentTranscript = '';
+
+        // Reset UI
+        openModal('modal-voice-call');
+        setVoiceStatus('Calling…', 'Connecting to Terra AI hotline…');
+        setVoiceVisualizer('ringing');
+        const timerEl = document.getElementById('voice-call-timer');
+        const dotEl = document.getElementById('voice-call-timer-dot');
+        const transEl = document.getElementById('voice-call-transcript');
+        if (timerEl) timerEl.textContent = '';
+        if (dotEl) dotEl.classList.add('hidden');
+        if (transEl) transEl.textContent = '"Connecting to Terra AI…"';
+
+        // Play authentic dial ringtone
+        playRingtone();
+
+        // Connect after 1.8 seconds (simulating instant cellular handshake)
+        setTimeout(() => {
+            if (!voiceCallActive) return;
+            stopRingtone();
+
+            // Start duration timer
+            if (dotEl) dotEl.classList.remove('hidden');
+            voiceTimerInterval = setInterval(() => {
+                voiceCallSeconds++;
+                if (timerEl) timerEl.textContent = formatCallDuration(voiceCallSeconds);
+            }, 1000);
+
+            // Initialize microphone recognition
+            voiceRecognition = initVoiceRecognition();
+
+            // Terra AI speaks first greeting
+            const greeting = voiceSelectedLang === 'hi-IN'
+                ? 'Namaste! Main Terra AI hoon. Kooda segregation ya pickup ke baare mein kuch bhi poochiye.'
+                : 'Hello! I am Terra AI. How can I help you with your waste segregation or pickup today?';
+
+            speakVoiceResponse(greeting);
+        }, 1800);
+    }
+
+    function endVoiceCall() {
+        voiceCallActive = false;
+        stopRingtone();
+
+        if (voiceTimerInterval) {
+            clearInterval(voiceTimerInterval);
+            voiceTimerInterval = null;
+        }
+        if (voiceSilenceTimer) {
+            clearTimeout(voiceSilenceTimer);
+            voiceSilenceTimer = null;
+        }
+
+        if (voiceRecognition) {
+            try {
+                voiceRecognition.onend = null;
+                voiceRecognition.stop();
+            } catch (e) {}
+            voiceRecognition = null;
+        }
+
+        if (window.speechSynthesis) {
+            try { window.speechSynthesis.cancel(); } catch (e) {}
+        }
+
+        setVoiceVisualizer('idle');
+        closeModal('modal-voice-call');
     }
 </script>
 </body>

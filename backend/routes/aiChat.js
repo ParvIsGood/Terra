@@ -19,8 +19,9 @@ Official Circular by Terra Knowledge:
 • Milk Pouches / Soft Plastics: Rinse lightly with water, let dry, and bundle with Dry Recyclables.
 • E-Waste: Old phones, chargers, cables, appliances, remotes, gadgets, circuit boards.
 • Harmful / Hazardous Waste: Expired medicines, syringes/sharps, chemical cleaners, paint, pesticides, car oil, aerosol cans. Must never be mixed with regular waste. Sharps should be in a puncture-proof container.
-• Scrap Payouts: When weight is confirmed at the doorstep by the authorized kabadiwala, the household is disbursed an initial 20% of the actual amount. The remaining 20% balance is paid after batch confirmation in the authorized Recycling Unit.
-• Green Points: 1 point earned per kg of segregated recyclables. Every 50 points prevents ~12.5 kg of CO2 emissions.
+• Scrap Payouts: Doorstep weigh-in by authorized collector gives instant verified cash credited to wallet (Cardboard ₹7.60/kg, Paper ₹8/kg, Plastic ₹10/kg, Iron ₹14/kg, Aluminium ₹44/kg, Copper ₹160/kg). Withdrawable to UPI.
+• Pickup Fees: Segregated scheduled collection is 100% FREE (₹0). Non-segregated mixed waste incurs a ₹15 sorting fee (₹0 payout). Instant pickup within 45 mins has a ₹30 convenience fee.
+• Green Points: Non-monetary environmental impact score (+10 pts/kg of recyclables diverted). Points cannot be converted to wallet cash.
 • Segregation Reference: When relevant, share the official link: "For more information refer https://share.google/ek9B3BloMvGMxW7UR".
 `;
 
@@ -70,7 +71,7 @@ function getSmartFallbackReply(userMsg, context = {}) {
 // Body: { message, imageBase64?, mimeType?, userId? }
 // ─────────────────────────────────────────────
 router.post('/chat', async (req, res) => {
-    const { message, imageBase64, mimeType, userId } = req.body;
+    const { message, imageBase64, mimeType, userId, isVoiceCall } = req.body;
 
     if (!message && !imageBase64) {
         return res.status(400).json({ error: 'Message or image is required.' });
@@ -84,13 +85,14 @@ router.post('/chat', async (req, res) => {
         // Fetch live database context if user is logged in
         if (userId) {
             try {
-                const uStmt = db.prepare('SELECT id, name, points, role, address, pincode FROM users WHERE id = ?');
+                const uStmt = db.prepare('SELECT id, name, points, role, address, pincode, wallet_balance FROM users WHERE id = ?');
                 uStmt.bind([userId]);
                 if (uStmt.step()) {
                     const u = uStmt.getAsObject();
                     contextData.userName = u.name;
                     contextData.userPoints = u.points || 0;
-                    dbContextString += `User Profile: Name: ${u.name}, Role: ${u.role}, Pincode: ${u.pincode}, Green Points: ${u.points || 0}.\n`;
+                    contextData.walletBalance = u.wallet_balance || 0;
+                    dbContextString += `User Profile: Name: ${u.name}, Role: ${u.role}, Pincode: ${u.pincode}, Cash Wallet Balance: ₹${u.wallet_balance || 0}, Green Points: ${u.points || 0}.\n`;
                 }
                 uStmt.free();
 
@@ -114,6 +116,15 @@ router.post('/chat', async (req, res) => {
         if (dbContextString) {
             systemWithContext += `[Live Database Context for current user]:\n${dbContextString}\n\n`;
         }
+        if (isVoiceCall) {
+            systemWithContext += `\n[CRITICAL TELEPHONE VOICE CALL OVERRIDE]:
+You are on a live voice phone call right now with the customer.
+1. Answer in natural, friendly spoken Hindi/Hinglish (or English if addressed in English).
+2. Keep your response strictly under 2 short conversational sentences (under 25 words).
+3. ABSOLUTELY NEVER use markdown symbols, asterisks (**), bullet points, emojis, or website links. Your text is directly fed into browser speech synthesis.
+4. If asked about scrap rates, quote: Cardboard ₹7.60 per kg, Paper ₹8 per kg, Plastic ₹10 per kg, Iron ₹14 per kg.
+5. Scheduled segregated pickups are 100% free.\n`;
+        }
 
         // 1. Try Groq (Ultra-fast, Llama 3 / Qwen)
         if (groqKey && groqKey.startsWith('gsk_')) {
@@ -133,8 +144,8 @@ router.post('/chat', async (req, res) => {
                     userContent.push({ type: 'text', text: message });
                 }
 
-                const chosenModel = imageBase64 ? 'qwen/qwen3.8-27b' : 'openai/gpt-oss-120b';
-                const maxTokens = imageBase64 ? 350 : 500;
+                const chosenModel = 'qwen/qwen3.8-27b';
+                const maxTokens = isVoiceCall ? 120 : (imageBase64 ? 350 : 500);
 
                 const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                     method: 'POST',
