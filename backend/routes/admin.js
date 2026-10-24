@@ -20,7 +20,7 @@ router.get('/users', requireAdmin, async (req, res) => {
     try {
         const db   = await getDb();
         const stmt = db.prepare(`
-            SELECT id, name, email, dob, address, pincode, role, hh_code, created_at
+            SELECT id, name, email, phone, dob, address, pincode, city, state, role, hh_code, points, wallet_balance, created_at
             FROM users ORDER BY id DESC
         `);
         const users = [];
@@ -28,6 +28,88 @@ router.get('/users', requireAdmin, async (req, res) => {
         stmt.free();
         return res.json({ count: users.length, users });
     } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/admin/users/:id  — full user details, wallet & activity
+// ─────────────────────────────────────────────
+router.get('/users/:id', requireAdmin, async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id, 10);
+        if (!userId) return res.status(400).json({ error: 'Valid user ID required.' });
+
+        const db = await getDb();
+
+        // 1. Fetch user profile
+        const uStmt = db.prepare(`
+            SELECT id, name, email, phone, dob, address, pincode, city, state, role, hh_code, bio, saved_materials, points, wallet_balance, created_at
+            FROM users WHERE id = ?
+        `);
+        uStmt.bind([userId]);
+        if (!uStmt.step()) {
+            uStmt.free();
+            return res.status(404).json({ error: 'User not found.' });
+        }
+        const user = uStmt.getAsObject();
+        uStmt.free();
+
+        // 2. Fetch all pickups for this user
+        const pStmt = db.prepare(`
+            SELECT p.*, c.name as collector_name, c.phone_number as collector_phone
+            FROM pickups p
+            LEFT JOIN collectors c ON p.collector_id = c.id
+            WHERE p.user_id = ?
+            ORDER BY p.id DESC
+        `);
+        pStmt.bind([userId]);
+        const pickups = [];
+        while (pStmt.step()) pickups.push(pStmt.getAsObject());
+        pStmt.free();
+
+        // 3. Fetch all wallet transactions
+        const tStmt = db.prepare(`
+            SELECT * FROM transactions
+            WHERE user_id = ?
+            ORDER BY id DESC
+        `);
+        tStmt.bind([userId]);
+        const transactions = [];
+        while (tStmt.step()) transactions.push(tStmt.getAsObject());
+        tStmt.free();
+
+        // 4. Compute financial & environmental summary
+        let totalEarned = 0;
+        let totalWithdrawn = 0;
+        transactions.forEach(t => {
+            if (t.direction === 'credit' && t.status === 'Completed') {
+                totalEarned += (t.amount || 0);
+            } else if (t.direction === 'debit' && t.status === 'Completed') {
+                totalWithdrawn += (t.amount || 0);
+            }
+        });
+
+        const completedPickups = pickups.filter(p => (p.status || '').toLowerCase() === 'completed');
+        const totalWeightCollected = completedPickups.reduce((sum, p) => sum + (parseFloat(p.actual_weight) || 0), 0);
+
+        return res.json({
+            success: true,
+            user,
+            pickups,
+            transactions,
+            summary: {
+                wallet_balance: Math.round((user.wallet_balance || 0) * 100) / 100,
+                points: user.points || 0,
+                total_earned: Math.round(totalEarned * 100) / 100,
+                total_withdrawn: Math.round(totalWithdrawn * 100) / 100,
+                total_pickups: pickups.length,
+                completed_pickups: completedPickups.length,
+                total_weight_kg: Math.round(totalWeightCollected * 10) / 10
+            }
+        });
+    } catch (err) {
+        console.error('Admin user detail fetch error:', err);
         return res.status(500).json({ error: err.message });
     }
 });

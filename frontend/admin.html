@@ -132,10 +132,10 @@
                         <thead>
                             <tr class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                                 <th class="text-left px-6 py-3">ID</th>
-                                <th class="text-left px-6 py-3">Name</th>
-                                <th class="text-left px-6 py-3">Email</th>
+                                <th class="text-left px-6 py-3">User &amp; Contact</th>
                                 <th class="text-left px-6 py-3">Role</th>
-                                <th class="text-left px-6 py-3">Pincode</th>
+                                <th class="text-left px-6 py-3">Location</th>
+                                <th class="text-left px-6 py-3">Wallet &amp; Points</th>
                                 <th class="text-left px-6 py-3">HH Code</th>
                                 <th class="text-left px-6 py-3">Joined</th>
                                 <th class="text-left px-6 py-3">Actions</th>
@@ -236,6 +236,179 @@
                 <i class="ph-bold ph-check-circle text-lg"></i> WhatsApp Connected!
             </div>
             <p class="text-xs text-gray-500">Auto alerts are active. Pickups will automatically be sent to Kabadiwalas.</p>
+        </div>
+    </div>
+</div>
+
+<!-- USER DETAIL MODAL -->
+<div id="modal-user-detail" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl max-h-[92vh] flex flex-col overflow-hidden my-auto border border-gray-100">
+        <!-- Header -->
+        <div class="px-6 py-5 bg-[#0A3B2C] text-white flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-white/10 rounded-2xl flex items-center justify-center font-bold text-lg text-emerald-300 border border-white/10" id="ud-avatar">
+                    U
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-lg text-white" id="ud-name">User Details</h3>
+                        <span id="ud-role" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">Household</span>
+                        <span id="ud-id-badge" class="text-[11px] font-mono text-emerald-300">#0</span>
+                    </div>
+                    <p class="text-xs text-emerald-200/80 font-mono" id="ud-email">user@example.com</p>
+                </div>
+            </div>
+            <button onclick="closeUserDetailsModal()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
+        </div>
+
+        <!-- Body Scrollable -->
+        <div class="p-6 overflow-y-auto space-y-6">
+            <!-- Loading Indicator -->
+            <div id="ud-loading" class="py-16 text-center">
+                <div class="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                <p class="text-sm font-semibold text-gray-500">Fetching comprehensive user records…</p>
+            </div>
+
+            <div id="ud-content" class="hidden space-y-6">
+                <!-- Summary Metrics Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4">
+                        <div class="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i class="ph-bold ph-wallet"></i> Wallet Balance
+                        </div>
+                        <div class="text-2xl font-black text-[#0A3B2C]" id="ud-metric-wallet">₹0.00</div>
+                        <div class="text-[11px] text-emerald-600 mt-1">Available balance</div>
+                    </div>
+                    <div class="bg-green-50/70 border border-green-100 rounded-2xl p-4">
+                        <div class="text-[11px] font-semibold text-green-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i class="ph-fill ph-leaf"></i> Green Points
+                        </div>
+                        <div class="text-2xl font-black text-green-700" id="ud-metric-points">0</div>
+                        <div class="text-[11px] text-green-600 mt-1">Eco-rewards earned</div>
+                    </div>
+                    <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-4">
+                        <div class="text-[11px] font-semibold text-blue-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i class="ph-bold ph-currency-inr"></i> Total Earned
+                        </div>
+                        <div class="text-2xl font-black text-blue-700" id="ud-metric-earned">₹0.00</div>
+                        <div class="text-[11px] text-blue-600 mt-1">From scrap sales</div>
+                    </div>
+                    <div class="bg-amber-50/70 border border-amber-100 rounded-2xl p-4">
+                        <div class="text-[11px] font-semibold text-amber-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i class="ph-bold ph-scales"></i> Waste Recycled
+                        </div>
+                        <div class="text-2xl font-black text-amber-700" id="ud-metric-weight">0 kg</div>
+                        <div class="text-[11px] text-amber-600 mt-1" id="ud-metric-pickups-count">0 pickups completed</div>
+                    </div>
+                </div>
+
+                <!-- Section 1: Full Profile & Address Details -->
+                <div class="bg-gray-50/80 rounded-2xl p-5 border border-gray-100">
+                    <h4 class="font-bold text-gray-800 text-sm flex items-center gap-2 mb-4">
+                        <i class="ph-bold ph-identification-card text-emerald-700 text-base"></i>
+                        Profile, Contact &amp; Address Information
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-400 block mb-0.5">Full Name</span>
+                            <span class="font-semibold text-gray-800 text-sm" id="ud-full-name">—</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block mb-0.5">Email Address</span>
+                            <span class="font-semibold text-gray-800" id="ud-full-email">—</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block mb-0.5">Phone / WhatsApp</span>
+                            <div class="flex items-center gap-2 mt-0.5" id="ud-phone-container">
+                                <span class="font-mono font-semibold text-gray-800" id="ud-phone">—</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block mb-0.5">Age &amp; Date of Birth</span>
+                            <span class="font-medium text-gray-700" id="ud-dob-age">—</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block mb-0.5">Shared Household Code</span>
+                            <span class="font-mono font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded text-xs border border-emerald-200 inline-block" id="ud-hhcode">—</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block mb-0.5">Account Created</span>
+                            <span class="font-medium text-gray-700" id="ud-joined">—</span>
+                        </div>
+                        <div class="sm:col-span-2 md:col-span-3">
+                            <span class="text-gray-400 block mb-0.5">Full Doorstep Address</span>
+                            <div class="font-medium text-gray-800 bg-white p-3.5 rounded-xl border border-gray-200 leading-relaxed" id="ud-full-address">
+                                —
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Wallet Money & Financial Records -->
+                <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-bold ph-receipt text-emerald-700 text-lg"></i>
+                            <h4 class="font-bold text-gray-800 text-sm">Wallet Money &amp; Financial Ledger</h4>
+                        </div>
+                        <span class="text-xs text-gray-400" id="ud-tx-count">0 records</span>
+                    </div>
+                    <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-gray-50 text-gray-400 uppercase font-semibold sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2.5">Date</th>
+                                    <th class="px-4 py-2.5">Description</th>
+                                    <th class="px-4 py-2.5">Type</th>
+                                    <th class="px-4 py-2.5 text-right">Amount</th>
+                                    <th class="px-4 py-2.5 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ud-transactions-tbody" class="divide-y divide-gray-50">
+                                <tr><td colspan="5" class="text-center py-6 text-gray-400">No transactions recorded.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 3: Scrap Pickups & Activity -->
+                <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-bold ph-truck text-emerald-700 text-lg"></i>
+                            <h4 class="font-bold text-gray-800 text-sm">Pickups &amp; Waste Recycling History</h4>
+                        </div>
+                        <span class="text-xs text-gray-400" id="ud-pickup-count">0 pickups</span>
+                    </div>
+                    <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-gray-50 text-gray-400 uppercase font-semibold sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2.5">ID</th>
+                                    <th class="px-4 py-2.5">Scheduled Slot</th>
+                                    <th class="px-4 py-2.5">Materials</th>
+                                    <th class="px-4 py-2.5">Doorstep PIN</th>
+                                    <th class="px-4 py-2.5">Collector Assigned</th>
+                                    <th class="px-4 py-2.5">Weight / Value</th>
+                                    <th class="px-4 py-2.5">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ud-pickups-tbody" class="divide-y divide-gray-50">
+                                <tr><td colspan="7" class="text-center py-6 text-gray-400">No pickups scheduled yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+            <button onclick="closeUserDetailsModal()" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs rounded-xl transition-colors">
+                Close
+            </button>
         </div>
     </div>
 </div>
@@ -360,25 +533,217 @@
             return;
         }
         tbody.innerHTML = users.map(u => `
-            <tr class="hover:bg-gray-50 transition-colors">
+            <tr class="hover:bg-emerald-50/40 transition-colors cursor-pointer group" onclick="openUserDetails(${u.id})">
                 <td class="px-6 py-4 text-gray-400 font-mono text-xs">#${u.id}</td>
-                <td class="px-6 py-4 font-semibold text-gray-800">${escHtml(u.name)}</td>
-                <td class="px-6 py-4 text-gray-500">${escHtml(u.email)}</td>
                 <td class="px-6 py-4">
-                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold ${roleColors[u.role] || 'bg-gray-100 text-gray-700'}">
+                    <div class="font-bold text-gray-900 group-hover:text-emerald-800 transition-colors">${escHtml(u.name)}</div>
+                    <div class="text-xs text-gray-500">${escHtml(u.email || '—')}</div>
+                    ${u.phone ? `<div class="text-[11px] text-gray-400 font-mono flex items-center gap-1 mt-0.5"><i class="ph-bold ph-phone"></i> ${escHtml(u.phone)}</div>` : ''}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${roleColors[u.role] || 'bg-gray-100 text-gray-700'}">
                         ${u.role}
                     </span>
                 </td>
-                <td class="px-6 py-4 text-gray-500 font-mono text-xs">${u.pincode}</td>
-                <td class="px-6 py-4 font-mono text-xs ${u.hh_code ? 'text-green-700 font-bold' : 'text-gray-300'}">${u.hh_code || '—'}</td>
-                <td class="px-6 py-4 text-gray-400 text-xs">${u.created_at || '—'}</td>
+                <td class="px-6 py-4 text-xs text-gray-600">
+                    <div class="font-medium text-gray-800">${escHtml(u.city || '—')}</div>
+                    <div class="text-gray-400 font-mono text-[11px]">${u.pincode || '—'}</div>
+                </td>
                 <td class="px-6 py-4">
-                    <button onclick="confirmDelete('user', ${u.id})"
-                        class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1 transition-colors">
-                        <i class="ph ph-trash"></i> Delete
-                    </button>
+                    <div class="font-bold text-emerald-700 text-xs">₹${Number(u.wallet_balance || 0).toFixed(2)}</div>
+                    <div class="text-[11px] text-green-600 font-semibold flex items-center gap-1"><i class="ph-fill ph-leaf"></i> ${u.points || 0} pts</div>
+                </td>
+                <td class="px-6 py-4 font-mono text-xs">
+                    ${u.hh_code ? `<span class="bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded border border-green-200">#${u.hh_code}</span>` : '<span class="text-gray-300">—</span>'}
+                </td>
+                <td class="px-6 py-4 text-gray-400 text-xs">${u.created_at ? u.created_at.split(' ')[0] : '—'}</td>
+                <td class="px-6 py-4" onclick="event.stopPropagation()">
+                    <div class="flex items-center gap-2">
+                        <button onclick="openUserDetails(${u.id})"
+                            title="Inspect User Details & Ledger"
+                            class="text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors">
+                            <i class="ph-bold ph-eye"></i> Details
+                        </button>
+                        <button onclick="confirmDelete('user', ${u.id})"
+                            title="Delete User"
+                            class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg text-xs font-bold transition-colors">
+                            <i class="ph ph-trash text-sm"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>`).join('');
+    }
+
+    // ── User Details Modal ────────────────────────────────────────────────────
+    async function openUserDetails(userId) {
+        const modal = document.getElementById('modal-user-detail');
+        const loading = document.getElementById('ud-loading');
+        const content = document.getElementById('ud-content');
+
+        modal.classList.remove('hidden');
+        loading.classList.remove('hidden');
+        content.classList.add('hidden');
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/users/${userId}`, {
+                headers: { 'x-admin-key': adminKey }
+            });
+            if (!res.ok) throw new Error('User not found or error loading records.');
+            const data = await res.json();
+            const u = data.user;
+            const summary = data.summary || {};
+            const txs = data.transactions || [];
+            const pickups = data.pickups || [];
+
+            // Header info
+            document.getElementById('ud-avatar').textContent = (u.name || 'U').charAt(0).toUpperCase();
+            document.getElementById('ud-name').textContent = u.name || 'Unnamed User';
+            document.getElementById('ud-role').textContent = u.role || 'Household';
+            document.getElementById('ud-id-badge').textContent = `#${u.id}`;
+            document.getElementById('ud-email').textContent = u.email || '—';
+
+            // Summary metrics
+            document.getElementById('ud-metric-wallet').textContent = `₹${Number(summary.wallet_balance || 0).toFixed(2)}`;
+            document.getElementById('ud-metric-points').textContent = Number(summary.points || 0).toLocaleString();
+            document.getElementById('ud-metric-earned').textContent = `₹${Number(summary.total_earned || 0).toFixed(2)}`;
+            document.getElementById('ud-metric-weight').textContent = `${Number(summary.total_weight_kg || 0).toFixed(1)} kg`;
+            document.getElementById('ud-metric-pickups-count').textContent = `${summary.completed_pickups || 0} of ${summary.total_pickups || 0} completed`;
+
+            // Profile info
+            document.getElementById('ud-full-name').textContent = u.name || '—';
+            document.getElementById('ud-full-email').textContent = u.email || '—';
+
+            const phoneContainer = document.getElementById('ud-phone-container');
+            if (u.phone) {
+                const cleanPhone = String(u.phone).replace(/[^0-9]/g, '');
+                phoneContainer.innerHTML = `
+                    <span class="font-mono font-bold text-gray-900">${escHtml(u.phone)}</span>
+                    <a href="https://wa.me/91${cleanPhone}" target="_blank" rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-2 py-0.5 rounded text-[11px] font-bold transition-colors">
+                        <i class="ph-fill ph-whatsapp-logo text-green-600"></i> WhatsApp
+                    </a>
+                `;
+            } else {
+                phoneContainer.innerHTML = `<span class="text-gray-400 font-mono">Not provided</span>`;
+            }
+
+            const ageDob = [];
+            if (u.age) ageDob.push(`${u.age} yrs`);
+            if (u.dob) ageDob.push(`DOB: ${u.dob}`);
+            document.getElementById('ud-dob-age').textContent = ageDob.length ? ageDob.join(' • ') : '—';
+
+            document.getElementById('ud-hhcode').textContent = u.hh_code ? `#${u.hh_code}` : 'None';
+            document.getElementById('ud-joined').textContent = u.created_at || '—';
+
+            // Full address
+            const locDetails = [u.city, u.state, u.pincode ? `PIN: ${u.pincode}` : ''].filter(Boolean).join(', ');
+            document.getElementById('ud-full-address').innerHTML = `
+                <div class="text-gray-900 font-semibold mb-1">${escHtml(u.address || 'No street address specified.')}</div>
+                <div class="text-gray-500 font-mono text-xs flex items-center gap-1.5">
+                    <i class="ph-bold ph-map-pin text-emerald-700"></i>
+                    ${escHtml(locDetails || 'No city/state details')}
+                </div>
+            `;
+
+            // Transactions Table
+            document.getElementById('ud-tx-count').textContent = `${txs.length} record${txs.length === 1 ? '' : 's'}`;
+            const txBody = document.getElementById('ud-transactions-tbody');
+            if (!txs.length) {
+                txBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400">No transactions recorded.</td></tr>`;
+            } else {
+                txBody.innerHTML = txs.map(t => {
+                    const isCredit = (t.direction || '').toLowerCase() === 'credit';
+                    const amtClass = isCredit ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold';
+                    const sign = isCredit ? '+₹' : '-₹';
+                    const badgeClass = isCredit 
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                        : 'bg-amber-50 text-amber-700 border-amber-200';
+                    return `
+                        <tr class="hover:bg-gray-50/70 transition-colors">
+                            <td class="px-4 py-2.5 text-gray-400 font-mono text-[11px] whitespace-nowrap">${escHtml(t.created_at || '—')}</td>
+                            <td class="px-4 py-2.5 font-medium text-gray-800">${escHtml(t.description || '—')}</td>
+                            <td class="px-4 py-2.5">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${badgeClass}">${escHtml(t.type || t.direction || '—')}</span>
+                            </td>
+                            <td class="px-4 py-2.5 text-right font-mono ${amtClass}">${sign}${Number(t.amount || 0).toFixed(2)}</td>
+                            <td class="px-4 py-2.5 text-center">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${t.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}">
+                                    ${escHtml(t.status || 'Completed')}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Pickups Table
+            document.getElementById('ud-pickup-count').textContent = `${pickups.length} pickup${pickups.length === 1 ? '' : 's'}`;
+            const puBody = document.getElementById('ud-pickups-tbody');
+            if (!pickups.length) {
+                puBody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-400">No pickups scheduled yet.</td></tr>`;
+            } else {
+                puBody.innerHTML = pickups.map(p => {
+                    const statusClass = {
+                        'Completed': 'bg-emerald-100 text-emerald-800',
+                        'Collected': 'bg-blue-100 text-blue-800',
+                        'Assigned': 'bg-purple-100 text-purple-800',
+                        'Pending': 'bg-amber-100 text-amber-800',
+                        'Cancelled': 'bg-red-100 text-red-700'
+                    }[p.status] || 'bg-gray-100 text-gray-700';
+
+                    const collectorInfo = p.collector_name
+                        ? `<div class="font-bold text-gray-800">${escHtml(p.collector_name)}</div>
+                           <div class="text-[11px] text-gray-500 font-mono">${escHtml(p.collector_phone || '')}</div>`
+                        : `<span class="text-gray-400 italic">Unassigned</span>`;
+
+                    const weightPayout = [];
+                    if (p.actual_weight) weightPayout.push(`${p.actual_weight} kg`);
+                    if (p.payout_amount) weightPayout.push(`₹${p.payout_amount}`);
+
+                    return `
+                        <tr class="hover:bg-gray-50/70 transition-colors">
+                            <td class="px-4 py-2.5 font-mono text-[11px] text-gray-400 whitespace-nowrap">${escHtml(p.request_id || '#' + p.id)}</td>
+                            <td class="px-4 py-2.5 text-gray-700">
+                                <div class="font-medium">${escHtml(p.date || '—')}</div>
+                                <div class="text-[11px] text-gray-400">${escHtml(p.time_slot || '')}</div>
+                            </td>
+                            <td class="px-4 py-2.5 text-gray-800 font-medium max-w-[150px] truncate" title="${escHtml(p.items || '')}">
+                                ${escHtml(p.items || '—')}
+                            </td>
+                            <td class="px-4 py-2.5 font-mono">
+                                ${(p.pin || p.doorstep_pin) ? `<span class="bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-200 text-[11px]">🔑 ${p.pin || p.doorstep_pin}</span>` : '<span class="text-gray-300">—</span>'}
+                            </td>
+                            <td class="px-4 py-2.5 text-xs">${collectorInfo}</td>
+                            <td class="px-4 py-2.5 text-xs font-semibold text-gray-800">
+                                ${weightPayout.length ? weightPayout.join(' • ') : '<span class="text-gray-400 font-normal">Pending measurement</span>'}
+                            </td>
+                            <td class="px-4 py-2.5">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">
+                                    ${escHtml(p.status || 'Pending')}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            loading.classList.add('hidden');
+            content.classList.remove('hidden');
+        } catch (err) {
+            console.error('Error loading user details:', err);
+            loading.innerHTML = `
+                <div class="py-8 text-center text-red-500">
+                    <i class="ph-bold ph-warning-circle text-3xl mb-2 inline-block"></i>
+                    <p class="font-bold text-sm">Could not load user records</p>
+                    <p class="text-xs text-gray-400 mt-1">${escHtml(err.message)}</p>
+                    <button onclick="closeUserDetailsModal()" class="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold">Close</button>
+                </div>
+            `;
+        }
+    }
+
+    function closeUserDetailsModal() {
+        document.getElementById('modal-user-detail').classList.add('hidden');
     }
 
     // ── Collectors (WhatsApp) ────────────────────────────────────────────────
