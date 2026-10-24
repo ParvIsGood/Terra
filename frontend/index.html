@@ -5842,6 +5842,8 @@
     let voiceSpeechStartTime = null;
     let voiceSilenceStartTime = null;
     let voiceActiveAudioPlayer = null;
+    let voiceRecognition = null;
+    let voiceLatestLiveText = '';
 
     function formatCallDuration(sec) {
         const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -5856,16 +5858,20 @@
         if (subEl) subEl.textContent = subtext;
     }
 
-    function updateVoiceMicIndicator(state) { // 'listening' | 'speaking' | 'thinking' | 'muted'
+    function updateVoiceMicIndicator(state) { // 'listening' | 'user_speaking' | 'speaking' | 'thinking' | 'muted'
         const label = document.getElementById('voice-mic-label');
         const ping = document.getElementById('voice-mic-ping');
         const btn = document.getElementById('btn-voice-push-speak');
         if (!label || !ping || !btn) return;
 
         if (state === 'listening') {
-            label.textContent = voiceSelectedLang === 'hi' ? '🎙️ Sun raha hoon… Aap boliye' : '🎙️ Listening… Speak now';
+            label.textContent = voiceSelectedLang === 'hi' ? '🎙️ Sun raha hoon… (Tap to Send)' : '🎙️ Listening… (Tap to Send)';
             ping.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping';
             btn.className = 'mb-3 px-4 py-2 rounded-full bg-emerald-500/25 border border-emerald-400/50 text-emerald-300 text-xs font-bold flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-emerald-950/40 cursor-pointer';
+        } else if (state === 'user_speaking') {
+            label.textContent = voiceSelectedLang === 'hi' ? '🗣️ Sun raha hoon… (Aap boliye)' : '🗣️ Hearing you… (Tap to Send)';
+            ping.className = 'w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse scale-125';
+            btn.className = 'mb-3 px-4 py-2 rounded-full bg-emerald-500/40 border border-emerald-300 text-white text-xs font-extrabold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-500/30 cursor-pointer';
         } else if (state === 'speaking') {
             label.textContent = '🔊 Terra AI is speaking…';
             ping.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
@@ -5895,7 +5901,7 @@
             ring2.className = 'absolute -inset-6 rounded-full border border-emerald-400/30';
         } else if (state === 'ringing') {
             ring1.className = 'absolute -inset-4 rounded-full border-2 border-yellow-400 animate-ping opacity-50';
-            ring2.className = 'absolute -inset-8 rounded-full border border-yellow-400/30 animate-pulse';
+            ring2.className = 'absolute -inset-8 rounded-full border-2 border-yellow-400/30 animate-pulse';
         } else if (state === 'thinking') {
             ring1.className = 'absolute -inset-3 rounded-full border-2 border-yellow-300 animate-spin opacity-60';
             ring2.className = 'absolute -inset-6 rounded-full border border-yellow-400/20';
@@ -5958,10 +5964,16 @@
         if (voiceSelectedLang === 'hi') {
             voiceSelectedLang = 'en';
             document.getElementById('voice-lang-label').textContent = 'English';
+            if (voiceRecognition) {
+                try { voiceRecognition.lang = 'en-IN'; } catch(e) {}
+            }
             toast('Language switched to English');
         } else {
             voiceSelectedLang = 'hi';
             document.getElementById('voice-lang-label').textContent = 'हिन्दी';
+            if (voiceRecognition) {
+                try { voiceRecognition.lang = 'hi-IN'; } catch(e) {}
+            }
             toast('Language switched to Hindi (हिन्दी)');
         }
     }
@@ -6018,10 +6030,11 @@
             voiceAnalyserCtx = new AudioCtx();
             const source = voiceAnalyserCtx.createMediaStreamSource(voiceMediaStream);
             voiceAnalyserNode = voiceAnalyserCtx.createAnalyser();
-            voiceAnalyserNode.fftSize = 64;
+            voiceAnalyserNode.fftSize = 256;
             source.connect(voiceAnalyserNode);
 
             startAudioVisualizerLoop();
+            initDualWebSpeech();
             return true;
         } catch (err) {
             console.error('Microphone hardware access failed:', err);
@@ -6030,20 +6043,69 @@
         }
     }
 
+    function initDualWebSpeech() {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) return;
+
+        try {
+            voiceRecognition = new SpeechRec();
+            voiceRecognition.continuous = true;
+            voiceRecognition.interimResults = true;
+            voiceRecognition.lang = voiceSelectedLang === 'hi' ? 'hi-IN' : 'en-IN';
+
+            voiceRecognition.onresult = function(event) {
+                if (!voiceCallActive || voiceIsSpeaking || voiceIsThinking || voiceIsMuted) return;
+
+                let interim = '';
+                let final = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) final += event.results[i][0].transcript;
+                    else interim += event.results[i][0].transcript;
+                }
+                const text = (final || interim).trim();
+                if (text) {
+                    voiceLatestLiveText = text;
+                    const transcriptEl = document.getElementById('voice-call-transcript');
+                    if (transcriptEl) transcriptEl.textContent = `You: "${text}"`;
+                    updateVoiceMicIndicator('user_speaking');
+
+                    voiceIsUserSpeaking = true;
+                    voiceSpeechStartTime = Date.now();
+                    voiceSilenceStartTime = null;
+                }
+            };
+
+            voiceRecognition.onerror = function(err) {
+                console.warn('Speech recognition notice (MediaRecorder is active):', err.error);
+            };
+
+            voiceRecognition.onend = function() {
+                if (voiceCallActive && !voiceIsSpeaking && !voiceIsThinking && !voiceIsMuted && voiceRecognition) {
+                    try { voiceRecognition.start(); } catch (e) {}
+                }
+            };
+
+            voiceRecognition.start();
+        } catch (e) {
+            console.warn('Dual WebSpeech start notice:', e);
+        }
+    }
+
     function startAudioVisualizerLoop() {
         if (!voiceAnalyserNode) return;
-        const dataArray = new Uint8Array(voiceAnalyserNode.frequencyBinCount);
+        const timeData = new Uint8Array(voiceAnalyserNode.fftSize);
 
         function renderFrame() {
             if (!voiceCallActive) return;
 
-            voiceAnalyserNode.getByteFrequencyData(dataArray);
+            // Measure true diaphragm displacement via Time-Domain peak amplitude
+            voiceAnalyserNode.getByteTimeDomainData(timeData);
 
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-                sum += dataArray[i];
+            let maxDev = 0;
+            for (let i = 0; i < timeData.length; i++) {
+                const dev = Math.abs(timeData[i] - 128);
+                if (dev > maxDev) maxDev = dev;
             }
-            const avgVolume = sum / dataArray.length;
 
             const b1 = document.getElementById('v-bar-1');
             const b2 = document.getElementById('v-bar-2');
@@ -6053,32 +6115,35 @@
 
             if (b1 && b2 && b3 && b4 && b5) {
                 if (voiceIsSpeaking) {
-                    const t = Date.now() / 140;
+                    const t = Date.now() / 130;
                     b1.style.height = `${8 + Math.sin(t) * 10}px`;
                     b2.style.height = `${12 + Math.sin(t + 1) * 12}px`;
                     b3.style.height = `${16 + Math.sin(t + 2) * 14}px`;
                     b4.style.height = `${12 + Math.sin(t + 3) * 12}px`;
                     b5.style.height = `${8 + Math.sin(t + 4) * 10}px`;
                 } else if (!voiceIsMuted && voiceMediaRecorder && voiceMediaRecorder.state === 'recording') {
-                    const scale = Math.min(28, Math.max(4, avgVolume * 0.45));
-                    b1.style.height = `${Math.max(4, scale * 0.6)}px`;
-                    b2.style.height = `${Math.max(6, scale * 0.9)}px`;
-                    b3.style.height = `${Math.max(8, scale * 1.2)}px`;
-                    b4.style.height = `${Math.max(6, scale * 0.9)}px`;
-                    b5.style.height = `${Math.max(4, scale * 0.6)}px`;
+                    // Reactive to real vocal volume!
+                    const scale = Math.min(32, Math.max(4, maxDev * 0.9));
+                    b1.style.height = `${Math.max(4, scale * 0.55)}px`;
+                    b2.style.height = `${Math.max(6, scale * 0.85)}px`;
+                    b3.style.height = `${Math.max(8, scale * 1.25)}px`;
+                    b4.style.height = `${Math.max(6, scale * 0.85)}px`;
+                    b5.style.height = `${Math.max(4, scale * 0.55)}px`;
 
                     const now = Date.now();
-                    if (avgVolume > 15) {
+                    // Physical threshold: maxDev > 5 reliably captures quiet & normal speech
+                    if (maxDev > 5) {
                         if (!voiceIsUserSpeaking) {
                             voiceIsUserSpeaking = true;
                             voiceSpeechStartTime = now;
+                            updateVoiceMicIndicator('user_speaking');
                         }
                         voiceSilenceStartTime = null;
                     } else if (voiceIsUserSpeaking) {
                         if (!voiceSilenceStartTime) {
                             voiceSilenceStartTime = now;
-                        } else if (now - voiceSilenceStartTime > 1300) {
-                            // User paused for 1.3 seconds -> Send speech to Groq Whisper
+                        } else if (now - voiceSilenceStartTime > 850) {
+                            // 850ms of silence after speaking -> dispatch to AI!
                             voiceIsUserSpeaking = false;
                             voiceSilenceStartTime = null;
                             stopAndSendAudioRecording();
@@ -6113,28 +6178,36 @@
                     voiceAudioChunks.push(e.data);
                 }
             };
-            voiceMediaRecorder.start(200);
+            voiceMediaRecorder.start(150);
             updateVoiceMicIndicator('listening');
+
+            if (voiceRecognition) {
+                try { voiceRecognition.start(); } catch (e) {}
+            }
         } catch (e) {
             console.error('MediaRecorder start error:', e);
         }
     }
 
     function stopAndSendAudioRecording() {
-        if (!voiceMediaRecorder || voiceMediaRecorder.state !== 'recording') return;
+        if (!voiceMediaRecorder || voiceMediaRecorder.state !== 'recording') {
+            if (voiceLatestLiveText && !voiceIsThinking && !voiceIsSpeaking) {
+                const textToSend = voiceLatestLiveText;
+                voiceLatestLiveText = '';
+                sendVoiceAudioToBackend(null, null, textToSend);
+            }
+            return;
+        }
 
         voiceMediaRecorder.onstop = function() {
             const blob = new Blob(voiceAudioChunks, { type: voiceMediaRecorder.mimeType || 'audio/webm' });
             voiceAudioChunks = [];
-
-            if (blob.size < 1200) {
-                startAudioRecording();
-                return;
-            }
+            const textToSend = voiceLatestLiveText;
+            voiceLatestLiveText = '';
 
             const reader = new FileReader();
             reader.onloadend = function() {
-                sendVoiceAudioToBackend(reader.result, blob.type);
+                sendVoiceAudioToBackend(reader.result, blob.type, textToSend);
             };
             reader.readAsDataURL(blob);
         };
@@ -6148,33 +6221,36 @@
         if (voiceIsSpeaking || voiceIsThinking) return;
 
         if (voiceMediaRecorder && voiceMediaRecorder.state === 'recording') {
-            // User manually tapped to finish speaking and send immediately
             voiceIsUserSpeaking = false;
             voiceSilenceStartTime = null;
             stopAndSendAudioRecording();
         } else {
-            // Start recording
             startAudioRecording();
         }
     }
 
-    async function sendVoiceAudioToBackend(audioBase64, mimeType) {
+    async function sendVoiceAudioToBackend(audioBase64, mimeType, messageText) {
         if (!voiceCallActive) return;
         voiceIsThinking = true;
-        setVoiceStatus('Thinking…', 'Transcribing & analyzing with Groq AI');
+        setVoiceStatus('Thinking…', 'Finding the best answer');
         setVoiceVisualizer('thinking');
         updateVoiceMicIndicator('thinking');
 
         const transcriptEl = document.getElementById('voice-call-transcript');
-        if (transcriptEl) transcriptEl.textContent = 'Transcribing your voice with Groq Whisper…';
+        if (messageText && transcriptEl) {
+            transcriptEl.textContent = `You: "${messageText}"`;
+        } else if (transcriptEl) {
+            transcriptEl.textContent = 'Transcribing your voice with Groq Whisper…';
+        }
 
         try {
             const res = await fetch(`${API_BASE}/ai/voice-chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    audioBase64: audioBase64,
-                    mimeType: mimeType,
+                    message: messageText || null,
+                    audioBase64: audioBase64 || null,
+                    mimeType: mimeType || null,
                     userId: appState.user?.id || null,
                     lang: voiceSelectedLang
                 })
@@ -6252,6 +6328,7 @@
         voiceIsMuted = false;
         voiceIsSpeaking = false;
         voiceIsThinking = false;
+        voiceLatestLiveText = '';
 
         // Reset UI
         openModal('modal-voice-call');
@@ -6311,6 +6388,14 @@
         if (voiceAnimFrame) {
             cancelAnimationFrame(voiceAnimFrame);
             voiceAnimFrame = null;
+        }
+
+        if (voiceRecognition) {
+            try {
+                voiceRecognition.onend = null;
+                voiceRecognition.stop();
+            } catch (e) {}
+            voiceRecognition = null;
         }
 
         if (voiceMediaRecorder) {
