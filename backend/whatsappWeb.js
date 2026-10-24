@@ -812,10 +812,9 @@ async function startWhatsApp() {
 
                 const reply = async (replyText, spokenAddon = null) => {
                     await sock.sendMessage(remoteJid, { text: replyText });
-                    if (spokenAddon || isIncomingVoiceNote) {
-                        const toSpeak = spokenAddon || replyText;
-                        sendWhatsAppVoiceNote(remoteJid, toSpeak, 'hi').catch(e => {});
-                    }
+                    // Always send companion voice note to Kabadiwala (regardless of text, photo, or voice input)
+                    const toSpeak = spokenAddon || replyText;
+                    sendWhatsAppVoiceNote(remoteJid, toSpeak, 'hi').catch(e => {});
                 };
 
                 // ── 0. PICKUP ACCEPT / REJECT HANDLER (60s Dispatch System) ─────
@@ -1068,7 +1067,10 @@ async function startWhatsApp() {
                             `⚠️ *Note:* Weight enter karne ke baad hi pickup *Officially Complete* hoga.`;
                     }
 
-                    await reply(verifyPrompt);
+                    const spokenPrompt = (collLang === 'hindi')
+                        ? `शाबाश भाई जी! क्यूआर कोड वेरीफाई हो गया है। अब कचरे का वजन नापकर, बोलकर या लिखकर भेज दीजिए।`
+                        : `Shabaash bhai ji! QR code verify ho gaya hai. Ab kachre ka weight naap kar bolkar ya type karke bhej dijiye.`;
+                    await reply(verifyPrompt, spokenPrompt);
                     continue;
                 }
 
@@ -1260,7 +1262,10 @@ async function startWhatsApp() {
                                 `2️⃣ Reply *NAHI*, *NO* ya *2* - Dobara bolne/likhne ke liye\n\n` +
                                 `_Reply karein *HAAN* ya *NAHI*:_`;
                         }
-                        await reply(confirmPrompt);
+                        const spokenConfirm = (collLang === 'hindi')
+                            ? `भाई जी, कुल ${totalWeight} किलो का वजन नोट हुआ है। क्या मैं इसे कन्फर्म कर दूँ? हाँ या ना बोलिए।`
+                            : `Bhai ji, kul ${totalWeight} kilo ka weight note hua hai. Kya main ise confirm kar doon? Haan ya na boliye.`;
+                        await reply(confirmPrompt, spokenConfirm);
                         continue;
                     } else if (session.pendingParsed) {
                         const askAgain = (collLang === 'hindi')
@@ -1268,7 +1273,10 @@ async function startWhatsApp() {
                             : (collLang === 'english')
                             ? `❓ *Please confirm:*\nIs the weight breakdown above correct?\n\n• *YES* / *1* - To Confirm\n• *NO* / *2* - To change`
                             : `❓ *Kripya confirm karein:*\nKya upar diya gaya weight sahi hai?\n\n• *HAAN* / *1* - Confirm karne ke liye\n• *NAHI* / *2* - Change karne ke liye`;
-                        await reply(askAgain);
+                        const spokenAskAgain = (collLang === 'hindi')
+                            ? `भाई जी, क्या ऊपर दिया गया वजन सही है? हाँ या ना बोलिए।`
+                            : `Bhai ji, kya upar diya gaya weight sahi hai? Haan ya na boliye.`;
+                        await reply(askAgain, spokenAskAgain);
                         continue;
                     } else if (text && !text.startsWith('#') && text.toLowerCase() !== 'duty' && text.toLowerCase() !== 'status') {
                         // Gentle reminder if message is received during active weighing
