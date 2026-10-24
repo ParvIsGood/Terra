@@ -143,6 +143,144 @@ If no weight is found, return {"items":[],"totalWeight":0}`;
 }
 
 // ─────────────────────────────────────────────────────────────
+// AI INTENT CLASSIFIER FOR DISPATCH OFFERS (Groq LLM + Smart Fuzzy)
+// Handles "मैं इस आफर को सेप्ट करता हूँ", "meh yeh order accept krta hu", "हा मैं ले लूँगा", "1", "yes", "reject", etc.
+// ─────────────────────────────────────────────────────────────
+async function classifyAcceptRejectIntent(rawText) {
+    if (!rawText) return null;
+    const clean = rawText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'“”]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+
+    // 1. Fast local checks for Hindi, Hinglish, English patterns
+    const acceptWords = [
+        'accept', 'accepting', 'accepted', 'sept', '1', 'yes', 'haan', 'ha', 'haa', 'hn', 'haanji', 'haji',
+        'ok', 'okay', 'done', 'manzoor', 'sweekar', 'le lunga', 'lelunga', 'leloonga', 'le raha hu', 'le rha hu',
+        'le rha', 'le raha', 'mujhe de do', 'de do', 'main lunga', 'mai lunga', 'krunga', 'karunga',
+        'accept karta hu', 'accept krta hu', 'accept kar lo', 'accept krlo', 'accept karo', 'accept kar liya',
+        'i will accept', 'take order', 'assign to me'
+    ];
+    const devanagariAccept = ['सेप्ट', 'स्वीकार', 'मंजूर', 'हाँ', 'हां', 'ले लूंगा', 'लेलूंगा', 'लेलूँगा', 'हामेल', 'करूंगा', 'लेता', 'लूंगा', 'लूँगा'];
+
+    const rejectWords = [
+        'reject', 'rejecting', 'rejected', '2', 'no', 'nahi', 'nahin', 'na', 'nah', 'cancel',
+        'busy', 'nahi chahiye', 'nahi kar sakta', 'nahi kr skta', 'nahi lunga', 'reject kar do', 'reject krdo',
+        'cannot accept', 'decline'
+    ];
+    const devanagariReject = ['रिजेक्ट', 'अस्वीकार', 'नहीं', 'रद्द'];
+
+    if (acceptWords.some(w => clean === w || clean.includes(w)) || devanagariAccept.some(w => rawText.includes(w))) {
+        if (!clean.includes('not accept') && !clean.includes('nahi accept') && !clean.includes('mat accept') && !clean.includes('nahi lunga')) {
+            return 'ACCEPT';
+        }
+    }
+
+    if (rejectWords.some(w => clean === w || clean.includes(w)) || devanagariReject.some(w => rawText.includes(w))) {
+        return 'REJECT';
+    }
+
+    // 2. Groq LLM fallback for conversational/complex sentences (Multi-lingual: Hindi/Hinglish/English)
+    const groqKey = process.env.GROQ_API_KEY;
+    if (groqKey && groqKey.startsWith('gsk_')) {
+        try {
+            const prompt = `A scrap pickup partner received a dispatch job offer on WhatsApp.
+Classify their response into strictly one of three words: ACCEPT, REJECT, or OTHER.
+Response: "${rawText}"
+Rules:
+- If they are agreeing to take or accept the order (in ANY language: Hindi, Hinglish, English, e.g. "मैं इस आफर को सेप्ट करता हूँ", "हामेल लेलूंगा", "order de do", "I will do it", "accept karunga"), reply ACCEPT.
+- If they are declining, saying no, busy, or rejecting, reply REJECT.
+- Otherwise reply OTHER.
+Reply with ONLY the word ACCEPT, REJECT, or OTHER:`;
+
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: "openai/gpt-oss-20b",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.0,
+                    max_tokens: 150
+                })
+            });
+            const data = await res.json();
+            const result = (data.choices?.[0]?.message?.content || '').trim().toUpperCase();
+            if (result.includes('ACCEPT')) return 'ACCEPT';
+            if (result.includes('REJECT')) return 'REJECT';
+        } catch (e) {
+            console.warn('Groq accept/reject classification error:', e.message);
+        }
+    }
+
+    return null;
+}
+
+// ─────────────────────────────────────────────────────────────
+// AI INTENT CLASSIFIER FOR WEIGHT CONFIRMATION (Groq LLM + Smart Fuzzy)
+// Handles "Yes.", "Haan", "sahi hai", "theek hai", "confirm kar do", "nahi galat hai", etc.
+// ─────────────────────────────────────────────────────────────
+async function classifyConfirmationIntent(rawText) {
+    if (!rawText) return null;
+    const clean = rawText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'“”]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+
+    // 1. Fast local checks
+    const confirmPhrases = [
+        '1', 'yes', 'haan', 'ha', 'haa', 'hn', 'haanji', 'haji', 'ok', 'okay', 'done', 'yup', 'yeah',
+        'sahi', 'sahi hai', 'sahi h', 'theek', 'theek hai', 'theek h', 'thik', 'thik hai', 'confirm',
+        'confirmed', 'confirm hai', 'kar do', 'krdo', 'kar dijiye', 'complete', 'bilkul', 'bilkul sahi',
+        'all good', 'correct', 'right'
+    ];
+    const devanagariConfirm = ['हाँ', 'हां', 'हाँजी', 'सही', 'सही है', 'ठीक है', 'कन्फर्म', 'कर दो'];
+
+    const rejectPhrases = [
+        '2', 'no', 'nahi', 'nahin', 'na', 'nah', 'galat', 'galat hai', 'wrong', 'change', 'badalna',
+        'cancel', 'dobara', 'reenter', 'not correct', 'incorrect'
+    ];
+    const devanagariReject = ['नहीं', 'गलत', 'गलत है', 'बदलो', 'रद्द'];
+
+    if (confirmPhrases.some(w => clean === w || clean.startsWith(w + ' ') || clean.endsWith(' ' + w) || clean.includes(w)) || devanagariConfirm.some(w => rawText.includes(w))) {
+        if (!clean.includes('not correct') && !clean.includes('nahi hai') && !clean.includes('sahi nahi')) {
+            return 'CONFIRM';
+        }
+    }
+
+    if (rejectPhrases.some(w => clean === w || clean.includes(w)) || devanagariReject.some(w => rawText.includes(w))) {
+        return 'REJECT';
+    }
+
+    // 2. Groq LLM fallback for conversational Hindi/Hinglish/English
+    const groqKey = process.env.GROQ_API_KEY;
+    if (groqKey && groqKey.startsWith('gsk_')) {
+        try {
+            const prompt = `A user was asked: "Should I confirm this scrap weight breakdown?".
+Classify their response into strictly one of three words: CONFIRM, REJECT, or OTHER.
+Response: "${rawText}"
+Rules:
+- If they are agreeing, confirming, or saying it is correct (in ANY language: Hindi, Hinglish, English, e.g. "Yes.", "sahi hai ji", "haan bhai kar do", "हाँ", "it is fine"), reply CONFIRM.
+- If they are disagreeing, saying it is wrong or want to change, reply REJECT.
+- Otherwise reply OTHER.
+Reply with ONLY the word CONFIRM, REJECT, or OTHER:`;
+
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: "openai/gpt-oss-20b",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.0,
+                    max_tokens: 150
+                })
+            });
+            const data = await res.json();
+            const result = (data.choices?.[0]?.message?.content || '').trim().toUpperCase();
+            if (result.includes('CONFIRM')) return 'CONFIRM';
+            if (result.includes('REJECT')) return 'REJECT';
+        } catch (e) {
+            console.warn('Groq confirmation classification error:', e.message);
+        }
+    }
+
+    return null;
+}
+
+// ─────────────────────────────────────────────────────────────
 // CONVERSATIONAL AI ASSISTANT FOR WHATSAPP (Groq LLM)
 // Answers inquiries from Kabadiwalas or residents in chosen language (Hindi/Hinglish/English)
 // ─────────────────────────────────────────────────────────────
@@ -467,7 +605,7 @@ async function startWhatsApp() {
                             const blob = new Blob([audioBuffer], { type: mime });
                             form.append('file', blob, 'voice.ogg');
                             form.append('model', 'whisper-large-v3-turbo');
-                            form.append('prompt', 'Transcribe Hindi, English, and Hinglish scrap waste items and weights like plastic, gatta, raddi, loha, kgs, kilo, etc.');
+                            form.append('prompt', 'Hindi, Hinglish, and English scrap collection speech: हाँ मैं ले लूँगा, ha main le lunga, accept, I will accept this order, reject, nahi, cancel, haan, yes, confirm, sahi hai, theek hai, plastic, gatta, raddi, loha, cardboard, kgs, kilo.');
 
                             const whisperRes = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
                                 method: 'POST',
@@ -522,8 +660,11 @@ async function startWhatsApp() {
 
                 const explicitAccept = text.match(/^\s*ACCEPT(?:[_\s]+([A-Za-z0-9\-_]+))?\s*$/i);
                 const explicitReject = text.match(/^\s*REJECT(?:[_\s]+([A-Za-z0-9\-_]+))?\s*$/i);
-                const quickAccept = targetDispatchForCollector && text.match(/^\s*(?:1|YES|HAAN?)\s*$/i);
-                const quickReject = targetDispatchForCollector && text.match(/^\s*(?:2|NO|NAHI?)\s*$/i);
+
+                // AI-driven intent classification for voice notes and conversational messages ("मैं इस आफर को सेप्ट करता हूँ", "meh yeh order accept krta hu", etc.)
+                const dispatchIntent = targetDispatchForCollector ? await classifyAcceptRejectIntent(text) : null;
+                const quickAccept = dispatchIntent === 'ACCEPT';
+                const quickReject = dispatchIntent === 'REJECT';
 
                 const acceptMatch = explicitAccept || quickAccept;
                 const rejectMatch = explicitReject || quickReject;
@@ -759,111 +900,197 @@ async function startWhatsApp() {
                 if (pendingVerifications[phone]) {
                     const session = pendingVerifications[phone];
                     const collLang = session.lang || collector?.language || 'hinglish';
+
+                    // 1. If we are currently awaiting confirmation for parsed weights:
+                    if (session.pendingParsed) {
+                        // AI-powered confirmation classification (handles "Yes.", "Haan", "sahi hai", etc.)
+                        const confIntent = await classifyConfirmationIntent(text);
+                        const isConfirm = confIntent === 'CONFIRM';
+                        const isReject  = confIntent === 'REJECT';
+
+                        if (isConfirm) {
+                            const { items: weightItems, totalWeight, payout, weightSummaryStr, breakdownLines } = session.pendingParsed;
+                            const ptsEarned = session.ptsEarned || 50;
+
+                            // NOW officially complete the pickup in SQLite & record verified weights & payout
+                            db.run(`
+                                UPDATE pickups 
+                                SET status = 'Completed',
+                                    actual_weight = ?, 
+                                    material_weights = ?,
+                                    payout_amount = ?,
+                                    completed_at = datetime('now', 'localtime')
+                                WHERE id = ?
+                            `, [totalWeight, weightSummaryStr, payout, session.pickupId]);
+
+                            // NOW award Green Points and wallet cash to user
+                            db.run(`
+                                UPDATE users 
+                                SET points = COALESCE(points, 0) + ?,
+                                    wallet_balance = COALESCE(wallet_balance, 0) + ?
+                                WHERE id = ?
+                            `, [ptsEarned, payout, session.userId]);
+
+                            // Record credit transaction into wallet history
+                            db.run(`
+                                INSERT INTO transactions (user_id, type, title, description, amount, points, direction, status, reference_id, created_at)
+                                VALUES (?, 'scrap_payout', ?, ?, ?, ?, 'credit', 'Completed', ?, datetime('now', 'localtime'))
+                            `, [
+                                session.userId,
+                                `Scrap Payout • #${session.requestId}`,
+                                `Doorstep weigh-in verified (${totalWeight} kg recyclables)`,
+                                payout,
+                                ptsEarned,
+                                session.requestId
+                            ]);
+
+                            persist();
+                            delete pendingVerifications[phone];
+
+                            // Confirmation celebration to Collector in their language
+                            let compMsg = '';
+                            if (collLang === 'hindi') {
+                                compMsg = 
+                                    `✅ *पिकअप सफलतापूर्वक वेरीफाई और पूर्ण हो गया!* 🎉\n\n` +
+                                    `• ऑर्डर आईडी: *#${session.requestId}*\n` +
+                                    `• कस्टमर: *${session.customerName}*\n\n` +
+                                    `*दर्ज किया गया वजन विवरण:*\n` +
+                                    `${breakdownLines}\n` +
+                                    `──────────────────\n` +
+                                    `📦 *कुल वजन (Total Weight):* *${totalWeight} kg*\n` +
+                                    `💵 *कस्टमर भुगतान:* *₹${payout}*\n\n` +
+                                    `पिकअप स्टेटस *Completed* मार्क हो गया है और कस्टमर को *+${ptsEarned} Green Points* क्रेडिट कर दिए गए हैं। धन्यवाद!`;
+                            } else if (collLang === 'english') {
+                                compMsg = 
+                                    `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
+                                    `• Order ID: *#${session.requestId}*\n` +
+                                    `• Customer: *${session.customerName}*\n\n` +
+                                    `*Segregated Weight Breakdown:*\n` +
+                                    `${breakdownLines}\n` +
+                                    `──────────────────\n` +
+                                    `📦 *Total Weight:* *${totalWeight} kg*\n` +
+                                    `💵 *Customer Payout:* *₹${payout}*\n\n` +
+                                    `Status marked *Completed* and customer awarded *+${ptsEarned} Green Points*. Thank you!`;
+                            } else {
+                                compMsg = 
+                                    `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
+                                    `• Order ID: *#${session.requestId}*\n` +
+                                    `• Customer: *${session.customerName}*\n\n` +
+                                    `*Segregated Weight Breakdown:*\n` +
+                                    `${breakdownLines}\n` +
+                                    `──────────────────\n` +
+                                    `📦 *Total Weight:* *${totalWeight} kg*\n` +
+                                    `💵 *Customer Payout:* *₹${payout}*\n\n` +
+                                    `Pickup status *Completed* mark ho gaya hai aur customer ko *+${ptsEarned} Green Points* credit kar diye gaye hain. Dhanyawad!`;
+                            }
+                            await reply(compMsg);
+
+                            // Official completion & weight alert to Customer on WhatsApp
+                            if (session.customerPhone) {
+                                sendWhatsAppAlert(session.customerPhone,
+                                    `🌿 *circular. Pickup Completed!* 🌿\n\n` +
+                                    `Hi *${session.customerName}*,\n` +
+                                    `Aapka pickup *#${session.requestId}* collection partner dwara successfully collect kar liya gaya hai!\n\n` +
+                                    `*Verified Waste Collected:*\n` +
+                                    `${breakdownLines}\n` +
+                                    `──────────────────\n` +
+                                    `📦 *Total Weight:* *${totalWeight} kg*\n` +
+                                    `💵 *Scrap Amount:* *₹${payout}* (Wallet me add ho chuke hain)\n` +
+                                    `⭐ Green Points: *+${ptsEarned} pts*\n\n` +
+                                    `Thank you for contributing to a cleaner, zero-waste environment! 🌍`
+                                ).catch(e => console.error('Error notifying customer of completion:', e));
+                            }
+                            continue;
+                        } else if (isReject) {
+                            delete session.pendingParsed;
+                            const retryMsg = (collLang === 'hindi')
+                                ? `🔄 *कोई बात नहीं!* कृपया सही वजन दोबारा बोलकर (Voice Note 🎙️) या लिखकर भेजें:`
+                                : (collLang === 'english')
+                                ? `🔄 *No problem!* Please re-send the correct weight via Voice Note 🎙️ or text:`
+                                : `🔄 *Koi baat nahi!* Kripya sahi weight dobara bolkar (Voice Note 🎙️) ya likh kar bhejein:`;
+                            await reply(retryMsg);
+                            continue;
+                        }
+                    }
+
+                    // 2. Parse weights from text or voice transcription
                     const parsedWeight = await parseMaterialWeightsSmart(text);
 
                     if (parsedWeight.items.length > 0 && parsedWeight.totalWeight > 0) {
                         const { items: weightItems, totalWeight } = parsedWeight;
                         const weightSummaryStr = weightItems.map(it => `${it.material}: ${it.weight} kg`).join(', ');
-                        const ptsEarned = session.ptsEarned || 50;
-
                         const payout = Math.round(totalWeight * 10);
-
-                        // NOW officially complete the pickup in SQLite & record verified weights & payout
-                        db.run(`
-                            UPDATE pickups 
-                            SET status = 'Completed',
-                                actual_weight = ?, 
-                                material_weights = ?,
-                                payout_amount = ?,
-                                completed_at = datetime('now', 'localtime')
-                            WHERE id = ?
-                        `, [totalWeight, weightSummaryStr, payout, session.pickupId]);
-
-                        // NOW award Green Points and wallet cash to user
-                        db.run(`
-                            UPDATE users 
-                            SET points = COALESCE(points, 0) + ?,
-                                wallet_balance = COALESCE(wallet_balance, 0) + ?
-                            WHERE id = ?
-                        `, [ptsEarned, payout, session.userId]);
-
-                        // Record credit transaction into wallet history
-                        db.run(`
-                            INSERT INTO transactions (user_id, type, title, description, amount, points, direction, status, reference_id, created_at)
-                            VALUES (?, 'scrap_payout', ?, ?, ?, ?, 'credit', 'Completed', ?, datetime('now', 'localtime'))
-                        `, [
-                            session.userId,
-                            `Scrap Payout • #${session.requestId}`,
-                            `Doorstep weigh-in verified (${totalWeight} kg recyclables)`,
-                            payout,
-                            ptsEarned,
-                            session.requestId
-                        ]);
-
-                        persist();
-                        delete pendingVerifications[phone];
-
                         const breakdownLines = weightItems
                             .map(it => `• ${it.material}: *${it.weight} kg*`)
                             .join('\n');
 
-                        // Confirmation to Collector in their language
-                        let compMsg = '';
+                        // Save parsed data in session and ask confirmation
+                        session.pendingParsed = {
+                            items: weightItems,
+                            totalWeight,
+                            payout,
+                            weightSummaryStr,
+                            breakdownLines
+                        };
+
+                        let confirmPrompt = '';
                         if (collLang === 'hindi') {
-                            compMsg = 
-                                `✅ *पिकअप सफलतापूर्वक वेरीफाई और पूर्ण हो गया!* 🎉\n\n` +
+                            confirmPrompt = 
+                                `📋 *नापा गया वजन विवरण (Weight Breakdown):*\n\n` +
                                 `• ऑर्डर आईडी: *#${session.requestId}*\n` +
                                 `• कस्टमर: *${session.customerName}*\n\n` +
-                                `*दर्ज किया गया वजन विवरण:*\n` +
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
-                                `📦 *कुल वजन (Total Weight):* *${totalWeight} kg*\n\n` +
-                                `पिकअप स्टेटस *Completed* मार्क हो गया है और कस्टमर को *+${ptsEarned} Green Points* क्रेडिट कर दिए गए हैं। धन्यवाद!`;
+                                `📦 *कुल वजन (Total Weight):* *${totalWeight} kg*\n` +
+                                `💵 *अनुमानित भुगतान (Payout):* *₹${payout}*\n\n` +
+                                `❓ *क्या मैं इसे कन्फर्म कर दूँ? (Should I confirm this?)*\n\n` +
+                                `1️⃣ *हाँ / YES* - कन्फर्म और कम्पलीट करने के लिए\n` +
+                                `2️⃣ *नहीं / NO* - दोबारा वजन बोलने/बदलने के लिए\n\n` +
+                                `_जवाब में *हाँ* / *1* या *नहीं* / *2* भेजें:_`;
                         } else if (collLang === 'english') {
-                            compMsg = 
-                                `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
+                            confirmPrompt = 
+                                `📋 *Recorded Weight Breakdown:*\n\n` +
                                 `• Order ID: *#${session.requestId}*\n` +
                                 `• Customer: *${session.customerName}*\n\n` +
-                                `*Segregated Weight Breakdown:*\n` +
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
-                                `📦 *Total Weight:* *${totalWeight} kg*\n\n` +
-                                `Status marked *Completed* and customer awarded *+${ptsEarned} Green Points*. Thank you!`;
+                                `📦 *Total Weight:* *${totalWeight} kg*\n` +
+                                `💵 *Estimated Payout:* *₹${payout}*\n\n` +
+                                `❓ *Should I confirm and complete this pickup?*\n\n` +
+                                `1️⃣ Reply *YES* or *1* to Confirm & Complete\n` +
+                                `2️⃣ Reply *NO* or *2* to re-enter weight\n\n` +
+                                `_Reply with *YES* or *NO*:_`;
                         } else {
-                            compMsg = 
-                                `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
+                            confirmPrompt = 
+                                `📋 *Dikhaya gaya Weight Breakdown:*\n\n` +
                                 `• Order ID: *#${session.requestId}*\n` +
                                 `• Customer: *${session.customerName}*\n\n` +
-                                `*Segregated Weight Breakdown:*\n` +
                                 `${breakdownLines}\n` +
                                 `──────────────────\n` +
-                                `📦 *Total Weight:* *${totalWeight} kg*\n\n` +
-                                `Pickup status *Completed* mark ho gaya hai aur customer ko *+${ptsEarned} Green Points* credit kar diye gaye hain. Dhanyawad!`;
+                                `📦 *Kul Weight (Total):* *${totalWeight} kg*\n` +
+                                `💵 *Estimated Payout:* *₹${payout}*\n\n` +
+                                `❓ *Kya main ise confirm kar doon? (Should I confirm this?)*\n\n` +
+                                `1️⃣ Reply *HAAN*, *YES* ya *1* - Confirm & Complete karne ke liye\n` +
+                                `2️⃣ Reply *NAHI*, *NO* ya *2* - Dobara bolne/likhne ke liye\n\n` +
+                                `_Reply karein *HAAN* ya *NAHI*:_`;
                         }
-                        await reply(compMsg);
-
-                        // Official completion & weight alert to Customer on WhatsApp
-                        if (session.customerPhone) {
-                            sendWhatsAppAlert(session.customerPhone,
-                                `🌿 *circular. Pickup Completed!* 🌿\n\n` +
-                                `Hi *${session.customerName}*,\n` +
-                                `Aapka pickup *#${session.requestId}* collection partner dwara successfully collect kar liya gaya hai!\n\n` +
-                                `*Verified Waste Collected:*\n` +
-                                `${breakdownLines}\n` +
-                                `──────────────────\n` +
-                                `📦 *Total Weight:* *${totalWeight} kg*\n\n` +
-                                `⭐ Green Points: *+${ptsEarned} pts* (App me add ho chuke hain)\n\n` +
-                                `Thank you for contributing to a cleaner, zero-waste environment! 🌍`
-                            ).catch(e => console.error('Error notifying customer of completion:', e));
-                        }
+                        await reply(confirmPrompt);
+                        continue;
+                    } else if (session.pendingParsed) {
+                        const askAgain = (collLang === 'hindi')
+                            ? `❓ *कृपया पुष्टि करें:*\nक्या ऊपर दिया गया वजन सही है?\n\n• *हाँ* / *1* - कन्फर्म करने के लिए\n• *नहीं* / *2* - बदलने के लिए`
+                            : (collLang === 'english')
+                            ? `❓ *Please confirm:*\nIs the weight breakdown above correct?\n\n• *YES* / *1* - To Confirm\n• *NO* / *2* - To change`
+                            : `❓ *Kripya confirm karein:*\nKya upar diya gaya weight sahi hai?\n\n• *HAAN* / *1* - Confirm karne ke liye\n• *NAHI* / *2* - Change karne ke liye`;
+                        await reply(askAgain);
                         continue;
                     } else if (text && !text.startsWith('#') && text.toLowerCase() !== 'duty' && text.toLowerCase() !== 'status') {
                         // Gentle reminder if message is received during active weighing
                         const remMsg = (collLang === 'hindi')
-                            ? `⚖️ *ऑर्डर #${session.requestId} के लिए वजन पेंडिंग है!*\n\nकस्टमर का कचरा: *${session.items}*\n\nकृपया नापा हुआ वजन (kg) लिखकर भेजें:\n• जैसे: *Cardboard 8, Plastic 3*\n• या कुल: *12 kg*`
+                            ? `⚖️ *ऑर्डर #${session.requestId} के लिए वजन पेंडिंग है!*\n\nकस्टमर का कचरा: *${session.items}*\n\nकृपया नापा हुआ वजन (kg) बोलकर या लिखकर भेजें:\n• जैसे: *Cardboard 8, Plastic 3*\n• या कुल: *12 kg*`
                             : (collLang === 'english')
                             ? `⚖️ *Weight entry pending for #${session.requestId}!*\n\nBooked items: *${session.items}*\n\nPlease reply with measured weight (kg):\n• e.g. *Cardboard 8, Plastic 3*\n• or total: *12 kg*`
-                            : `⚖️ *Order #${session.requestId} ke liye weight pending hai!*\n\nCustomer ka booked waste: *${session.items}*\n\nKripya measured weight (kg) likh kar bhejein:\n• Jaise: *Cardboard 8, Plastic 3*\n• ya total: *12 kg*`;
+                            : `⚖️ *Order #${session.requestId} ke liye weight pending hai!*\n\nCustomer ka booked waste: *${session.items}*\n\nKripya measured weight (kg) bolkar ya likh kar bhejein:\n• Jaise: *Cardboard 8, Plastic 3*\n• ya total: *12 kg*`;
                         await reply(remMsg);
                         continue;
                     }
@@ -878,6 +1105,10 @@ async function startWhatsApp() {
                 if (!collector) {
                     db.run(
                         `INSERT INTO collectors (phone_number, onboarding_step, language) VALUES (?, 'AWAITING_LANGUAGE', 'hinglish')`,
+                        [phone]
+                    );
+                    db.run(
+                        `UPDATE collectors SET employee_id = 'KW-' || (1000 + id) WHERE phone_number = ? AND (employee_id IS NULL OR employee_id = '')`,
                         [phone]
                     );
                     persist();
@@ -1152,9 +1383,10 @@ async function startWhatsApp() {
                             mats = text;
                         }
 
+                        const empId = collector.employee_id || ('KW-' + (1000 + collector.id));
                         db.run(
-                            `UPDATE collectors SET materials = ?, onboarding_step = 'COMPLETED', is_available = 1 WHERE id = ?`,
-                            [mats, collector.id]
+                            `UPDATE collectors SET materials = ?, onboarding_step = 'COMPLETED', is_available = 1, employee_id = ? WHERE id = ?`,
+                            [mats, empId, collector.id]
                         );
                         if (latitude && longitude) {
                             db.run(`UPDATE collectors SET latitude = ?, longitude = ? WHERE id = ?`, [latitude, longitude, collector.id]);
@@ -1165,6 +1397,7 @@ async function startWhatsApp() {
                             await reply(
                                 `🎉 *बधाई हो! आप Circular Partner बन चुके हैं!* 🎉\n\n` +
                                 `📋 *आपकी डिटेल्स:*\n` +
+                                `• पार्टनर ID (Employee ID): *${empId}*\n` +
                                 `• नाम: *${collector.name}*\n` +
                                 `• एरिया: *${collector.operating_area}* (${collector.pincode})\n` +
                                 `• सामग्री: *${mats}*\n` +
@@ -1177,6 +1410,7 @@ async function startWhatsApp() {
                             await reply(
                                 `🎉 *Congratulations! You are now an official Circular Partner!* 🎉\n\n` +
                                 `📋 *Your Profile:*\n` +
+                                `• Partner ID (Employee ID): *${empId}*\n` +
                                 `• Name: *${collector.name}*\n` +
                                 `• Area: *${collector.operating_area}* (${collector.pincode})\n` +
                                 `• Materials: *${mats}*\n` +
@@ -1189,6 +1423,7 @@ async function startWhatsApp() {
                             await reply(
                                 `🎉 *Badhaai ho! Aap Circular Partner ban chuke hain!* 🎉\n\n` +
                                 `📋 *Aapki Details:*\n` +
+                                `• Partner ID (Employee ID): *${empId}*\n` +
                                 `• Naam: *${collector.name}*\n` +
                                 `• Area: *${collector.operating_area}* (${collector.pincode})\n` +
                                 `• Material: *${mats}*\n` +
@@ -1283,9 +1518,10 @@ async function startWhatsApp() {
                         }
 
                         // For greetings or fallback, display the command menu in user's language
+                        const cEmpId = collector.employee_id || ('KW-' + (1000 + collector.id));
                         if (lang === 'hindi') {
                             await reply(
-                                `नमस्ते *${collector.name || 'पार्टनर'}* जी! 🙏\n\n` +
+                                `नमस्ते *${collector.name || 'पार्टनर'}* जी (ID: *${cEmpId}*)! 🙏\n\n` +
                                 `कमांड्स:\n` +
                                 `• *PICKUPS* - एरिया के पेंडिंग पिकअप्स देखें 📦\n` +
                                 `• *DUTY* - ड्यूटी ऑन/ऑफ करें 🟢/🔴\n` +
@@ -1295,7 +1531,7 @@ async function startWhatsApp() {
                             );
                         } else if (lang === 'english') {
                             await reply(
-                                `Welcome *${collector.name || 'Partner'}*! 🙏\n\n` +
+                                `Welcome *${collector.name || 'Partner'}* (ID: *${cEmpId}*)! 🙏\n\n` +
                                 `Commands:\n` +
                                 `• *PICKUPS* - Check pending pickups in your area 📦\n` +
                                 `• *DUTY* - Toggle On/Off duty status 🟢/🔴\n` +
@@ -1305,7 +1541,7 @@ async function startWhatsApp() {
                             );
                         } else {
                             await reply(
-                                `Namaste *${collector.name || 'Partner'}* ji! 🙏\n\n` +
+                                `Namaste *${collector.name || 'Partner'}* ji (ID: *${cEmpId}*)! 🙏\n\n` +
                                 `Commands:\n` +
                                 `• *PICKUPS* - Area ke pending pickups check karein 📦\n` +
                                 `• *DUTY* - On/Off duty toggle karein 🟢/🔴\n` +

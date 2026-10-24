@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Circular Segregation Hub • Floor Station</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg: #eef3ef;
+            --card: #ffffff;
+            --tx: #12302a;
+            --mu: #62756c;
+            --g: #1c8a5c;
+            --gl: #dcf3e5;
+            --bd: #e4ebe6;
+            --wa: #d9780f;
+            --wl: #fdebd3;
+            --sb: #0c3a2b;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font: 14px/1.45 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--tx);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+        }
+        .station-wrapper {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card);
+            border: 1px solid var(--bd);
+            border-radius: 28px;
+            min-height: 700px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(12, 58, 43, 0.08);
+        }
+        .header {
+            background: var(--sb);
+            color: #fff;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-title h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+        .header-title small {
+            color: #5fd29a;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .body {
+            padding: 20px 18px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .tabs {
+            display: flex;
+            border-top: 1px solid var(--bd);
+            background: #fff;
+        }
+        .tabs button {
+            flex: 1;
+            padding: 12px 4px;
+            border: 0;
+            background: none;
+            color: var(--mu);
+            font: inherit;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tabs button i { font-size: 18px; }
+        .tabs .on { color: var(--g); font-weight: 700; }
+        h2 { margin: 0 0 6px; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+        h3 { margin: 18px 0 8px; font-size: 14px; font-weight: 700; }
+        .mu { color: var(--mu); font-size: 13px; }
+        .kp {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 14px 0;
+        }
+        .kp div {
+            background: var(--gl);
+            border-radius: 14px;
+            padding: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--sb);
+        }
+        .kp b {
+            display: block;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 2px;
+            color: var(--g);
+        }
+        .pb {
+            width: 100%;
+            padding: 13px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--g);
+            color: #fff;
+            font: inherit;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .pb:disabled { opacity: 0.4; cursor: not-allowed; }
+        .sb {
+            padding: 6px 12px;
+            border: 1px solid var(--g);
+            background: none;
+            color: var(--g);
+            border-radius: 8px;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--bd);
+        }
+        .card {
+            border: 1px solid var(--bd);
+            border-radius: 14px;
+            padding: 14px;
+            margin-top: 12px;
+            background: #fff;
+        }
+        .seg { display: flex; gap: 8px; margin: 8px 0; }
+        .seg button {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--bd);
+            background: none;
+            color: var(--tx);
+            border-radius: 10px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .seg .on { background: var(--g); color: #fff; border-color: var(--g); }
+        .tg {
+            font-style: normal;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: var(--gl);
+            color: var(--g);
+        }
+        .tg.w { background: var(--wl); color: var(--wa); }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            font: inherit;
+            border: 1px solid var(--bd);
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--tx);
+            outline: none;
+        }
+        input.sm { width: 90px; text-align: right; padding: 8px; }
+        .ck {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 14px;
+            cursor: pointer;
+        }
+        .ck input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="station-wrapper">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title">
+            <h1>circular.</h1>
+            <small>Segregation Hub • Floor Station</small>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="background: rgba(255,255,255,0.15); font-size: 11px; padding: 4px 8px; border-radius: 20px; color: #5fd29a; font-weight: 700;">
+                <i class="ph-bold ph-broadcast"></i> Live Hub
+            </span>
+        </div>
+    </div>
+
+    <!-- Body Area -->
+    <div class="body" id="hub-body">
+        <p class="mu" style="text-align: center; padding: 40px 0;">Loading Floor Station…</p>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="tabs">
+        <button id="nav-home" class="on" onclick="setTab('home')">
+            <i class="ph-bold ph-house"></i> Home
+        </button>
+        <button id="nav-drop" onclick="setTab('drop', 0)">
+            <i class="ph-bold ph-scales"></i> Drop-off
+        </button>
+        <button id="nav-disp" onclick="setTab('disp')">
+            <i class="ph-bold ph-truck"></i> Dispatches
+        </button>
+        <button id="nav-prof" onclick="setTab('prof')">
+            <i class="ph-bold ph-user-circle"></i> Profile
+        </button>
+    </div>
+</div>
+
+<script>
+    const API_BASE = window.location.protocol.startsWith('http') 
+        ? `${window.location.origin}/api` 
+        : 'http://localhost:3001/api';
+
+    const MATERIALS = [
+        'Paper', 'Cardboard', 'Plastic', 'Copper', 'Steel', 'Aluminium', 
+        'Glass', 'Organic wet waste', 'E-waste', 'Landfill waste'
+    ];
+
+    let currentTab = 'home';
+    let dropStep = 0;
+    let selectedCollector = null;
+    let isSegregated = true;
+    let hubWeights = {}; // { material: kg }
+    let lastDropoff = null;
+
+    let summary = { today_dropoffs: 0, today_kg: 0, storage_stock_kg: 0, weight_gaps: 0 };
+    let recentTrips = [];
+    let dispatches = [];
+
+    async function loadData() {
+        try {
+            const [sumRes, tripsRes, dispRes] = await Promise.all([
+                fetch(`${API_BASE}/hub/summary`).then(r => r.json()),
+                fetch(`${API_BASE}/hub/trips`).then(r => r.json()),
+                fetch(`${API_BASE}/hub/dispatches`).then(r => r.json())
+            ]);
+            summary = sumRes || summary;
+            recentTrips = tripsRes.trips || [];
+            dispatches = dispRes.dispatches || [];
+            render();
+        } catch (e) {
+            console.error('Failed to load hub data:', e);
+            render();
+        }
+    }
+
+    function setTab(tab, step = 0) {
+        currentTab = tab;
+        dropStep = step;
+        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('on'));
+        const activeNav = document.getElementById(`nav-${tab}`);
+        if (activeNav) activeNav.classList.add('on');
+        render();
+    }
+
+    function render() {
+        const body = document.getElementById('hub-body');
+
+        // 1. HOME TAB
+        if (currentTab === 'home') {
+            const tripRows = recentTrips.slice(0, 5).map(t => `
+                <div class="row">
+                    <div>
+                        <div style="font-weight: 700; color: var(--tx);">${escapeHtml(t.collector_name || 'Partner')}</div>
+                        <small class="mu font-mono text-xs">${t.id} • ${t.hub_weight} kg measured</small>
+                    </div>
+                    <i class="tg ${t.is_flagged ? 'w' : ''}">${t.is_flagged ? 'Check weight' : 'OK'}</i>
+                </div>
+            `).join('') || '<p class="mu" style="text-align: center; padding: 20px 0;">No drop-offs recorded yet.</p>';
+
+            body.innerHTML = `
+                <h2>Good morning, Anil</h2>
+                <p class="mu">Circular Segregation Hub • Shift A</p>
+                <div class="kp">
+                    <div><b>${summary.today_dropoffs}</b>Drop-offs today</div>
+                    <div><b>${summary.today_kg} kg</b>Received today</div>
+                </div>
+                <button class="pb" onclick="setTab('drop', 0)">
+                    <i class="ph-bold ph-plus-circle"></i> New Drop-off (Weight 2)
+                </button>
+                <h3>Recent Hub Audit Logs</h3>
+                <div class="card" style="margin-top: 6px;">
+                    ${tripRows}
+                </div>
+            `;
+            return;
+        }
+
+        // 2. DROP-OFF TAB
+        if (currentTab === 'drop') {
+            // STEP 0: Find Kabadiwala
+            if (dropStep === 0) {
+                body.innerHTML = `
+                    <h2>New Drop-off Check-in</h2>
+                    <p class="mu">Enter the Kabadiwala's Partner ID or Phone Number to pull their doorstep declared weights.</p>
+                    <label style="display:block; margin: 16px 0 6px; font-weight: 700; font-size: 13px;">Kabadiwala ID / Employee ID</label>
+                    <input id="inp-kid" placeholder="e.g. KW-1010 or 7814776666" value="${selectedCollector?.employee_id || ''}" style="font-weight: 700; font-family: monospace;">
+                    <button class="pb" onclick="searchCollector()">
+                        <i class="ph-bold ph-magnifying-glass"></i> Find Kabadiwala Records
+                    </button>
+                    <p id="kid-err" style="color: #dc2626; font-size: 12px; margin-top: 8px;"></p>
+                    <div style="background: var(--bg); padding: 12px; border-radius: 12px; margin-top: 20px; font-size: 12px;" class="mu">
+                        <b>Active Live Partners:</b> <a href="javascript:void(0)" onclick="document.getElementById('inp-kid').value='KW-1011'; searchCollector();" style="color: var(--g); font-weight: 700; text-decoration: underline;">KW-1011</a> (Parv Dua), <a href="javascript:void(0)" onclick="document.getElementById('inp-kid').value='KW-1012'; searchCollector();" style="color: var(--g); font-weight: 700; text-decoration: underline;">KW-1012</a> (Amogh)
+                    </div>
+                `;
+                return;
+            }
+
+            // STEP 1: Inspect Trip & Select Lot Type
+            if (dropStep === 1) {
+                const c = selectedCollector.collector;
+                const pickups = selectedCollector.pickups || [];
+                const declaredTotal = selectedCollector.declared_total || 0;
+
+                const pickupRows = pickups.map(p => `
+                    <div class="row">
+                        <div>
+                            <div style="font-weight: 600; font-size: 12px;">${escapeHtml(p.customer_address || 'Customer Doorstep')}</div>
+                            <small class="mu">${escapeHtml(p.customer_name || 'Customer')} • ${escapeHtml(p.material_weights || p.items || '')}</small>
+                        </div>
+                        <b style="font-size: 13px; color: var(--sb);">${p.actual_weight || 0} kg</b>
+                    </div>
+                `).join('') || '<p class="mu">No pickup records found for this trip.</p>';
+
+                body.innerHTML = `
+                    <h2>${escapeHtml(c.name || 'Partner')}</h2>
+                    <p class="mu"><b style="color: var(--g); font-family: monospace;">${c.employee_id || 'KW-' + c.id}</b> • ${c.phone_number}<br>Area: ${c.operating_area || '—'} (PIN: ${c.pincode || '—'})</p>
+                    <div class="card">
+                        <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">Doorstep Declared Scrap (Weight 1)</div>
+                        ${pickupRows}
+                        <div class="row" style="margin-top: 6px; border-top: 2px solid var(--bd); border-bottom: 0;">
+                            <span>Declared Total (Weight 1)</span>
+                            <b style="font-size: 16px; color: var(--g);">${declaredTotal} kg</b>
+                        </div>
+                    </div>
+
+                    <label style="display:block; margin: 16px 0 6px; font-weight: 700; font-size: 13px;">Type of Lot</label>
+                    <div class="seg">
+                        <button class="${isSegregated ? 'on' : ''}" onclick="isSegregated=true; render();">Segregated (+₹50 Bonus)</button>
+                        <button class="${!isSegregated ? 'on' : ''}" onclick="isSegregated=false; render();">Unsegregated</button>
+                    </div>
+
+                    <button class="pb" onclick="dropStep=2; render();">
+                        Continue to Hub Weighbridge <i class="ph-bold ph-arrow-right"></i>
+                    </button>
+                `;
+                return;
+            }
+
+            // STEP 2: Re-weigh Scrap by Material (Weight 2)
+            if (dropStep === 2) {
+                const c = selectedCollector.collector;
+                const declTotal = selectedCollector.declared_total || 0;
+
+                const matInputs = MATERIALS.map(m => `
+                    <div class="row">
+                        <div>
+                            <span style="font-weight: 600; font-size: 13px;">${m}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <input class="sm" type="number" step="0.1" placeholder="0" 
+                                value="${hubWeights[m] || ''}" 
+                                oninput="setMatWeight('${m}', this.value)" style="font-weight: bold; font-family: monospace;">
+                            <span style="font-size: 11px; color: var(--mu);">kg</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                const hubTotal = getHubTotal();
+                const gap = declTotal > 0 ? (Math.abs(declTotal - hubTotal) / declTotal) : 0;
+                const isFlagged = gap > 0.1;
+
+                let gapBadge = '';
+                if (hubTotal > 0) {
+                    if (isFlagged) {
+                        gapBadge = `<span class="tg w" style="font-size: 12px;">⚠️ Gap ${Math.round(gap * 100)}% (Admin will be alerted)</span>`;
+                    } else {
+                        gapBadge = `<span class="tg" style="font-size: 12px;">✅ Matches Weight 1</span>`;
+                    }
+                }
+
+                body.innerHTML = `
+                    <h2>Hub Weighbridge Audit</h2>
+                    <p class="mu">${isSegregated ? 'Weigh each segregated scrap lot.' : 'Sort the mixed lot, then weigh each material.'}</p>
+                    <div class="card" style="max-height: 280px; overflow-y: auto;">
+                        ${matInputs}
+                    </div>
+
+                    <div style="background: var(--gl); padding: 12px; border-radius: 12px; margin-top: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-weight: 700; font-size: 13px;">Declared (Weight 1):</span>
+                            <b>${declTotal} kg</b>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 700; font-size: 13px;">Hub Scale (Weight 2):</span>
+                            <b style="color: var(--g); font-size: 16px;">${hubTotal} kg</b>
+                        </div>
+                        <div style="margin-top: 6px;">${gapBadge}</div>
+                    </div>
+
+                    <label class="ck">
+                        <input type="checkbox" id="chk-confirm" onchange="document.getElementById('btn-store').disabled = !(getHubTotal() > 0 && this.checked)">
+                        <span><b>${escapeHtml(c.name)}</b> confirmed the measured scale weights.</span>
+                    </label>
+
+                    <button class="pb" id="btn-store" disabled onclick="submitDropoff()">
+                        <i class="ph-bold ph-check-circle"></i> Confirm Audit &amp; Deposit to Silos
+                    </button>
+                `;
+                return;
+            }
+
+            // STEP 3: Drop-off Stored Successfully
+            if (dropStep === 3) {
+                body.innerHTML = `
+                    <h2>Drop-off Stored &amp; Verified! 🎉</h2>
+                    <p class="mu">Trip <b>${lastDropoff.trip_id}</b> recorded for ${lastDropoff.collector_name}.</p>
+                    <div class="card">
+                        <div class="row">
+                            <span style="font-weight: 600;">Trip Payout for Approval</span>
+                            <b style="color: var(--g); font-size: 18px;">₹${lastDropoff.payout}</b>
+                        </div>
+                        <div class="row">
+                            <span>Hub Measured Weight</span>
+                            <b>${lastDropoff.hub_weight} kg</b>
+                        </div>
+                        <div class="row">
+                            <span>Adulteration Audit Status</span>
+                            <i class="tg ${lastDropoff.is_flagged ? 'w' : ''}">${lastDropoff.is_flagged ? 'Gap Flagged' : 'Verified OK'}</i>
+                        </div>
+                    </div>
+                    <button class="pb" onclick="setTab('home')">
+                        <i class="ph-bold ph-arrow-left"></i> Back to Floor Home
+                    </button>
+                `;
+                return;
+            }
+        }
+
+        // 3. DISPATCH TAB
+        if (currentTab === 'disp') {
+            const dRows = dispatches.map(d => `
+                <div class="card">
+                    <div class="row">
+                        <b>${d.id} • ${d.material}</b>
+                        <i class="tg ${d.status === 'Planned' ? 'w' : ''}">${d.status}</i>
+                    </div>
+                    <p class="mu" style="margin: 4px 0 8px;">${d.weight_kg} kg batched for <b>${escapeHtml(d.recycling_unit)}</b></p>
+                    ${d.status === 'Planned' ? `
+                        <button class="sb" onclick="markLoaded('${d.id}')">
+                            <i class="ph-bold ph-check"></i> Mark Loaded into Truck
+                        </button>
+                    ` : '<span style="font-size: 11px; color: var(--g); font-weight: 700;">Dispatched &amp; En Route</span>'}
+                </div>
+            `).join('') || '<p class="mu" style="text-align: center; padding: 20px 0;">No active dispatches.</p>';
+
+            body.innerHTML = `
+                <h2>Bulk Dispatches</h2>
+                <p class="mu">Load aggregated material lots into trucks for delivery to certified recycling units.</p>
+                ${dRows}
+            `;
+            return;
+        }
+
+        // 4. PROFILE TAB
+        if (currentTab === 'prof') {
+            body.innerHTML = `
+                <h2>Anil Sharma</h2>
+                <p class="mu">Employee ID <b>E-201</b> • Floor Weighing &amp; Sorting<br>Shift A: 08:00 – 16:00 IST</p>
+                <div class="card">
+                    <div class="row">
+                        <span>Hub Location</span>
+                        <b>Patiala Central Hub #1</b>
+                    </div>
+                    <div class="row">
+                        <span>Weighbridge Status</span>
+                        <b style="color: var(--g);">Online &amp; Calibrated 🟢</b>
+                    </div>
+                    <div class="row">
+                        <span>Language</span>
+                        <b>English / Hindi</b>
+                    </div>
+                </div>
+                <button class="pb" style="background: #e2e8f0; color: #334155;" onclick="alert('Floor Station is active and connected.')">
+                    Station Status: Active
+                </button>
+            `;
+        }
+    }
+
+    async function searchCollector() {
+        const inp = document.getElementById('inp-kid');
+        const err = document.getElementById('kid-err');
+        const q = inp.value.trim();
+        if (!q) { err.textContent = 'Please enter a Kabadiwala ID.'; return; }
+
+        err.textContent = 'Looking up records…';
+        try {
+            const res = await fetch(`${API_BASE}/hub/collector/${encodeURIComponent(q)}`);
+            if (!res.ok) {
+                const data = await res.json();
+                err.textContent = data.error || 'No Kabadiwala found.';
+                return;
+            }
+            selectedCollector = await res.json();
+            hubWeights = {};
+            dropStep = 1;
+            render();
+        } catch (e) {
+            err.textContent = 'Cannot reach hub server.';
+        }
+    }
+
+    function setMatWeight(mat, val) {
+        hubWeights[mat] = parseFloat(val) || 0;
+        const btn = document.getElementById('btn-store');
+        const chk = document.getElementById('chk-confirm');
+        if (btn && chk) {
+            btn.disabled = !(getHubTotal() > 0 && chk.checked);
+        }
+        render();
+    }
+
+    function getHubTotal() {
+        return Math.round(Object.values(hubWeights).reduce((a, b) => a + (parseFloat(b) || 0), 0) * 10) / 10;
+    }
+
+    async function submitDropoff() {
+        const hubTotal = getHubTotal();
+        const declTotal = selectedCollector.declared_total || 0;
+        const c = selectedCollector.collector;
+
+        try {
+            const res = await fetch(`${API_BASE}/hub/dropoff`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    collector_id: c.id,
+                    collector_name: c.name,
+                    collector_phone: c.phone_number,
+                    declared_weight: declTotal,
+                    hub_weight: hubTotal,
+                    is_segregated: isSegregated,
+                    materials: hubWeights,
+                    address_count: selectedCollector.pickups?.length || 1
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                lastDropoff = {
+                    trip_id: data.trip_id,
+                    payout: data.payout,
+                    collector_name: c.name,
+                    hub_weight: data.hub_weight,
+                    is_flagged: data.is_flagged
+                };
+                dropStep = 3;
+                loadData();
+            } else {
+                alert(data.error || 'Failed to record dropoff.');
+            }
+        } catch (e) {
+            alert('Network error recording dropoff.');
+        }
+    }
+
+    async function markLoaded(id) {
+        try {
+            await fetch(`${API_BASE}/hub/dispatches/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'In transit' })
+            });
+            loadData();
+        } catch (e) {
+            alert('Failed to update dispatch.');
+        }
+    }
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Initial load
+    loadData();
+</script>
+
+</body>
+</html>

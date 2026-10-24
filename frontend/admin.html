@@ -70,6 +70,27 @@
                     class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
                     <i class="ph ph-truck text-lg"></i> Pickups
                 </button>
+
+                <div class="pt-5 pb-2 px-3 text-[10px] font-extrabold uppercase tracking-wider text-emerald-300/80">
+                    Segregation Hub (Stage 3)
+                </div>
+                <button onclick="showTab('hub-silos')" id="tab-hub-silos-btn"
+                    class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
+                    <i class="ph ph-archive text-lg text-emerald-300"></i> Storage Silos & Bins
+                </button>
+                <button onclick="showTab('hub-audits')" id="tab-hub-audits-btn"
+                    class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
+                    <i class="ph ph-scales text-lg text-amber-300"></i> Weight Audits & Gaps
+                </button>
+                <button onclick="showTab('hub-dispatches')" id="tab-hub-dispatches-btn"
+                    class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
+                    <i class="ph ph-paper-plane-tilt text-lg text-blue-300"></i> Recycler Dispatches
+                </button>
+                <a href="hub.html" target="_blank"
+                    class="w-full mt-3 flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-200 bg-emerald-900/60 border border-emerald-500/30 hover:bg-emerald-800/80 transition-colors text-left">
+                    <span class="flex items-center gap-2"><i class="ph-bold ph-device-mobile"></i> Floor Staff Station</span>
+                    <i class="ph-bold ph-arrow-square-out text-emerald-400"></i>
+                </a>
             </nav>
 
             <div class="p-4 border-t border-white/10">
@@ -162,6 +183,7 @@
                         <thead>
                             <tr class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                                 <th class="text-left px-6 py-3">ID</th>
+                                <th class="text-left px-6 py-3">Kabadiwala ID</th>
                                 <th class="text-left px-6 py-3">Phone</th>
                                 <th class="text-left px-6 py-3">Name</th>
                                 <th class="text-left px-6 py-3">Area / Pincode</th>
@@ -172,7 +194,7 @@
                             </tr>
                         </thead>
                         <tbody id="collectors-tbody" class="divide-y divide-gray-50">
-                            <tr><td colspan="8" class="text-center py-10 text-gray-400">Loading…</td></tr>
+                            <tr><td colspan="9" class="text-center py-10 text-gray-400">Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -208,6 +230,141 @@
                             <tr><td colspan="8" class="text-center py-10 text-gray-400">Loading…</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- TAB: HUB SILOS -->
+            <div id="tab-hub-silos" class="hidden space-y-6">
+                <!-- Banner -->
+                <div class="bg-gradient-to-r from-[#0A3B2C] to-[#125841] text-white p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-1">
+                            <i class="ph-bold ph-archive"></i> Stage 3 • Circular Hub Floor
+                        </div>
+                        <h3 class="text-xl font-extrabold text-white">Material Silos & Storage Inventory</h3>
+                        <p class="text-xs text-emerald-100/80 mt-1 max-w-xl">
+                            Materials collected doorstep by Kabadiwalas are weighed, audited, and held in segregated storage silos until bulk threshold dispatch to industrial recyclers.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openCreateDispatchModal()" class="flex items-center gap-2 bg-emerald-400 text-[#0A3B2C] px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-300 transition-colors shadow-md">
+                            <i class="ph-bold ph-plus-circle text-base"></i> Dispatch New Lot
+                        </button>
+                        <a href="hub.html" target="_blank" class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors">
+                            <i class="ph-bold ph-device-mobile"></i> Floor App ↗
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Silos KPI cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Current Stock</p>
+                        <p class="text-2xl font-extrabold text-[#0A3B2C]" id="stat-hub-stock">— kg</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Capacity</p>
+                        <p class="text-2xl font-extrabold text-gray-700" id="stat-hub-capacity">— kg</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Avg Silo Fill</p>
+                        <p class="text-2xl font-extrabold text-emerald-600" id="stat-hub-fill">—%</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Active Silos</p>
+                        <p class="text-2xl font-extrabold text-[#0A3B2C]" id="stat-hub-silos-count">10 Silos</p>
+                    </div>
+                </div>
+
+                <!-- Silos Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="hub-silos-grid">
+                    <div class="col-span-full text-center py-12 text-gray-400">Loading silos…</div>
+                </div>
+            </div>
+
+            <!-- TAB: HUB AUDITS & GAPS -->
+            <div id="tab-hub-audits" class="hidden space-y-6">
+                <!-- Banner -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 text-amber-600 text-xs font-bold uppercase tracking-wider mb-1">
+                            <i class="ph-bold ph-scales"></i> Dual-Scale Audit (Weight 1 vs Weight 2)
+                        </div>
+                        <h3 class="text-xl font-extrabold text-gray-900">Doorstep vs Hub Weighbridge Verification</h3>
+                        <p class="text-xs text-gray-500 mt-1 max-w-2xl">
+                            Compare collector-declared weights (Weight 1) against the Hub floor scale (Weight 2). If deviation exceeds 10%, an audit alert is triggered before payout approval.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select id="hub-audit-filter" onchange="filterHubAudits()" class="bg-gray-50 border border-gray-200 text-xs rounded-xl px-3 py-2 text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="all">All Drop-offs</option>
+                            <option value="flagged">⚠️ Gaps > 10% Only</option>
+                            <option value="pending">Pending Approval</option>
+                            <option value="approved">Approved & Paid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                    <th class="text-left px-6 py-3.5">Trip ID</th>
+                                    <th class="text-left px-6 py-3.5">Collector</th>
+                                    <th class="text-left px-6 py-3.5">Declared (W1)</th>
+                                    <th class="text-left px-6 py-3.5">Hub Scale (W2)</th>
+                                    <th class="text-left px-6 py-3.5">Audit Gap</th>
+                                    <th class="text-left px-6 py-3.5">Segregated</th>
+                                    <th class="text-left px-6 py-3.5">Payout</th>
+                                    <th class="text-left px-6 py-3.5">Status &amp; Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hub-audits-tbody" class="divide-y divide-gray-50">
+                                <tr><td colspan="8" class="text-center py-12 text-gray-400">Loading audit records…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: HUB DISPATCHES -->
+            <div id="tab-hub-dispatches" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 text-blue-600 text-xs font-bold uppercase tracking-wider mb-1">
+                            <i class="ph-bold ph-paper-plane-tilt"></i> Stage 3 → Stage 4 Dispatches
+                        </div>
+                        <h3 class="text-xl font-extrabold text-gray-900">Industrial Recycler Shipments</h3>
+                        <p class="text-xs text-gray-500 mt-1 max-w-xl">
+                            Batched truckloads sent directly to certified recyclers (PaperCycle, GreenLoop Plastics, MetalWorks, BioCompost).
+                        </p>
+                    </div>
+                    <button onclick="openCreateDispatchModal()" class="flex items-center gap-2 bg-[#0A3B2C] text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-[#0c4634] transition-colors shadow-sm">
+                        <i class="ph-bold ph-plus-circle text-base text-emerald-400"></i> Dispatch New Lot
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                    <th class="text-left px-6 py-3.5">Lot ID</th>
+                                    <th class="text-left px-6 py-3.5">Material</th>
+                                    <th class="text-left px-6 py-3.5">Weight</th>
+                                    <th class="text-left px-6 py-3.5">Certified Recycler</th>
+                                    <th class="text-left px-6 py-3.5">Dispatch Status</th>
+                                    <th class="text-left px-6 py-3.5">Logged At</th>
+                                    <th class="text-left px-6 py-3.5">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hub-dispatches-tbody" class="divide-y divide-gray-50">
+                                <tr><td colspan="7" class="text-center py-12 text-gray-400">Loading dispatches…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -429,6 +586,111 @@
     </div>
 </div>
 
+<!-- CREATE DISPATCH MODAL -->
+<div id="modal-create-dispatch" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative border border-gray-100">
+        <button onclick="closeCreateDispatchModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold">
+                <i class="ph-bold ph-paper-plane-tilt"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-gray-900 text-lg">Dispatch Recycler Lot</h3>
+                <p class="text-xs text-gray-500">Batch collected materials to certified recycling plant</p>
+            </div>
+        </div>
+
+        <form id="form-create-dispatch" onsubmit="submitCreateDispatch(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Material Stream</label>
+                <select id="disp-material" required onchange="autoFillRecyclingPartner()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="Plastic">Plastic (PET / HDPE / Film)</option>
+                    <option value="Cardboard">Cardboard</option>
+                    <option value="Paper">Paper</option>
+                    <option value="Steel">Steel</option>
+                    <option value="Copper">Copper</option>
+                    <option value="Aluminium">Aluminium</option>
+                    <option value="Glass">Glass</option>
+                    <option value="Organic wet waste">Organic wet waste</option>
+                    <option value="E-waste">E-waste</option>
+                    <option value="Landfill waste">Landfill waste (Inert Residue)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Batch Weight (kg)</label>
+                <input type="number" id="disp-weight" step="0.1" min="1" required placeholder="e.g. 150" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Certified Recycling Partner / Mill</label>
+                <input type="text" id="disp-unit" required placeholder="e.g. GreenLoop Plastics" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="closeCreateDispatchModal()" class="flex-1 border border-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl text-xs hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" id="btn-submit-dispatch" class="flex-1 bg-[#0A3B2C] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#0e4b38] transition-colors shadow-sm">
+                    Confirm Dispatch
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TRIP AUDIT DETAILS MODAL -->
+<div id="modal-trip-breakdown" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative border border-gray-100">
+        <button onclick="document.getElementById('modal-trip-breakdown').classList.add('hidden')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl font-bold">
+                <i class="ph-bold ph-scales"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-gray-900 text-lg" id="tb-trip-id">Trip Breakdown</h3>
+                <p class="text-xs text-gray-500" id="tb-collector-name">Collector drop-off audit</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                    <span class="text-gray-400 font-medium block">Doorstep W1</span>
+                    <span class="font-bold text-gray-800 text-sm" id="tb-w1">—</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 font-medium block">Hub Scale W2</span>
+                    <span class="font-bold text-gray-800 text-sm" id="tb-w2">—</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 font-medium block">Discrepancy</span>
+                    <span class="font-bold text-sm" id="tb-gap">—</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 font-medium block">Calculated Payout</span>
+                    <span class="font-extrabold text-emerald-700 text-sm" id="tb-payout">—</span>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Deposited Stream Breakdown</h4>
+        <div id="tb-materials-list" class="space-y-1.5 max-h-48 overflow-y-auto mb-5">
+            <!-- Dynamic rows -->
+        </div>
+
+        <div class="flex justify-end">
+            <button onclick="document.getElementById('modal-trip-breakdown').classList.add('hidden')" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     const API_BASE  = window.location.protocol.startsWith('http') 
         ? `${window.location.origin}/api` 
@@ -439,6 +701,10 @@
     let allUsers      = [];
     let allPickups    = [];
     let allCollectors = [];
+    let currentTab    = 'users';
+    let allHubBins    = [];
+    let allHubTrips   = [];
+    let allHubDispatches = [];
 
     // ── Gate ──────────────────────────────────────────────────────────────────
     function unlockAdmin() {
@@ -472,16 +738,20 @@
 
     // ── Tab switching ─────────────────────────────────────────────────────────
     function showTab(tab) {
-        document.getElementById('tab-users').classList.toggle('hidden',      tab !== 'users');
-        document.getElementById('tab-collectors').classList.toggle('hidden', tab !== 'collectors');
-        document.getElementById('tab-pickups').classList.toggle('hidden',    tab !== 'pickups');
+        currentTab = tab;
+        document.getElementById('tab-users').classList.toggle('hidden',          tab !== 'users');
+        document.getElementById('tab-collectors').classList.toggle('hidden',     tab !== 'collectors');
+        document.getElementById('tab-pickups').classList.toggle('hidden',        tab !== 'pickups');
+        document.getElementById('tab-hub-silos').classList.toggle('hidden',      tab !== 'hub-silos');
+        document.getElementById('tab-hub-audits').classList.toggle('hidden',     tab !== 'hub-audits');
+        document.getElementById('tab-hub-dispatches').classList.toggle('hidden', tab !== 'hub-dispatches');
 
         document.querySelectorAll('.admin-nav-btn').forEach(btn => {
             btn.classList.remove('bg-white/20', 'text-white');
         });
 
         const activeBtn = document.getElementById(`tab-${tab}-btn`);
-        activeBtn.classList.add('bg-white/20', 'text-white');
+        if (activeBtn) activeBtn.classList.add('bg-white/20', 'text-white');
 
         if (tab === 'users') {
             document.getElementById('page-title').textContent    = 'Users';
@@ -489,15 +759,35 @@
         } else if (tab === 'collectors') {
             document.getElementById('page-title').textContent    = 'WhatsApp Collectors (Kabadiwalas)';
             document.getElementById('page-subtitle').textContent = 'Field workers registered directly via WhatsApp';
-        } else {
+        } else if (tab === 'pickups') {
             document.getElementById('page-title').textContent    = 'Pickups';
             document.getElementById('page-subtitle').textContent = 'All pickup requests across all users';
+        } else if (tab === 'hub-silos') {
+            document.getElementById('page-title').textContent    = 'Segregation Hub Silos & Storage';
+            document.getElementById('page-subtitle').textContent = 'Material silos, capacity tracking and threshold-based bulk dispatch';
+            loadHubSilos();
+        } else if (tab === 'hub-audits') {
+            document.getElementById('page-title').textContent    = 'Hub Weighbridge Audits & Settlement';
+            document.getElementById('page-subtitle').textContent = 'Doorstep Weight 1 vs Hub Floor Scale Weight 2 comparison & gap triaging';
+            loadHubAudits();
+        } else if (tab === 'hub-dispatches') {
+            document.getElementById('page-title').textContent    = 'Industrial Recycler Dispatches';
+            document.getElementById('page-subtitle').textContent = 'Shipments dispatched to certified recycling mills and compost plants';
+            loadHubDispatches();
         }
     }
 
     // ── Load all data ─────────────────────────────────────────────────────────
     async function loadAll() {
-        await Promise.all([loadUsers(), loadCollectors(), loadPickups()]);
+        await Promise.all([
+            loadUsers(),
+            loadCollectors(),
+            loadPickups(),
+            loadHubSummary(),
+            currentTab === 'hub-silos' ? loadHubSilos() : null,
+            currentTab === 'hub-audits' ? loadHubAudits() : null,
+            currentTab === 'hub-dispatches' ? loadHubDispatches() : null
+        ]);
     }
 
     function refreshData() { loadAll(); }
@@ -691,8 +981,13 @@
                         'Cancelled': 'bg-red-100 text-red-700'
                     }[p.status] || 'bg-gray-100 text-gray-700';
 
+                    const empBadge = p.collector_employee_id 
+                        ? `<span class="bg-emerald-50 text-emerald-800 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-200">ID: ${escHtml(p.collector_employee_id)}</span>` 
+                        : '';
                     const collectorInfo = p.collector_name
-                        ? `<div class="font-bold text-gray-800">${escHtml(p.collector_name)}</div>
+                        ? `<div>
+                             <span class="font-bold text-gray-800">${escHtml(p.collector_name)}</span> ${empBadge}
+                           </div>
                            <div class="text-[11px] text-gray-500 font-mono">${escHtml(p.collector_phone || '')}</div>`
                         : `<span class="text-gray-400 italic">Unassigned</span>`;
 
@@ -762,12 +1057,17 @@
     function renderCollectors(collectors) {
         const tbody = document.getElementById('collectors-tbody');
         if (!collectors.length) {
-            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-gray-400">No WhatsApp collectors registered yet.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-gray-400">No WhatsApp collectors registered yet.</td></tr>`;
             return;
         }
         tbody.innerHTML = collectors.map(c => `
             <tr class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4 text-gray-400 font-mono text-xs">#${c.id}</td>
+                <td class="px-6 py-4 font-mono text-xs">
+                    <span class="inline-flex items-center gap-1 font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-lg border border-emerald-300">
+                        <i class="ph-bold ph-identification-badge text-emerald-700"></i> ${escHtml(c.employee_id || ('KW-' + (1000 + c.id)))}
+                    </span>
+                </td>
                 <td class="px-6 py-4 font-mono font-semibold text-green-700">${escHtml(c.phone_number)}</td>
                 <td class="px-6 py-4 font-semibold text-gray-800">${escHtml(c.name || 'Incomplete')}</td>
                 <td class="px-6 py-4 text-gray-600 text-xs">
@@ -933,6 +1233,386 @@
 
     // Auto-check once on load
     setTimeout(checkWhatsAppStatus, 1500);
+
+    // ── Segregation Hub Controllers ──────────────────────────────────────────
+    async function loadHubSummary() {
+        try {
+            const res = await fetch(`${API_BASE}/hub/summary`);
+            const data = await res.json();
+            const stockEl = document.getElementById('stat-hub-stock');
+            const capEl   = document.getElementById('stat-hub-capacity');
+            const fillEl  = document.getElementById('stat-hub-fill');
+            if (stockEl) stockEl.textContent = `${data.storage_stock_kg || 0} kg`;
+            if (capEl)   capEl.textContent   = `${data.storage_capacity_kg || 0} kg`;
+            if (fillEl) {
+                const pct = data.storage_capacity_kg > 0 
+                    ? Math.round((data.storage_stock_kg / data.storage_capacity_kg) * 100) 
+                    : 0;
+                fillEl.textContent = `${pct}%`;
+            }
+        } catch (err) {
+            console.warn('Hub summary load failed:', err);
+        }
+    }
+
+    async function loadHubSilos() {
+        const grid = document.getElementById('hub-silos-grid');
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">Loading silos…</div>`;
+        try {
+            await loadHubSummary();
+            const res = await fetch(`${API_BASE}/hub/bins`);
+            const data = await res.json();
+            allHubBins = data.bins || [];
+            renderHubSilos(allHubBins);
+        } catch (err) {
+            grid.innerHTML = `<div class="col-span-full text-center py-12 text-red-500">Failed to load hub storage silos.</div>`;
+        }
+    }
+
+    const matIcons = {
+        'Plastic': 'ph-recycle',
+        'Paper': 'ph-file-text',
+        'Cardboard': 'ph-package',
+        'Copper': 'ph-lightning',
+        'Steel': 'ph-wrench',
+        'Aluminium': 'ph-diamonds-four',
+        'Glass': 'ph-drop',
+        'Organic wet waste': 'ph-plant',
+        'E-waste': 'ph-cpu',
+        'Landfill waste': 'ph-trash'
+    };
+
+    function renderHubSilos(bins) {
+        const grid = document.getElementById('hub-silos-grid');
+        if (!bins.length) {
+            grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">No silos found.</div>`;
+            return;
+        }
+
+        grid.innerHTML = bins.map(b => {
+            const pct = b.fill_pct || Math.min(100, Math.round((b.current_kg / b.capacity) * 100));
+            const isHigh = pct >= 80;
+            const barColor = isHigh ? 'bg-amber-500' : 'bg-emerald-500';
+            const icon = matIcons[b.material] || 'ph-archive';
+
+            return `
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between hover:border-emerald-200 transition-all">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center text-xl font-bold">
+                                    <i class="ph-bold ${icon}"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold text-gray-900 text-base leading-snug">${escHtml(b.material)}</h4>
+                                    <span class="text-[11px] font-mono text-gray-400">Silo #${b.id}</span>
+                                </div>
+                            </div>
+                            ${isHigh ? `<span class="bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2 py-0.5 rounded-full text-[10px]">⚠️ High Fill</span>` : ''}
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <span class="text-xs font-semibold text-gray-500">Stored Weight</span>
+                                <span class="text-sm font-extrabold text-gray-900">${b.current_kg} <span class="text-xs text-gray-400 font-normal">/ ${b.capacity} kg</span></span>
+                            </div>
+                            <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                                <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                            </div>
+                            <div class="text-right text-[11px] font-bold text-gray-400 mt-1">${pct}% Capacity</div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                        <div class="text-[11px] text-gray-500 truncate flex items-center gap-1">
+                            <i class="ph-bold ph-factory text-emerald-600"></i>
+                            <span class="truncate" title="${escHtml(b.recycling_unit)}">${escHtml(b.recycling_unit)}</span>
+                        </div>
+                        <button onclick="openCreateDispatchModal('${escHtml(b.material)}', '${escHtml(b.recycling_unit)}')" 
+                            class="shrink-0 bg-gray-50 hover:bg-emerald-50 text-emerald-800 border border-gray-200 hover:border-emerald-300 font-bold text-xs px-2.5 py-1.5 rounded-xl transition-colors">
+                            Dispatch ↗
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function loadHubAudits() {
+        const tbody = document.getElementById('hub-audits-tbody');
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-gray-400">Loading audit records…</td></tr>`;
+        try {
+            const res = await fetch(`${API_BASE}/hub/trips`);
+            const data = await res.json();
+            allHubTrips = data.trips || [];
+            filterHubAudits();
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-red-500">Failed to load audit records.</td></tr>`;
+        }
+    }
+
+    function filterHubAudits() {
+        const filter = document.getElementById('hub-audit-filter').value;
+        let list = allHubTrips;
+        if (filter === 'flagged') {
+            list = list.filter(t => t.is_flagged === 1);
+        } else if (filter === 'pending') {
+            list = list.filter(t => t.is_approved === 0);
+        } else if (filter === 'approved') {
+            list = list.filter(t => t.is_approved === 1);
+        }
+        renderHubAudits(list);
+    }
+
+    function renderHubAudits(trips) {
+        const tbody = document.getElementById('hub-audits-tbody');
+        if (!trips.length) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-gray-400">No drop-off audit records found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = trips.map(t => {
+            const isFlagged = t.is_flagged === 1;
+            const gapBadge = isFlagged 
+                ? `<span class="bg-red-50 text-red-700 border border-red-200 font-bold px-2 py-0.5 rounded text-xs flex items-center gap-1 w-max">
+                     <i class="ph-bold ph-warning"></i> +${t.gap_pct}% Gap
+                   </span>`
+                : `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold px-2 py-0.5 rounded text-xs flex items-center gap-1 w-max">
+                     <i class="ph-bold ph-check-circle"></i> Match (${t.gap_pct}%)
+                   </span>`;
+
+            const segBadge = t.is_segregated === 1
+                ? `<span class="text-emerald-700 font-bold text-xs flex items-center gap-1"><i class="ph-bold ph-check"></i> Yes (+₹50)</span>`
+                : `<span class="text-gray-400 text-xs">No</span>`;
+
+            const actionBtn = t.is_approved === 1
+                ? `<span class="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-lg">
+                     <i class="ph-bold ph-check-circle"></i> Paid &amp; Settled
+                   </span>`
+                : `<button onclick="approveHubTrip('${t.id}')" class="bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm transition-colors">
+                     Approve ₹${t.payout_amount}
+                   </button>`;
+
+            return `
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                    <td class="px-6 py-4 font-mono font-bold text-gray-900 text-xs">${escHtml(t.id)}</td>
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-gray-900">${escHtml(t.collector_name || 'Partner')}</div>
+                        <div class="text-xs text-gray-400 font-mono">${escHtml(t.collector_phone || '—')}</div>
+                    </td>
+                    <td class="px-6 py-4 font-extrabold text-gray-800">${t.declared_weight || 0} kg</td>
+                    <td class="px-6 py-4 font-extrabold text-[#0A3B2C]">${t.hub_weight || 0} kg</td>
+                    <td class="px-6 py-4">${gapBadge}</td>
+                    <td class="px-6 py-4">${segBadge}</td>
+                    <td class="px-6 py-4 font-bold text-emerald-800">₹${t.payout_amount || 0}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            ${actionBtn}
+                            <button onclick="viewTripBreakdown('${t.id}')" title="Inspect drop-off breakdown" class="text-gray-400 hover:text-gray-800 p-1 rounded-lg transition-colors">
+                                <i class="ph-bold ph-eye text-base"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function approveHubTrip(tripId) {
+        try {
+            const res = await fetch(`${API_BASE}/hub/trips/${tripId}/approve`, { method: 'PATCH' });
+            const data = await res.json();
+            if (data.success) {
+                // Update local model
+                const item = allHubTrips.find(t => t.id === tripId);
+                if (item) item.is_approved = 1;
+                filterHubAudits();
+            } else {
+                alert(data.error || 'Approval failed');
+            }
+        } catch (e) {
+            alert('Could not reach server to approve payout');
+        }
+    }
+
+    function viewTripBreakdown(tripId) {
+        const trip = allHubTrips.find(t => t.id === tripId);
+        if (!trip) return;
+
+        document.getElementById('tb-trip-id').textContent = `Drop-off Audit ${trip.id}`;
+        document.getElementById('tb-collector-name').textContent = `${trip.collector_name} (${trip.collector_phone || 'KW partner'})`;
+        document.getElementById('tb-w1').textContent = `${trip.declared_weight || 0} kg`;
+        document.getElementById('tb-w2').textContent = `${trip.hub_weight || 0} kg`;
+        
+        const gapEl = document.getElementById('tb-gap');
+        gapEl.textContent = `${trip.gap_pct}% ${trip.is_flagged ? '(⚠️ Flagged)' : '(Matches)'}`;
+        gapEl.className = trip.is_flagged ? 'font-bold text-sm text-red-600' : 'font-bold text-sm text-emerald-600';
+
+        document.getElementById('tb-payout').textContent = `₹${trip.payout_amount || 0}`;
+
+        const list = document.getElementById('tb-materials-list');
+        const details = trip.details || {};
+        const entries = Object.entries(details).filter(([_, kg]) => Number(kg) > 0);
+
+        if (!entries.length) {
+            list.innerHTML = `<p class="text-xs text-gray-400 py-3 text-center">No individual stream breakdown recorded.</p>`;
+        } else {
+            list.innerHTML = entries.map(([mat, kg]) => `
+                <div class="flex justify-between items-center bg-white p-2 rounded-xl border border-gray-100 text-xs">
+                    <span class="font-semibold text-gray-700">${escHtml(mat)}</span>
+                    <span class="font-extrabold text-[#0A3B2C]">${kg} kg</span>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('modal-trip-breakdown').classList.remove('hidden');
+    }
+
+    async function loadHubDispatches() {
+        const tbody = document.getElementById('hub-dispatches-tbody');
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-gray-400">Loading dispatches…</td></tr>`;
+        try {
+            const res = await fetch(`${API_BASE}/hub/dispatches`);
+            const data = await res.json();
+            allHubDispatches = data.dispatches || [];
+            renderHubDispatches(allHubDispatches);
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-red-500">Failed to load recycler dispatches.</td></tr>`;
+        }
+    }
+
+    function renderHubDispatches(dispatches) {
+        const tbody = document.getElementById('hub-dispatches-tbody');
+        if (!dispatches.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-gray-400">No dispatches logged yet.</td></tr>`;
+            return;
+        }
+
+        const statusBadges = {
+            'Planned': 'bg-amber-50 text-amber-800 border-amber-200',
+            'In transit': 'bg-blue-50 text-blue-800 border-blue-200',
+            'Received & Recycled': 'bg-emerald-50 text-emerald-800 border-emerald-200'
+        };
+
+        tbody.innerHTML = dispatches.map(d => {
+            const nextAction = d.status === 'Planned'
+                ? `<button onclick="updateDispatchStatus('${d.id}', 'In transit')" class="text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-200 transition-colors">Ship Lot →</button>`
+                : d.status === 'In transit'
+                ? `<button onclick="updateDispatchStatus('${d.id}', 'Received & Recycled')" class="text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200 transition-colors">Mark Recycled ✓</button>`
+                : `<span class="text-xs text-gray-400 font-semibold">Done</span>`;
+
+            return `
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                    <td class="px-6 py-4 font-mono font-bold text-gray-900 text-xs">${escHtml(d.id)}</td>
+                    <td class="px-6 py-4 font-bold text-gray-800">${escHtml(d.material)}</td>
+                    <td class="px-6 py-4 font-extrabold text-[#0A3B2C]">${d.weight_kg} kg</td>
+                    <td class="px-6 py-4 text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                        <i class="ph-bold ph-factory text-emerald-600"></i> ${escHtml(d.recycling_unit)}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusBadges[d.status] || 'bg-gray-50 text-gray-700 border-gray-200'}">
+                            ${escHtml(d.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-xs text-gray-400 font-mono">${escHtml(d.created_at || '—')}</td>
+                    <td class="px-6 py-4">${nextAction}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function updateDispatchStatus(dispatchId, newStatus) {
+        try {
+            const res = await fetch(`${API_BASE}/hub/dispatches/${dispatchId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadHubDispatches();
+            } else {
+                alert(data.error || 'Failed to update dispatch status');
+            }
+        } catch (e) {
+            alert('Server error updating status');
+        }
+    }
+
+    const partnerMap = {
+        'Plastic': 'GreenLoop Plastics',
+        'Cardboard': 'PaperCycle Mills',
+        'Paper': 'PaperCycle Mills',
+        'Steel': 'MetalWorks Recyclers',
+        'Copper': 'MetalWorks Recyclers',
+        'Aluminium': 'MetalWorks Recyclers',
+        'Glass': 'ClearGlass Unit',
+        'Organic wet waste': 'BioCompost Plant',
+        'E-waste': 'SafeE Recyclers',
+        'Landfill waste': 'Authorised Landfill'
+    };
+
+    function autoFillRecyclingPartner() {
+        const mat = document.getElementById('disp-material').value;
+        const unitInput = document.getElementById('disp-unit');
+        if (partnerMap[mat]) {
+            unitInput.value = partnerMap[mat];
+        }
+    }
+
+    function openCreateDispatchModal(prefillMat, prefillUnit) {
+        if (prefillMat) {
+            document.getElementById('disp-material').value = prefillMat;
+        }
+        if (prefillUnit) {
+            document.getElementById('disp-unit').value = prefillUnit;
+        } else {
+            autoFillRecyclingPartner();
+        }
+        document.getElementById('disp-weight').value = '';
+        document.getElementById('modal-create-dispatch').classList.remove('hidden');
+    }
+
+    function closeCreateDispatchModal() {
+        document.getElementById('modal-create-dispatch').classList.add('hidden');
+    }
+
+    async function submitCreateDispatch(e) {
+        e.preventDefault();
+        const material = document.getElementById('disp-material').value;
+        const weight_kg = parseFloat(document.getElementById('disp-weight').value);
+        const recycling_unit = document.getElementById('disp-unit').value.trim();
+
+        if (!weight_kg || weight_kg <= 0) {
+            alert('Please enter a valid weight');
+            return;
+        }
+
+        const btn = document.getElementById('btn-submit-dispatch');
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+
+        try {
+            const res = await fetch(`${API_BASE}/hub/dispatches`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ material, weight_kg, recycling_unit })
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeCreateDispatchModal();
+                loadHubDispatches();
+                loadHubSilos();
+            } else {
+                alert(data.error || 'Dispatch creation failed');
+            }
+        } catch (err) {
+            alert('Failed to connect to server');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Confirm Dispatch';
+        }
+    }
 
     function escHtml(str) {
         return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

@@ -122,6 +122,85 @@
             will-change: transform;
             cursor: pointer;
         }
+
+        /* ── Main Page Brand Logo (Step 1 -> Step 2 -> Step 3) ── */
+        .brand-arc-group {
+            opacity: 0;
+            transform-origin: 50px 50px;
+        }
+
+        .brand-arc-group path {
+            stroke-dasharray: 45;
+            stroke-dashoffset: 45;
+        }
+
+        /* Step 1: Arc 1 draws & springs in */
+        .brand-arc-1 {
+            animation: brandStepIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation-delay: 0.15s;
+        }
+        .brand-arc-1 path {
+            animation: brandDrawArc 0.35s ease-out forwards;
+            animation-delay: 0.15s;
+        }
+
+        /* Step 2: Arc 2 draws & springs in */
+        .brand-arc-2 {
+            animation: brandStepIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation-delay: 0.55s;
+        }
+        .brand-arc-2 path {
+            animation: brandDrawArc 0.35s ease-out forwards;
+            animation-delay: 0.55s;
+        }
+
+        /* Step 3: Arc 3 completes the loop */
+        .brand-arc-3 {
+            animation: brandStepIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation-delay: 0.95s;
+        }
+        .brand-arc-3 path {
+            animation: brandDrawArc 0.35s ease-out forwards;
+            animation-delay: 0.95s;
+        }
+
+        /* Final assembly spin pulse */
+        .main-logo-squircle {
+            animation: brandLogoAssembleSpin 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation-delay: 1.35s;
+        }
+
+        @keyframes brandStepIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.6);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes brandDrawArc {
+            0% {
+                stroke-dashoffset: 45;
+            }
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes brandLogoAssembleSpin {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                transform: scale(1.08) rotate(-180deg);
+            }
+            100% {
+                transform: scale(1) rotate(-360deg);
+            }
+        }
     </style>
 </head>
 <body class="text-brand-dark font-sans antialiased" id="body-theme">
@@ -135,8 +214,24 @@
         <div class="px-6 py-8 my-auto w-full">
             <!-- Logo -->
             <div class="mb-6 text-center flex flex-col items-center">
-                <div class="relative mb-3.5 group cursor-pointer inline-block" onclick="spinLogo(this)" title="Tap to spin!">
-                    <img src="logo.png" alt="Circular Logo" class="brand-spin-logo w-20 h-20 rounded-[24px] shadow-lg shadow-emerald-950/20 object-cover select-none border-2 border-white/80 active:scale-90 hover:scale-105 transition-all">
+                <div class="relative mb-3.5 group cursor-pointer inline-block" onclick="triggerLogoAssembly(this)" title="Tap to replay animation!">
+                    <!-- Squircle Container without white border -->
+                    <div class="w-20 h-20 bg-[#1f7a5a] rounded-[24px] shadow-lg shadow-emerald-950/20 flex items-center justify-center p-2.5 main-logo-squircle active:scale-95 transition-all">
+                        <svg viewBox="0 0 100 100" class="w-full h-full overflow-visible">
+                            <!-- Step 1: Arc 1 (Left / Top-Left) -->
+                            <g class="brand-arc-group brand-arc-1" transform="rotate(120 50 50)">
+                                <path d="M 70.68 32.64 A 27 27 0 0 1 70.68 67.36" fill="none" stroke="#9fd0b8" stroke-width="9.5" stroke-linecap="round" />
+                            </g>
+                            <!-- Step 2: Arc 2 (Bottom) -->
+                            <g class="brand-arc-group brand-arc-2" transform="rotate(240 50 50)">
+                                <path d="M 70.68 32.64 A 27 27 0 0 1 70.68 67.36" fill="none" stroke="#c2e8d5" stroke-width="9.5" stroke-linecap="round" />
+                            </g>
+                            <!-- Step 3: Arc 3 (Right) Completes the loop! -->
+                            <g class="brand-arc-group brand-arc-3" transform="rotate(0 50 50)">
+                                <path d="M 70.68 32.64 A 27 27 0 0 1 70.68 67.36" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" />
+                            </g>
+                        </svg>
+                    </div>
                 </div>
                 <h1 class="text-4xl font-extrabold tracking-tighter text-brand-dark mb-1">circular.</h1>
                 <p class="text-brand-grayText font-medium text-xs">Smarter waste, cleaner cities.</p>
@@ -604,7 +699,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 border border-white/80 select-none" title="Tap to spin Circular logo!">
+                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 select-none" title="Tap to spin Circular logo!">
                     <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform cursor-pointer" title="Settings">
                         <i class="ph-bold ph-gear text-lg"></i>
                     </button>
@@ -668,7 +763,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 border border-white/80 select-none" title="Tap to spin Circular logo!">
+                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 select-none" title="Tap to spin Circular logo!">
                     <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
                         <i class="ph-bold ph-gear text-lg"></i>
                     </button>
@@ -703,7 +798,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 border border-white/80 select-none" title="Tap to spin Circular logo!">
+                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 select-none" title="Tap to spin Circular logo!">
                     <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
                         <i class="ph-bold ph-gear text-lg"></i>
                     </button>
@@ -2060,7 +2155,7 @@
         </div>
         <div class="space-y-3.5 text-xs text-brand-dark font-medium leading-relaxed">
             <div class="text-center py-2 flex flex-col items-center">
-                <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-16 h-16 rounded-[20px] mb-2 cursor-pointer shadow-md shadow-emerald-950/15 object-cover border border-white/80 active:scale-90 hover:scale-105 select-none" title="Tap to spin Circular logo!">
+                <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-16 h-16 rounded-[20px] mb-2 cursor-pointer shadow-md shadow-emerald-950/15 object-cover active:scale-90 hover:scale-105 select-none" title="Tap to spin Circular logo!">
                 <h2 class="text-2xl font-black text-brand-dark tracking-tight">circular.</h2>
                 <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-700 mt-0.5">By Terra Technologies</p>
                 <span class="inline-block bg-brand-light text-brand-dark text-[10px] font-extrabold px-3 py-1 rounded-full mt-2 border border-brand-border">Version 2.4.0 (Patiala Edition)</span>
@@ -2115,6 +2210,20 @@
         if (img) {
             img.style.transform = `rotate(${brandLogoRotation}deg)`;
         }
+    }
+
+    // ─── Brand Logo Step 1 -> Step 2 -> Step 3 Interactive Replay ────────────
+    function triggerLogoAssembly(el) {
+        const squircle = (el && el.querySelector) ? el.querySelector('.main-logo-squircle') : el;
+        if (!squircle) return;
+        const arcs = squircle.querySelectorAll('.brand-arc-group');
+        
+        squircle.classList.remove('main-logo-squircle');
+        arcs.forEach((arc, i) => arc.classList.remove(`brand-arc-${i+1}`));
+        void squircle.offsetWidth; // force browser reflow
+        
+        squircle.classList.add('main-logo-squircle');
+        arcs.forEach((arc, i) => arc.classList.add(`brand-arc-${i+1}`));
     }
 
     // ─── Config ──────────────────────────────────────────────────────────────
@@ -4521,6 +4630,7 @@
                 completedAt: p.completed_at,
                 collectorName: p.collector_name,
                 collectorPhone: p.collector_phone,
+                collectorEmployeeId: p.collector_employee_id,
                 userId: p.user_id,
                 bookedByName: p.booked_by_name,
                 householdCode: p.household_code
@@ -4732,7 +4842,7 @@
                             <h4 class="text-xs font-extrabold text-brand-dark">Collector Assigned</h4>
                             <span class="text-[10px] font-bold text-emerald-800">${assignedTime}</span>
                         </div>
-                        <p class="text-[11px] text-brand-dark font-semibold">Assigned to: <span class="text-emerald-900 font-extrabold">${escapeHtml(partnerName)}</span> ${partnerPhone ? `(${partnerPhone})` : ''}</p>
+                        <p class="text-[11px] text-brand-dark font-semibold">Assigned to: <span class="text-emerald-900 font-extrabold">${escapeHtml(partnerName)}</span> ${p.collectorEmployeeId ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold border border-emerald-200">ID: ${escapeHtml(p.collectorEmployeeId)}</span>` : ''} ${partnerPhone ? `(${partnerPhone})` : ''}</p>
                         <p class="text-[10px] text-brand-grayText mt-0.5">Partner dispatched and en route to your location.</p>
                     </div>
                 </div>

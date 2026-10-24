@@ -76,6 +76,7 @@ router.get('/', async (req, res) => {
                     SELECT p.*, 
                            c.name as collector_name, 
                            c.phone_number as collector_phone_num,
+                           c.employee_id as collector_employee_id,
                            u.name as booked_by_name,
                            u.phone as booked_by_phone,
                            u.hh_code as household_code
@@ -91,6 +92,7 @@ router.get('/', async (req, res) => {
                     SELECT p.*, 
                            c.name as collector_name, 
                            c.phone_number as collector_phone_num,
+                           c.employee_id as collector_employee_id,
                            u.name as booked_by_name,
                            u.phone as booked_by_phone,
                            u.hh_code as household_code
@@ -110,6 +112,7 @@ router.get('/', async (req, res) => {
                 SELECT p.*, 
                        c.name as collector_name, 
                        c.phone_number as collector_phone_num,
+                       c.employee_id as collector_employee_id,
                        u.name as booked_by_name,
                        u.phone as booked_by_phone,
                        u.hh_code as household_code
@@ -195,7 +198,7 @@ router.get('/:id/status', async (req, res) => {
     try {
         const db = await getDb();
         const stmt = db.prepare(`
-            SELECT p.*, c.name as collector_name 
+            SELECT p.*, c.name as collector_name, c.employee_id as collector_employee_id 
             FROM pickups p 
             LEFT JOIN collectors c ON p.collector_id = c.id 
             WHERE p.id = ? OR p.request_id = ?

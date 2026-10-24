@@ -20,6 +20,7 @@ app.use('/api/admin',    require('./routes/admin'));
 app.use('/api/whatsapp', require('./routes/whatsapp'));
 app.use('/api/ai',       require('./routes/aiChat'));
 app.use('/api/wallet',   require('./routes/wallet'));
+app.use('/api/hub',      require('./routes/hub'));
 
 // ── WhatsApp Web Client & Status ─────────────────────
 const { getStatus } = require('./whatsappWeb');

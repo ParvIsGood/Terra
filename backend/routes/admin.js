@@ -57,7 +57,7 @@ router.get('/users/:id', requireAdmin, async (req, res) => {
 
         // 2. Fetch all pickups for this user
         const pStmt = db.prepare(`
-            SELECT p.*, c.name as collector_name, c.phone_number as collector_phone
+            SELECT p.*, c.name as collector_name, c.phone_number as collector_phone, c.employee_id as collector_employee_id
             FROM pickups p
             LEFT JOIN collectors c ON p.collector_id = c.id
             WHERE p.user_id = ?
@@ -121,9 +121,10 @@ router.get('/pickups', requireAdmin, async (req, res) => {
     try {
         const db   = await getDb();
         const stmt = db.prepare(`
-            SELECT p.*, u.name as user_name, u.email as user_email
+            SELECT p.*, u.name as user_name, u.email as user_email, c.name as collector_name, c.employee_id as collector_employee_id
             FROM pickups p
             LEFT JOIN users u ON p.user_id = u.id
+            LEFT JOIN collectors c ON p.collector_id = c.id
             ORDER BY p.id DESC
         `);
         const pickups = [];
