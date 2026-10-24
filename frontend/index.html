@@ -1137,59 +1137,54 @@
                 </button>
             </div>
 
-            <!-- Main Wallet Balance Card (Emerald eco-gradient) -->
-            <div class="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#123824] via-[#0E2E1D] to-[#071F13] text-white p-6 shadow-xl shadow-emerald-950/20 mb-4 border border-emerald-500/20">
-                <i class="ph-fill ph-wallet absolute -bottom-5 -right-5 text-9xl text-white/5 pointer-events-none"></i>
-                <i class="ph-fill ph-leaf absolute -top-6 right-10 text-7xl text-emerald-400/10 pointer-events-none rotate-45"></i>
+            <!-- Main Wallet Balance Card (Clean Light Studio Card) -->
+            <div class="rounded-3xl bg-white p-6 shadow-sm mb-4 border border-brand-border">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText flex items-center gap-1.5">
+                        <i class="ph-fill ph-shield-check text-emerald-700 text-sm"></i> Available Scrap Balance
+                    </span>
+                    <span class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> 40% Rate Disbursed
+                    </span>
+                </div>
 
-                <div class="relative z-10">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-200/80 flex items-center gap-1.5">
-                            <i class="ph-fill ph-shield-check text-emerald-400"></i> Available Cash Balance
-                        </span>
-                        <span class="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active
-                        </span>
-                    </div>
+                <div class="flex items-baseline gap-1.5 mb-4">
+                    <span class="text-2xl font-black text-brand-dark">₹</span>
+                    <span id="wallet-balance-display" class="text-4xl font-black tracking-tight text-brand-dark">0.00</span>
+                </div>
 
-                    <div class="flex items-baseline gap-1 mb-3">
-                        <span class="text-2xl font-bold text-emerald-300">₹</span>
-                        <span id="wallet-balance-display" class="text-4xl font-black tracking-tight text-white">0.00</span>
-                    </div>
-
-                    <!-- Green Points Row -->
-                    <div class="flex items-center justify-between bg-white/10 rounded-2xl p-2.5 px-3 mb-2 backdrop-blur-xs border border-white/10">
-                        <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-sm font-bold">
-                                ⭐
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-semibold text-emerald-100/70 uppercase tracking-wide">Green Eco Points</p>
-                                <p id="wallet-points-display" class="text-xs font-bold text-white">0 pts</p>
-                            </div>
+                <!-- Green Points Row -->
+                <div class="flex items-center justify-between bg-brand-bg rounded-2xl p-3 px-3.5 mb-3 border border-brand-border">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-bold shrink-0">
+                            ⭐
                         </div>
-                        <button onclick="openPoints()" class="text-[11px] font-bold text-emerald-200 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 px-2.5 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1 cursor-pointer">
-                            <span>Impact Score</span>
-                            <i class="ph-bold ph-info text-[10px]"></i>
-                        </button>
+                        <div>
+                            <p class="text-[10px] font-bold text-brand-grayText uppercase tracking-wide">Green Eco Points</p>
+                            <p id="wallet-points-display" class="text-xs font-black text-brand-dark">0 pts</p>
+                        </div>
                     </div>
+                    <button onclick="openPoints()" class="text-[11px] font-bold text-brand-dark bg-white hover:bg-gray-50 border border-brand-border px-3 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1 cursor-pointer shadow-2xs">
+                        <span>Impact Score</span>
+                        <i class="ph-bold ph-caret-right text-[10px] text-brand-grayText"></i>
+                    </button>
+                </div>
 
-                    <p class="text-[10px] text-emerald-100/70 font-medium px-1 mb-4 flex items-center gap-1">
-                        <i class="ph-fill ph-shield-check text-emerald-300 text-xs"></i>
-                        <span>Wallet balance is 40% scrap payout cash. Points are non-monetary impact score.</span>
-                    </p>
+                <p class="text-[10px] text-brand-grayText font-medium px-0.5 mb-4 flex items-center gap-1.5 leading-snug">
+                    <i class="ph-bold ph-info text-emerald-700 text-xs shrink-0"></i>
+                    <span>Balance is real cash earned from verified scrap pickups. Points are non-monetary impact score.</span>
+                </p>
 
-                    <!-- Action Buttons -->
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <button onclick="openWithdrawModal()" class="w-full bg-emerald-400 hover:bg-emerald-300 text-brand-dark font-extrabold py-2.5 px-3 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
-                            <i class="ph-bold ph-arrow-up-right text-sm"></i>
-                            <span>Withdraw Cash</span>
-                        </button>
-                        <button onclick="openPoints()" class="w-full bg-white/15 hover:bg-white/20 text-white font-bold py-2.5 px-3 rounded-xl text-xs border border-white/15 transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
-                            <i class="ph-bold ph-sparkle text-amber-300 text-sm"></i>
-                            <span>Points Sheet</span>
-                        </button>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="openWithdrawModal()" class="w-full bg-brand-dark hover:bg-brand-primary text-white font-extrabold py-3.5 px-3 rounded-2xl text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="ph-bold ph-arrow-up-right text-sm"></i>
+                        <span>Withdraw Cash</span>
+                    </button>
+                    <button onclick="openPoints()" class="w-full bg-brand-light hover:bg-[#c5e1ce] text-brand-dark font-extrabold py-3.5 px-3 rounded-2xl text-xs border border-brand-border transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="ph-bold ph-sparkle text-amber-700 text-sm"></i>
+                        <span>Points Sheet</span>
+                    </button>
                 </div>
             </div>
 
