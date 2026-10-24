@@ -1,6 +1,8 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, downloadMediaMessage } = require('@whiskeysockets/baileys');
 const pino   = require('pino');
 const QRCode = require('qrcode');
+const jsQR   = require('jsqr');
+const { Jimp } = require('jimp');
 const path   = require('path');
 const fs     = require('fs');
 const { getDb, persist } = require('./database');
@@ -10,6 +12,25 @@ let qrCodeDataUrl = null;
 let isReady = false;
 const pendingVerifications = {};
 const activeDispatches = {}; // Keyed by requestId (e.g. 'REQ-1234')
+
+async function decodeQRFromImageBuffer(buffer) {
+    if (!buffer || buffer.length === 0) return null;
+    try {
+        const image = await Jimp.read(buffer);
+        const { data, width, height } = image.bitmap;
+        const code = jsQR(new Uint8ClampedArray(data), width, height);
+        if (code && code.data) {
+            let decoded = decodeURIComponent(code.data);
+            if (decoded.includes('text=')) {
+                decoded = decoded.split('text=')[1].split('&')[0];
+            }
+            return decoded.trim();
+        }
+    } catch (err) {
+        console.warn('QR image decoding error:', err.message);
+    }
+    return null;
+}
 
 function parseMaterialWeights(inputStr) {
     if (!inputStr) return { items: [], totalWeight: 0 };
@@ -626,6 +647,40 @@ async function startWhatsApp() {
                         }
                     } catch (voiceErr) {
                         console.error('Error downloading or transcribing WhatsApp voice note:', voiceErr);
+                    }
+                }
+
+                // 📸 WHATSAPP QR PHOTO HANDLER (Auto-decode QR code from camera snapshot)
+                if (!text && msg.message.imageMessage) {
+                    try {
+                        console.log(`📸 [WhatsApp Image] Photo received from ${phone}. Scanning for customer QR Code...`);
+                        const imageBuffer = await downloadMediaMessage(
+                            msg,
+                            'buffer',
+                            {},
+                            {
+                                logger: pino({ level: 'silent' }),
+                                reuploadRequest: sock.updateMediaMessage
+                            }
+                        );
+
+                        if (imageBuffer && imageBuffer.length > 0) {
+                            const qrText = await decodeQRFromImageBuffer(imageBuffer);
+                            if (qrText) {
+                                text = qrText;
+                                console.log(`📸 [QR Photo Scanned]: "${text}"`);
+                                await sock.sendMessage(remoteJid, {
+                                    text: `📸 *QR Code Photo Scanned!* ⚡\n⏳ Verifying pickup with customer...`
+                                });
+                            } else {
+                                console.log('No QR code detected in image.');
+                                await sock.sendMessage(remoteJid, {
+                                    text: `⚠️ *QR Code Detect Nahi Hua!*\nKripya customer ke phone screen ka QR code thoda saaf aur paas se kheench kar bhejein, ya Security PIN likh kar bhejein.`
+                                });
+                            }
+                        }
+                    } catch (imgErr) {
+                        console.error('Error downloading or decoding WhatsApp image:', imgErr);
                     }
                 }
 
