@@ -1,6 +1,7 @@
 const express    = require('express');
 const router     = express.Router();
 const { getDb }  = require('../database');
+const { terminateUserSessions } = require('../sessionManager');
 
 // Simple admin key auth middleware
 const ADMIN_KEY = 'circular-admin-2024';
@@ -177,6 +178,10 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
         db.run(`DELETE FROM users WHERE id = ?`, [req.params.id]);
         db.run(`DELETE FROM pickups WHERE user_id = ?`, [req.params.id]);
         persist();
+
+        // Instantly force logout any active browser sessions on the website
+        terminateUserSessions(req.params.id, 'Your account has been deleted by an administrator.');
+
         return res.json({ message: `User ${req.params.id} and their pickups deleted.` });
     } catch (err) {
         return res.status(500).json({ error: err.message });

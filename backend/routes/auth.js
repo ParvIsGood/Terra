@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const { getDb } = require('../database');
 const { sendWhatsAppAlert, getStatus } = require('../whatsappWeb');
+const { registerSession, unregisterSession } = require('../sessionManager');
 
 // In-memory OTP storage: phone -> { otp: string, expiresAt: number, attempts: number }
 const otpStore = new Map();
@@ -139,6 +140,41 @@ router.post('/verify-otp', async (req, res) => {
     } catch (err) {
         return res.status(500).json({ error: 'Database check failed.', details: err.message });
     }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/auth/live-session?userId=:id (Real-time SSE)
+// ─────────────────────────────────────────────
+router.get('/live-session', (req, res) => {
+    const userId = req.query.userId;
+    if (!userId) {
+        return res.status(400).json({ error: 'userId is required for live session.' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    // Initial connection acknowledgment
+    res.write(`event: connected\ndata: ${JSON.stringify({ status: 'connected', userId })}\n\n`);
+
+    registerSession(userId, res);
+
+    // Keep-alive heartbeat every 25 seconds
+    const heartbeat = setInterval(() => {
+        try {
+            res.write(': heartbeat\n\n');
+        } catch (e) {
+            clearInterval(heartbeat);
+        }
+    }, 25000);
+
+    req.on('close', () => {
+        clearInterval(heartbeat);
+        unregisterSession(userId, res);
+    });
 });
 
 module.exports = router;

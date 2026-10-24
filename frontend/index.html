@@ -2409,8 +2409,65 @@
     };
 
     // ─── Session ─────────────────────────────────────────────────────────────
-    function saveSession(user)  { localStorage.setItem(SESSION_KEY, JSON.stringify(user)); }
-    function clearSession()     { localStorage.removeItem(SESSION_KEY); }
+    let liveSessionSource = null;
+
+    function initLiveSession() {
+        if (!appState.user?.id) {
+            if (liveSessionSource) {
+                liveSessionSource.close();
+                liveSessionSource = null;
+            }
+            return;
+        }
+
+        if (liveSessionSource && liveSessionSource.readyState !== EventSource.CLOSED) {
+            return;
+        }
+
+        try {
+            liveSessionSource = new EventSource(`${API_BASE}/auth/live-session?userId=${appState.user.id}`);
+
+            liveSessionSource.addEventListener('force_logout', (e) => {
+                let reason = 'Your account has been deactivated or removed by an administrator.';
+                try {
+                    const parsed = JSON.parse(e.data);
+                    if (parsed.reason) reason = parsed.reason;
+                } catch (_) {}
+                handleForcedLogout(reason);
+            });
+
+            liveSessionSource.onerror = () => {
+                // Background auto-reconnect handled natively by browser EventSource
+            };
+        } catch (e) {
+            console.warn('Live session SSE connection error:', e);
+        }
+    }
+
+    function handleForcedLogout(reason = 'Your account has been deactivated or removed by an administrator.') {
+        if (liveSessionSource) {
+            liveSessionSource.close();
+            liveSessionSource = null;
+        }
+        handleLogout();
+        document.querySelectorAll('.modal, .modal-backdrop, [id$="-modal"]').forEach(m => {
+            m.classList.remove('active');
+            m.classList.add('hidden');
+        });
+        alert(`⚠️ ${reason}`);
+    }
+
+    function saveSession(user)  { 
+        localStorage.setItem(SESSION_KEY, JSON.stringify(user)); 
+        if (user?.id) initLiveSession();
+    }
+    function clearSession()     { 
+        localStorage.removeItem(SESSION_KEY); 
+        if (liveSessionSource) {
+            liveSessionSource.close();
+            liveSessionSource = null;
+        }
+    }
     function loadSession()      {
         const raw = localStorage.getItem(SESSION_KEY);
         return raw ? JSON.parse(raw) : null;
@@ -2420,6 +2477,10 @@
         if (!appState.user?.id) return;
         try {
             const res = await fetch(`${API_BASE}/users/${appState.user.id}`);
+            if (res.status === 404) {
+                handleForcedLogout('Your account has been removed by an administrator.');
+                return;
+            }
             if (res.ok) {
                 const data = await res.json();
                 if (data.user) {
@@ -2435,6 +2496,23 @@
             console.warn('Failed to sync user profile:', e);
         }
     }
+
+    // Background heartbeat check every 15 seconds (Fail-safe)
+    setInterval(() => {
+        if (appState.user?.id) {
+            syncUserProfile();
+        }
+    }, 15000);
+
+    // Tab focus check
+    window.addEventListener('focus', () => {
+        if (appState.user?.id) {
+            syncUserProfile();
+            if (!liveSessionSource || liveSessionSource.readyState === EventSource.CLOSED) {
+                initLiveSession();
+            }
+        }
+    });
 
     function initDobLimit() {
         const d = new Date();
@@ -2458,6 +2536,7 @@
             applyTheme(saved.role);
             returnToHome();
             syncUserProfile();
+            initLiveSession();
         } else {
             nav('auth');
         }
