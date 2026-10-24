@@ -2201,6 +2201,38 @@
     </div>
 </div>
 
+<!-- Modal: First-Time User Feature Guide / App Tour -->
+<div id="modal-feature-guide" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/70 backdrop-blur-sm" onclick="if(event.target===this) closeFeatureGuide()">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95 overflow-hidden text-center" id="modal-feature-guide-content">
+        <!-- Close / Skip Button -->
+        <button onclick="closeFeatureGuide()" class="absolute top-4 right-4 text-xs font-bold text-brand-grayText hover:text-brand-dark bg-brand-bg px-2.5 py-1 rounded-full cursor-pointer transition-colors z-20">
+            Skip
+        </button>
+
+        <!-- Slide Content Area (Injected via JS) -->
+        <div id="fg-slide-container" class="min-h-[340px] flex flex-col justify-between py-2">
+            <!-- Dynamic Slide Injected -->
+        </div>
+
+        <!-- Dots & Nav Controls -->
+        <div class="pt-4 border-t border-brand-border flex items-center justify-between">
+            <!-- Progress Dots -->
+            <div class="flex items-center gap-1.5" id="fg-dots">
+                <span class="w-6 h-2 rounded-full bg-brand-dark transition-all duration-300"></span>
+                <span class="w-2 h-2 rounded-full bg-gray-200 transition-all duration-300"></span>
+                <span class="w-2 h-2 rounded-full bg-gray-200 transition-all duration-300"></span>
+                <span class="w-2 h-2 rounded-full bg-gray-200 transition-all duration-300"></span>
+            </div>
+
+            <!-- Next / Finish Button -->
+            <button id="fg-btn-next" onclick="nextFeatureGuideSlide()" class="bg-brand-dark hover:bg-brand-primary text-white font-extrabold px-5 py-2.5 rounded-full text-xs shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer">
+                <span>Next</span>
+                <i class="ph-bold ph-arrow-right text-xs"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // ─── Brand Logo Interactive Anticlockwise Spin ───────────────────────────
     let brandLogoRotation = 0;
@@ -2516,6 +2548,7 @@
         else if (role === 'Business') nav('home-biz');
         else nav('home-vol');
         syncUserProfile();
+        setTimeout(checkAndShowFirstTimeGuide, 450);
     }
 
     function updateNavIcons(viewId) {
@@ -3511,6 +3544,7 @@
             <div class="mb-6">
                 <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Support &amp; Legal</div>
                 <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
+                    ${renderSettingLink('App Feature Tour & Guide', 'Walkthrough of Terra AI, Points & Pickups', "openFeatureGuide(0)", 'Tour ›')}
                     ${renderSettingLink('About Circular By Terra', 'Mission, vision and story', "openModal('modal-about')", 'About ›')}
                     ${renderSettingLink('Help & FAQs', 'Questions, segregation rules & guides', "nav('faq')", 'FAQs ›')}
                     ${renderSettingLink('Terms & Conditions', 'User agreement and service rules', "openModal('modal-terms')", 'Terms ›')}
@@ -3762,6 +3796,132 @@
         c?.classList.add('scale-95');
         c?.classList.remove('scale-100');
         setTimeout(() => m?.classList.remove('active'), 200);
+    }
+
+    // ─── First-Time User Feature Guide (App Tour) ─────────────────────────────
+    let currentFeatureSlide = 0;
+    const FEATURE_SLIDES = [
+        {
+            badge: 'Feature 1 of 4 • Smart Pickups',
+            icon: 'ph-fill ph-truck',
+            iconColor: 'bg-emerald-100 text-emerald-800',
+            title: 'Doorstep Scrap Collection 📦',
+            desc: 'Schedule waste pickups with a single tap. Verified local Kabadiwalas arrive on time, weigh scrap with digital scales, and verify handover with your unique 4-digit Security PIN.',
+            pill: '🛡️ PIN-Protected Digital Handover'
+        },
+        {
+            badge: 'Feature 2 of 4 • AI Assistant',
+            icon: 'ph-fill ph-sparkle',
+            iconColor: 'bg-gradient-to-tr from-emerald-600 to-emerald-800 text-yellow-300',
+            title: 'Meet Terra AI Assistant ✨',
+            desc: 'Not sure if an item can be recycled? Tap the floating Terra AI button anytime or snap a camera photo for instant sorting advice, pickup status, and live scrap rate quotes.',
+            pill: '📸 Camera Photo Scan & Hinglish Help'
+        },
+        {
+            badge: 'Feature 3 of 4 • Rewards',
+            icon: 'ph-fill ph-coins',
+            iconColor: 'bg-amber-100 text-amber-800',
+            title: 'Green Points & Cash Wallet ⭐',
+            desc: 'Earn +50 Green Points and immediate doorstep cash payouts every time you segregate scrap. Convert points to cash UPI withdrawals or redeem for eco-discounts.',
+            pill: '💵 100 Pts = ₹10 Real Cash Transfer'
+        },
+        {
+            badge: 'Feature 4 of 4 • Transparency',
+            icon: 'ph-fill ph-users-three',
+            iconColor: 'bg-indigo-100 text-indigo-800',
+            title: 'Shared Household & Circular Hub 🏠',
+            desc: 'Link flatmates and family using your Household Code (HH-XXXX) so anyone can verify handovers. All collected scrap is dual-scale audited at our Segregation Hub with zero landfill leakage.',
+            pill: '♻️ 100% Traceable Circular Lifecycle'
+        }
+    ];
+
+    function openFeatureGuide(slideIndex = 0) {
+        currentFeatureSlide = slideIndex;
+        renderFeatureGuideSlide();
+        openModal('modal-feature-guide');
+    }
+
+    function renderFeatureGuideSlide() {
+        const slide = FEATURE_SLIDES[currentFeatureSlide];
+        const container = document.getElementById('fg-slide-container');
+        if (!container || !slide) return;
+
+        container.innerHTML = `
+            <div class="space-y-4">
+                <span class="inline-block bg-brand-light text-brand-dark text-[10px] font-extrabold px-3 py-1 rounded-full border border-brand-border uppercase tracking-wider">
+                    ${slide.badge}
+                </span>
+
+                <div class="w-20 h-20 rounded-[28px] ${slide.iconColor} flex items-center justify-center text-4xl mx-auto shadow-md transform hover:scale-105 transition-transform">
+                    <i class="${slide.icon}"></i>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-black text-brand-dark tracking-tight leading-snug">${slide.title}</h3>
+                    <p class="text-xs text-brand-grayText font-medium mt-2 leading-relaxed px-2">
+                        ${slide.desc}
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3">
+                <span class="inline-block bg-brand-bg border border-brand-border text-brand-dark text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-xs">
+                    ${slide.pill}
+                </span>
+            </div>
+        `;
+
+        // Update Dots
+        const dotsContainer = document.getElementById('fg-dots');
+        if (dotsContainer) {
+            dotsContainer.innerHTML = FEATURE_SLIDES.map((_, i) => `
+                <span class="${i === currentFeatureSlide ? 'w-6 h-2 bg-brand-dark' : 'w-2 h-2 bg-gray-200'} rounded-full transition-all duration-300"></span>
+            `).join('');
+        }
+
+        // Update Button Text
+        const nextBtn = document.getElementById('fg-btn-next');
+        if (nextBtn) {
+            if (currentFeatureSlide === FEATURE_SLIDES.length - 1) {
+                nextBtn.innerHTML = `<span>Get Started 🎉</span><i class="ph-bold ph-check text-xs"></i>`;
+                nextBtn.className = 'bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold px-5 py-2.5 rounded-full text-xs shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer';
+            } else {
+                nextBtn.innerHTML = `<span>Next</span><i class="ph-bold ph-arrow-right text-xs"></i>`;
+                nextBtn.className = 'bg-brand-dark hover:bg-brand-primary text-white font-extrabold px-5 py-2.5 rounded-full text-xs shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer';
+            }
+        }
+    }
+
+    function nextFeatureGuideSlide() {
+        if (currentFeatureSlide < FEATURE_SLIDES.length - 1) {
+            currentFeatureSlide++;
+            renderFeatureGuideSlide();
+        } else {
+            closeFeatureGuide();
+            pulseFeatureAttention();
+        }
+    }
+
+    function closeFeatureGuide() {
+        closeModal('modal-feature-guide');
+        const uid = appState.user?.id || 'guest';
+        localStorage.setItem('circular_guide_seen_' + uid, 'true');
+    }
+
+    function checkAndShowFirstTimeGuide() {
+        const uid = appState.user?.id || 'guest';
+        if (!localStorage.getItem('circular_guide_seen_' + uid)) {
+            openFeatureGuide(0);
+        }
+    }
+
+    function pulseFeatureAttention() {
+        toast('🎉 Welcome to Circular! Tap Terra AI anytime for help.');
+        const aiBtn = document.getElementById('btn-terra-ai');
+        if (aiBtn) {
+            aiBtn.classList.add('animate-bounce');
+            setTimeout(() => aiBtn.classList.remove('animate-bounce'), 3000);
+        }
     }
 
     // ─── Segregation Guide (Household) ────────────────────────────────────────
