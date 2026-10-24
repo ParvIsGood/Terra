@@ -626,7 +626,7 @@ async function offerPickupToCurrentCandidate(reqId) {
     const spokenOffer = (lang === 'hindi')
         ? `नमस्ते ${currentCollector.name || 'पार्टनर'} भाई! नया पिकअप ऑर्डर आया है। अगर आप यह ऑर्डर लेना चाहते हैं, तो माइक दबाकर 'हाँ ले लूँगा' बोलिए।`
         : `Namaste ${currentCollector.name || 'Partner'} bhai! Naya pickup order aaya hai. Agar aap lena chahte hain, toh mic daba kar 'Haan' ya 'Accept' boliye.`;
-    sendWhatsAppVoiceNote(collectorPhone, spokenOffer, 'hi').catch(e => {});
+    await sendWhatsAppVoiceNote(collectorPhone, spokenOffer, 'hi').catch(e => {});
 
     // 60-second countdown timer
     dispatch.timer = setTimeout(async () => {
@@ -694,6 +694,8 @@ async function startWhatsApp() {
         // ─────────────────────────────────────────────────────────────
         // INBOUND MESSAGES: Automatically converses with any Kabadiwala
         // ─────────────────────────────────────────────────────────────
+        const userProcessingQueue = {};
+
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
             if (type !== 'notify') return;
 
@@ -710,6 +712,14 @@ async function startWhatsApp() {
                 const phone = resolved.phone || `+${remoteJid.replace(/\D/g, '')}`;
                 const cleanDigits = phone.replace(/\D/g, '');
                 if (!cleanDigits || cleanDigits.length < 8) continue;
+
+                // Strict sequential FIFO per phone (prevents message race conditions)
+                const prevTask = userProcessingQueue[phone] || Promise.resolve();
+                let notifyDone;
+                userProcessingQueue[phone] = new Promise(res => { notifyDone = res; });
+                await prevTask;
+
+                try {
 
                 // Extract message body text
                 let text = (
@@ -812,9 +822,11 @@ async function startWhatsApp() {
 
                 const reply = async (replyText, spokenAddon = null) => {
                     await sock.sendMessage(remoteJid, { text: replyText });
-                    // Always send companion voice note to Kabadiwala (regardless of text, photo, or voice input)
+                    // Always send companion voice note to Kabadiwala (regardless of text, photo, or voice input) in strict sequential order
                     const toSpeak = spokenAddon || replyText;
-                    sendWhatsAppVoiceNote(remoteJid, toSpeak, 'hi').catch(e => {});
+                    await sendWhatsAppVoiceNote(remoteJid, toSpeak, 'hi').catch(e => {
+                        console.warn('Voice send error:', e.message);
+                    });
                 };
 
                 // ── 0. PICKUP ACCEPT / REJECT HANDLER (60s Dispatch System) ─────
@@ -1750,8 +1762,13 @@ async function startWhatsApp() {
                     default:
                         await reply(`Namaste! Status update karne ke liye *DUTY* ya *PICKUPS* likhein.`);
                 }
+            } catch (procErr) {
+                console.error(`Error processing message from ${phone}:`, procErr);
+            } finally {
+                notifyDone();
             }
-        });
+        }
+    });
     } catch (err) {
         console.error('Baileys WhatsApp Init Error:', err);
     }
@@ -1787,9 +1804,11 @@ async function sendWhatsAppAlert(target, message) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// VOICE NOTE ADDON: Sends spoken Hindi voice note to Kabadiwala
+// VOICE NOTE ADDON: Sends spoken Hindi voice note to Kabadiwala (Serialized FIFO per target)
 // ─────────────────────────────────────────────────────────────
-async function sendWhatsAppVoiceNote(target, spokenText, lang = 'hi') {
+const voiceQueues = {};
+
+async function _sendWhatsAppVoiceNoteDirect(target, spokenText, lang = 'hi') {
     if (!isReady || !sock || !spokenText) return { success: false };
 
     try {
@@ -1859,6 +1878,20 @@ async function sendWhatsAppVoiceNote(target, spokenText, lang = 'hi') {
     } catch (err) {
         console.warn('Could not send WhatsApp voice note addon:', err.message);
         return { success: false, error: err.message };
+    }
+}
+
+async function sendWhatsAppVoiceNote(target, spokenText, lang = 'hi') {
+    const queueKey = (target || '').replace(/[^a-zA-Z0-9]/g, '');
+    const prevQueue = voiceQueues[queueKey] || Promise.resolve();
+    let advanceQueue;
+    voiceQueues[queueKey] = new Promise(res => { advanceQueue = res; });
+    await prevQueue;
+
+    try {
+        return await _sendWhatsAppVoiceNoteDirect(target, spokenText, lang);
+    } finally {
+        advanceQueue();
     }
 }
 
