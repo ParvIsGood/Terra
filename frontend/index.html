@@ -115,6 +115,13 @@
 
         /* Error / success message */
         .form-msg { font-size: 0.75rem; font-weight: 600; text-align: center; margin-top: 8px; min-height: 18px; }
+
+        /* Interactive Brand Logo Spin */
+        .brand-spin-logo {
+            transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: transform;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="text-brand-dark font-sans antialiased" id="body-theme">
@@ -127,7 +134,10 @@
     <div id="view-auth" class="view active bg-brand-bg overflow-y-auto">
         <div class="px-6 py-8 my-auto w-full">
             <!-- Logo -->
-            <div class="mb-6 text-center">
+            <div class="mb-6 text-center flex flex-col items-center">
+                <div class="relative mb-3.5 group cursor-pointer inline-block" onclick="spinLogo(this)" title="Tap to spin!">
+                    <img src="logo.png" alt="Circular Logo" class="brand-spin-logo w-20 h-20 rounded-[24px] shadow-lg shadow-emerald-950/20 object-cover select-none border-2 border-white/80 active:scale-90 hover:scale-105 transition-all">
+                </div>
                 <h1 class="text-4xl font-extrabold tracking-tighter text-brand-dark mb-1">circular.</h1>
                 <p class="text-brand-grayText font-medium text-xs">Smarter waste, cleaner cities.</p>
             </div>
@@ -593,9 +603,12 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform cursor-pointer" title="Settings">
-                    <i class="ph-bold ph-gear text-lg"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 border border-white/80 select-none" title="Tap to spin Circular logo!">
+                    <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform cursor-pointer" title="Settings">
+                        <i class="ph-bold ph-gear text-lg"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Headline & Points Pill -->
@@ -654,9 +667,12 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
-                    <i class="ph-bold ph-gear text-lg"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 border border-white/80 select-none" title="Tap to spin Circular logo!">
+                    <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
+                        <i class="ph-bold ph-gear text-lg"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="bg-brand-dark rounded-3xl p-6 shadow-card relative overflow-hidden mb-6">
@@ -686,9 +702,12 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
-                    <i class="ph-bold ph-gear text-lg"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-9 h-9 rounded-xl shadow-xs object-cover cursor-pointer hover:scale-105 active:scale-90 border border-white/80 select-none" title="Tap to spin Circular logo!">
+                    <button onclick="nav('settings')" class="w-10 h-10 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-sm hover:bg-gray-50 active:scale-95 transition-transform" title="Settings">
+                        <i class="ph-bold ph-gear text-lg"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-brand-border text-center">
@@ -1690,7 +1709,8 @@
             </button>
         </div>
         <div class="space-y-3.5 text-xs text-brand-dark font-medium leading-relaxed">
-            <div class="text-center py-2">
+            <div class="text-center py-2 flex flex-col items-center">
+                <img src="logo.png" onclick="spinLogo(this)" class="brand-spin-logo w-16 h-16 rounded-[20px] mb-2 cursor-pointer shadow-md shadow-emerald-950/15 object-cover border border-white/80 active:scale-90 hover:scale-105 select-none" title="Tap to spin Circular logo!">
                 <h2 class="text-2xl font-black text-brand-dark tracking-tight">circular.</h2>
                 <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-700 mt-0.5">By Terra Technologies</p>
                 <span class="inline-block bg-brand-light text-brand-dark text-[10px] font-extrabold px-3 py-1 rounded-full mt-2 border border-brand-border">Version 2.4.0 (Patiala Edition)</span>
@@ -1737,6 +1757,16 @@
 </div>
 
 <script>
+    // ─── Brand Logo Interactive Anticlockwise Spin ───────────────────────────
+    let brandLogoRotation = 0;
+    function spinLogo(el) {
+        brandLogoRotation -= 360; // Anticlockwise
+        const img = (el && el.tagName === 'IMG') ? el : (el && el.querySelector ? el.querySelector('img') : null);
+        if (img) {
+            img.style.transform = `rotate(${brandLogoRotation}deg)`;
+        }
+    }
+
     // ─── Config ──────────────────────────────────────────────────────────────
     const API_BASE   = window.location.protocol.startsWith('http') 
         ? `${window.location.origin}/api` 
