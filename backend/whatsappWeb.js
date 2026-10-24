@@ -411,7 +411,7 @@ Reply with ONLY the word CONFIRM, REJECT, or OTHER:`;
 // CONVERSATIONAL AI ASSISTANT FOR WHATSAPP (Groq LLM)
 // Answers inquiries from Kabadiwalas or residents in chosen language (Hindi/Hinglish/English)
 // ─────────────────────────────────────────────────────────────
-async function getWhatsAppAIReply(userQuery, userName = 'Partner', lang = 'hinglish') {
+async function getWhatsAppAIReply(userQuery, userName = 'Partner', lang = 'hinglish', contextData = {}) {
     const groqKey = process.env.GROQ_API_KEY;
     if (!groqKey || !groqKey.startsWith('gsk_')) return null;
 
@@ -423,34 +423,65 @@ async function getWhatsAppAIReply(userQuery, userName = 'Partner', lang = 'hingl
     }
 
     try {
-        const prompt = `You are "Terra AI", the official WhatsApp eco-assistant for "Circular by Terra" in India.
-You are talking to a local Kabadiwala (collector) or resident on WhatsApp named ${userName}.
+        let orderContextStr = "No active assigned orders right now.";
+        if (contextData.activePickups && contextData.activePickups.length > 0) {
+            orderContextStr = contextData.activePickups.map((p, idx) => {
+                return `Order #${p.request_id}:
+• Customer Name: ${p.customer_name || 'Resident'}
+• Address: ${p.customer_address || 'Local'} (PIN: ${p.customer_pincode || '—'})
+• Customer Phone: ${p.customer_phone || '—'}
+• Waste Items: ${p.items || 'Standard recyclables'}
+• Time Slot: ${p.time_slot || 'Today'}`;
+            }).join('\n\n');
+        }
+
+        const prompt = `You are "Terra AI", the intelligent, warm, respectful WhatsApp copilot for Circular waste collection partners (Kabadiwalas) in India.
+Partner Name: ${userName}
+
+CURRENT LIVE CONTEXT:
+[Active Assigned Pickups for this Partner]:
+${orderContextStr}
+
+[Official Circular Scrap Rates (40% Household Payout)]:
+• Cardboard / Gatta (गत्ता): ₹12/kg
+• Plastic Bottles & Containers (प्लास्टिक): ₹14/kg
+• Iron & Scrap Metals (लोहा): ₹28/kg
+• Brass / Peetal (पीतल): ₹320/kg
+• Copper / Taamba (तांबा): ₹430/kg
+• Newspaper / Raddi (रद्दी / अखबार): ₹10/kg
+
+[Partner Operating Status]:
+• Duty Status: ${contextData.dutyStatus ? 'ON DUTY 🟢' : 'OFF DUTY 🔴'}
+• Area: ${contextData.area || 'City Area'}
+
+[Doorstep Verification Guidelines]:
+• When reaching customer address: Ask customer to show QR code on their Circular web app.
+• Take photo of customer's QR code and send on WhatsApp, OR enter the 4-digit PIN displayed on customer's phone screen.
+• Weigh scrap items and send the weights (e.g. 'Gatta 8 kg, Plastic 4 kg' or send voice note).
 
 CRITICAL LANGUAGE REQUIREMENT:
 ${langInstruction}
-You must strictly adhere to this language without switching.
 
-Keep response brief (2-3 sentences max), helpful, with suitable emojis.
-Key Circular Knowledge:
-- Scrap Payouts: Doorstep weigh-in upon confirmation gives initial 20% payout, remaining 20% disbursed after Recycling Unit batch confirmation.
-- Green Points: 1 point per kg of recyclables (+50 points awarded per verified pickup).
-- Segregation: Wet (kitchen/food waste to compost), Dry (paper, plastic, metal, cardboard), E-Waste (gadgets/chargers), Harmful (syringes/chemicals).
-- Available Collector Commands:
-  • "PICKUPS" - view assigned/pending pickups in area.
-  • "DUTY" - toggle on/off duty status.
-  • "LANG" - switch preferred language (Hindi, Hinglish, English).
-  • Send live location on WhatsApp to update coordinates.
+INSTRUCTIONS:
+1. Answer the partner directly, respectfully, and concisely (2 to 3 sentences max).
+2. If the partner asks how to reach the customer, where the customer is, or for their address/phone, provide their active assigned order address and customer details from above!
+3. If they ask about rates or prices, quote the official rates above.
+4. Keep the tone friendly, practical, and helpful (like a respectful supervisor or partner). Use appropriate emojis.
+5. If they ask something completely unrelated, gently guide them back to their scrap collection work.
 
-User Query: "${userQuery}"`;
+Partner's Question: "${userQuery}"`;
 
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-                model: "openai/gpt-oss-120b",
-                messages: [{ role: "user", content: prompt }],
-                max_tokens: 180,
-                temperature: 0.6
+                model: "qwen/qwen3.8-27b",
+                messages: [
+                    { role: "system", content: "You are Terra AI, the WhatsApp copilot for Circular scrap collection partners. Answer concisely and accurately based on provided live context." },
+                    { role: "user", content: prompt }
+                ],
+                max_tokens: 220,
+                temperature: 0.3
             })
         });
 
@@ -1704,9 +1735,27 @@ async function startWhatsApp() {
                             break;
                         }
 
-                        // 3. Conversational AI Assistant check before falling back to menu
+                        // 3. Conversational AI Assistant with Live Order Context & Rates
                         if (!isGreeting && text.length > 2) {
-                            const aiReply = await getWhatsAppAIReply(text, collector.name, collector.language || 'hinglish');
+                            // Query active assigned pickups for this collector to provide live customer & address context
+                            const activePickupsStmt = db.prepare(`
+                                SELECT p.request_id, p.items, p.time_slot, u.name as customer_name, u.address as customer_address, u.phone as customer_phone, u.pincode as customer_pincode
+                                FROM pickups p
+                                LEFT JOIN users u ON p.user_id = u.id
+                                WHERE p.status = 'Assigned' AND (p.collector_phone = ? OR p.collector_id = ?)
+                            `);
+                            activePickupsStmt.bind([phone, collector.id]);
+                            const activeAssignedPickups = [];
+                            while (activePickupsStmt.step()) activeAssignedPickups.push(activePickupsStmt.getAsObject());
+                            activePickupsStmt.free();
+
+                            const contextData = {
+                                activePickups: activeAssignedPickups,
+                                dutyStatus: !!collector.is_on_duty,
+                                area: collector.area || ''
+                            };
+
+                            const aiReply = await getWhatsAppAIReply(text, collector.name, collector.language || 'hinglish', contextData);
                             if (aiReply) {
                                 const tipText = (lang === 'hindi')
                                     ? `_सलाह: ऑर्डर्स देखने के लिए *PICKUPS*, ड्यूटी के लिए *DUTY*, भाषा के लिए *LANG* लिखें।_`
@@ -1717,7 +1766,8 @@ async function startWhatsApp() {
                                 await reply(
                                     `🤖 *Terra AI:*\n${aiReply}\n\n` +
                                     `─────────────\n` +
-                                    tipText
+                                    tipText,
+                                    aiReply // Spoken voice note companion speaks the AI answer directly in Edge Neural Voice!
                                 );
                                 break;
                             }
