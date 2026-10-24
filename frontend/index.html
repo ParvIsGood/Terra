@@ -377,7 +377,10 @@
 
                     <!-- Date of Birth -->
                     <div>
-                        <label class="block text-xs font-semibold text-brand-dark mb-1">Date of Birth</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-xs font-semibold text-brand-dark">Date of Birth</label>
+                            <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">Min. 13 years</span>
+                        </div>
                         <input type="date" id="reg-dob" required
                             class="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-dark shadow-sm font-medium">
                     </div>
@@ -1366,6 +1369,30 @@
     </div>
 </div>
 
+<!-- Modal: Pickup Lifecycle Timeline -->
+<div id="modal-pickup-timeline" class="modal fixed inset-0 z-50 items-end justify-center bg-brand-dark/50 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-pickup-timeline')">
+    <div class="bg-white w-full max-w-[420px] rounded-t-[32px] p-6 shadow-2xl max-h-[85vh] overflow-y-auto no-scrollbar transform transition-transform" id="modal-pickup-timeline-content">
+        <div class="flex items-center justify-between pb-3 border-b border-brand-border mb-4">
+            <div>
+                <h3 class="text-base font-extrabold text-brand-dark">Pickup Timeline</h3>
+                <p id="timeline-req-id" class="text-xs font-semibold text-emerald-800">#REQ-XXXX</p>
+            </div>
+            <button onclick="closeModal('modal-pickup-timeline')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200 cursor-pointer">
+                <i class="ph-bold ph-x text-base"></i>
+            </button>
+        </div>
+
+        <!-- Timeline Steps Container -->
+        <div id="timeline-steps" class="space-y-5 relative pl-7 before:content-[''] before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-0.5 before:bg-brand-border">
+            <!-- Injected dynamically via openPickupTimeline() -->
+        </div>
+
+        <button onclick="closeModal('modal-pickup-timeline')" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-sm mt-6 active:scale-95 transition-all cursor-pointer">
+            Close
+        </button>
+    </div>
+</div>
+
 <!-- Address Modal (Add / Edit) -->
 <div id="modal-address" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/40 backdrop-blur-sm">
     <div class="bg-white rounded-3xl p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-address-content">
@@ -1852,8 +1879,19 @@
         }
     }
 
+    function initDobLimit() {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - 13);
+        const maxStr = d.toISOString().split('T')[0];
+        const inp = document.getElementById('reg-dob');
+        if (inp) inp.max = maxStr;
+        const profDob = document.getElementById('profile-edit-dob');
+        if (profDob) profDob.max = maxStr;
+    }
+
     // ─── Boot ─────────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
+        initDobLimit();
         if (appState.settings.dark) applyDarkMode(true);
         const saved = loadSession();
         if (saved) {
@@ -2459,6 +2497,27 @@
             msgEl.className = 'form-msg text-red-600';
             msgEl.textContent = 'Please verify your WhatsApp mobile number with OTP first.';
             document.getElementById('reg-phone').focus();
+            return;
+        }
+
+        // Validate minimum 13 years age
+        if (!dob) {
+            msgEl.className = 'form-msg text-red-600';
+            msgEl.textContent = 'Please enter your date of birth.';
+            document.getElementById('reg-dob').focus();
+            return;
+        }
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        if (isNaN(age) || age < 13) {
+            msgEl.className = 'form-msg text-red-600';
+            msgEl.textContent = 'You must be at least 13 years old to register on Circular.';
+            document.getElementById('reg-dob').focus();
             return;
         }
 
@@ -3496,7 +3555,18 @@
             const data = await res.json();
             if (!res.ok) return alert(data.error || 'Failed.');
 
-            appState.pickups.unshift({ id: data.pickup.request_id, dbId: data.pickup.id, items: data.pickup.items, time: data.pickup.time_slot, qty: data.pickup.quantity, status: data.pickup.status, pin: data.pickup.pin });
+            appState.pickups.unshift({ 
+                id: data.pickup.request_id, 
+                dbId: data.pickup.id, 
+                items: data.pickup.items, 
+                time: data.pickup.time_slot, 
+                qty: data.pickup.quantity, 
+                status: data.pickup.status, 
+                pin: data.pickup.pin,
+                createdAt: data.pickup.created_at,
+                assignedAt: data.pickup.assigned_at,
+                completedAt: data.pickup.completed_at
+            });
             renderPickupPanel();
             nav('success');
         } catch (err) { alert('Cannot reach server.'); }
@@ -3580,7 +3650,18 @@
             });
             const data = await res.json();
             if (!res.ok) return alert(data.error || 'Failed.');
-            appState.pickups.unshift({ id: data.pickup.request_id, dbId: data.pickup.id, items: data.pickup.items, time: data.pickup.time_slot, qty: data.pickup.quantity, status: data.pickup.status, pin: data.pickup.pin });
+            appState.pickups.unshift({ 
+                id: data.pickup.request_id, 
+                dbId: data.pickup.id, 
+                items: data.pickup.items, 
+                time: data.pickup.time_slot, 
+                qty: data.pickup.quantity, 
+                status: data.pickup.status, 
+                pin: data.pickup.pin,
+                createdAt: data.pickup.created_at,
+                assignedAt: data.pickup.assigned_at,
+                completedAt: data.pickup.completed_at
+            });
             renderPickupPanel();
             nav('success');
         } catch (err) { alert('Cannot reach server.'); }
@@ -3610,7 +3691,12 @@
             const res  = await fetch(`${API_BASE}/pickups?user_id=${appState.user.id}`);
             const data = await res.json();
             appState.pickups = data.pickups.map(p => ({
-                id: p.request_id, dbId: p.id, items: p.items, time: p.time_slot, qty: p.quantity, status: p.status, pin: p.pin, actual_weight: p.actual_weight, payout_amount: p.payout_amount
+                id: p.request_id, dbId: p.id, items: p.items, time: p.time_slot, qty: p.quantity, status: p.status, pin: p.pin, actual_weight: p.actual_weight, payout_amount: p.payout_amount,
+                createdAt: p.created_at,
+                assignedAt: p.assigned_at,
+                completedAt: p.completed_at,
+                collectorName: p.collector_name,
+                collectorPhone: p.collector_phone
             }));
             renderPickups();
             renderPickupPanel();
@@ -3716,9 +3802,196 @@
                 </div>
                 <h3 class="font-bold text-brand-dark text-base leading-tight mb-1">${escapeHtml(p.items)}</h3>
                 <p class="text-xs text-brand-grayText mb-3 flex items-center gap-1.5"><i class="ph-fill ph-clock"></i> ${escapeHtml(p.time)}${p.qty ? ` • <i class="ph-fill ph-scales"></i> ${escapeHtml(p.qty)}` : ''}</p>
+                <button onclick="openPickupTimeline('${p.id}')" class="w-full mb-3 py-2 px-3 bg-emerald-50/70 hover:bg-emerald-100/90 text-emerald-950 border border-emerald-200/70 rounded-xl text-xs font-bold flex items-center justify-between transition-all active:scale-98 cursor-pointer">
+                    <span class="flex items-center gap-1.5"><i class="ph-fill ph-git-commit text-emerald-700 text-sm"></i> Track Timeline</span>
+                    <span class="text-[11px] font-semibold text-emerald-700 flex items-center gap-0.5">Details <i class="ph-bold ph-caret-right"></i></span>
+                </button>
                 ${actionButtons}`;
             list.appendChild(card);
         });
+    }
+
+    function formatTimelineTime(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const isoStr = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return dateStr;
+            const now = new Date();
+            const isToday = d.toDateString() === now.toDateString();
+            const timePart = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+            if (isToday) return `Today, ${timePart}`;
+            const datePart = d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+            return `${datePart}, ${timePart}`;
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    async function openPickupTimeline(reqId) {
+        let p = appState.pickups.find(x => x.id === reqId || x.dbId === reqId);
+        if (!p) return;
+
+        // Fetch fresh status in case collector was just assigned
+        try {
+            const res = await fetch(`${API_BASE}/pickups/${p.dbId || p.id}/status`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.pickup) {
+                    p.status = data.pickup.status || p.status;
+                    p.createdAt = data.pickup.created_at || p.createdAt;
+                    p.assignedAt = data.pickup.assigned_at || p.assignedAt;
+                    p.completedAt = data.pickup.completed_at || p.completedAt;
+                    p.collectorName = data.pickup.collector_name || p.collectorName;
+                    p.collectorPhone = data.pickup.collector_phone || p.collectorPhone;
+                    p.actual_weight = data.pickup.actual_weight || p.actual_weight;
+                }
+            }
+        } catch (e) {}
+
+        const titleEl = document.getElementById('timeline-req-id');
+        if (titleEl) titleEl.textContent = `#${p.id} • ${p.items}`;
+
+        const st = (p.status || '').toLowerCase();
+        const isAssigned = ['assigned', 'completed'].includes(st);
+        const isCompleted = st === 'completed';
+        const isCancelled = st === 'cancelled';
+
+        const container = document.getElementById('timeline-steps');
+        if (!container) return;
+
+        let html = '';
+
+        // Step 1: Scheduled
+        const scheduledTime = formatTimelineTime(p.createdAt) || 'Scheduled';
+        html += `
+            <div class="relative">
+                <span class="absolute -left-[30px] top-0 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs shadow-xs z-10">
+                    <i class="ph-bold ph-check"></i>
+                </span>
+                <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border">
+                    <div class="flex items-center justify-between mb-0.5">
+                        <h4 class="text-xs font-extrabold text-brand-dark">Pickup Scheduled</h4>
+                        <span class="text-[10px] font-bold text-emerald-800">${scheduledTime}</span>
+                    </div>
+                    <p class="text-[11px] text-brand-grayText font-medium">Slot: ${escapeHtml(p.time)}${p.qty ? ` • ${escapeHtml(p.qty)}` : ''}</p>
+                </div>
+            </div>
+        `;
+
+        // Step 2: Collector Assigned
+        if (isAssigned) {
+            const assignedTime = formatTimelineTime(p.assignedAt) || 'Assigned';
+            const partnerName = p.collectorName || 'Verified Partner';
+            const partnerPhone = p.collectorPhone ? `+91 ${p.collectorPhone.replace(/^91/, '')}` : '';
+            html += `
+                <div class="relative">
+                    <span class="absolute -left-[30px] top-0 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs shadow-xs z-10">
+                        <i class="ph-bold ph-check"></i>
+                    </span>
+                    <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <h4 class="text-xs font-extrabold text-brand-dark">Collector Assigned</h4>
+                            <span class="text-[10px] font-bold text-emerald-800">${assignedTime}</span>
+                        </div>
+                        <p class="text-[11px] text-brand-dark font-semibold">Assigned to: <span class="text-emerald-900 font-extrabold">${escapeHtml(partnerName)}</span> ${partnerPhone ? `(${partnerPhone})` : ''}</p>
+                        <p class="text-[10px] text-brand-grayText mt-0.5">Partner dispatched and en route to your location.</p>
+                    </div>
+                </div>
+            `;
+        } else if (isCancelled) {
+            html += `
+                <div class="relative">
+                    <span class="absolute -left-[30px] top-0 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs shadow-xs z-10">
+                        <i class="ph-bold ph-x"></i>
+                    </span>
+                    <div class="bg-red-50/70 p-3.5 rounded-2xl border border-red-200">
+                        <h4 class="text-xs font-extrabold text-red-800">Pickup Cancelled</h4>
+                        <p class="text-[11px] text-red-700 mt-0.5">This pickup was cancelled. You can schedule a new pickup anytime.</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="relative">
+                    <span class="absolute -left-[30px] top-0 w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs animate-pulse z-10">
+                        <i class="ph-bold ph-hourglass-high"></i>
+                    </span>
+                    <div class="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <h4 class="text-xs font-extrabold text-amber-900">Matching Nearby Collector…</h4>
+                            <span class="text-[10px] font-bold text-amber-800 animate-pulse">Active</span>
+                        </div>
+                        <p class="text-[11px] text-amber-900/80">60-second sequential dispatch queue is matching active collectors in your PIN code.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Step 3: Doorstep Weigh-in & Handover
+        if (isCompleted) {
+            const completedTime = formatTimelineTime(p.completedAt) || 'Verified';
+            html += `
+                <div class="relative">
+                    <span class="absolute -left-[30px] top-0 w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs shadow-xs z-10">
+                        <i class="ph-bold ph-check"></i>
+                    </span>
+                    <div class="bg-brand-bg p-3.5 rounded-2xl border border-brand-border">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <h4 class="text-xs font-extrabold text-brand-dark">Doorstep Weigh-in &amp; Handover</h4>
+                            <span class="text-[10px] font-bold text-emerald-800">${completedTime}</span>
+                        </div>
+                        <p class="text-[11px] text-brand-dark font-semibold">Verified Weight: <span class="font-extrabold text-emerald-800">${p.actual_weight || 'Recorded'} kg</span></p>
+                        <p class="text-[10px] text-brand-grayText mt-0.5">Waste verified and 20% scrap payout disbursed.</p>
+                    </div>
+                </div>
+            `;
+        } else if (!isCancelled) {
+            html += `
+                <div class="relative">
+                    <span class="absolute -left-[30px] top-0 w-6 h-6 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xs z-10">
+                        <i class="ph-bold ph-scales"></i>
+                    </span>
+                    <div class="bg-gray-50/80 p-3.5 rounded-2xl border border-dashed border-gray-200 text-gray-400">
+                        <h4 class="text-xs font-bold text-gray-500">Doorstep Weigh-in</h4>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Collector will weigh each material upon arrival at your doorstep.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Step 4: Green Points Credited
+        if (isCompleted) {
+            html += `
+                <div class="relative">
+                    <span class="absolute -left-[30px] top-0 w-6 h-6 rounded-full bg-yellow-400 text-brand-dark flex items-center justify-center text-xs shadow-xs z-10">
+                        <i class="ph-fill ph-star"></i>
+                    </span>
+                    <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <h4 class="text-xs font-extrabold text-emerald-900">Green Points Credited</h4>
+                            <span class="text-xs font-black text-emerald-800">+50 pts ⭐</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-800/80">Thank you for segregating your waste and saving our planet! 🌿</p>
+                    </div>
+                </div>
+            `;
+        } else if (!isCancelled) {
+            html += `
+                <div class="relative">
+                    <span class="absolute -left-[30px] top-0 w-6 h-6 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xs z-10">
+                        <i class="ph-bold ph-star"></i>
+                    </span>
+                    <div class="bg-gray-50/80 p-3.5 rounded-2xl border border-dashed border-gray-200 text-gray-400">
+                        <h4 class="text-xs font-bold text-gray-500">Green Points</h4>
+                        <p class="text-[10px] text-gray-400 mt-0.5">+50 points will be credited automatically once verified.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+        openModal('modal-pickup-timeline');
     }
 
     // ─── Pickup Reschedule & Cancel Action Sheet ──────────────────────────────

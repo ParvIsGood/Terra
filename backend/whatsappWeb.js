@@ -354,7 +354,8 @@ async function startWhatsApp() {
                             UPDATE pickups 
                             SET collector_id = ?, 
                                 collector_phone = ?, 
-                                status = 'Assigned' 
+                                status = 'Assigned',
+                                assigned_at = datetime('now', 'localtime')
                             WHERE id = ?
                         `, [assignedCollector.id, assignedCollector.phone_number, pickupId]);
                         persist();

@@ -57,8 +57,8 @@ router.get('/', async (req, res) => {
         const db      = await getDb();
         const { user_id } = req.query;
         const sql     = user_id
-            ? `SELECT * FROM pickups WHERE user_id = ${Number(user_id)} ORDER BY id DESC`
-            : `SELECT * FROM pickups ORDER BY id DESC`;
+            ? `SELECT p.*, c.name as collector_name FROM pickups p LEFT JOIN collectors c ON p.collector_id = c.id WHERE p.user_id = ${Number(user_id)} ORDER BY p.id DESC`
+            : `SELECT p.*, c.name as collector_name FROM pickups p LEFT JOIN collectors c ON p.collector_id = c.id ORDER BY p.id DESC`;
         const stmt    = db.prepare(sql);
         const pickups = [];
         while (stmt.step()) pickups.push(stmt.getAsObject());
@@ -135,7 +135,12 @@ router.delete('/:id', async (req, res) => {
 router.get('/:id/status', async (req, res) => {
     try {
         const db = await getDb();
-        const stmt = db.prepare('SELECT id, request_id, status, pin, actual_weight, payout_amount, completed_at FROM pickups WHERE id = ? OR request_id = ?');
+        const stmt = db.prepare(`
+            SELECT p.*, c.name as collector_name 
+            FROM pickups p 
+            LEFT JOIN collectors c ON p.collector_id = c.id 
+            WHERE p.id = ? OR p.request_id = ?
+        `);
         stmt.bind([req.params.id, req.params.id]);
         if (!stmt.step()) {
             stmt.free();

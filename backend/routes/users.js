@@ -75,6 +75,19 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+function calculateAge(dobStr) {
+    if (!dobStr) return 0;
+    const birthDate = new Date(dobStr);
+    if (isNaN(birthDate.getTime())) return 0;
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+}
+
 // ─────────────────────────────────────────────
 // POST /api/users/register
 // Body: { name, email, password, dob, address, pincode, role, hh_code? }
@@ -84,6 +97,10 @@ router.post('/register', async (req, res) => {
 
     if (!name || !phone || !dob || !address || !pincode || !role) {
         return res.status(400).json({ error: 'All fields are required.' });
+    }
+
+    if (calculateAge(dob) < 13) {
+        return res.status(400).json({ error: 'You must be at least 13 years old to register on Circular.' });
     }
 
     if (!isValidIndianPincode(pincode)) {
@@ -374,6 +391,9 @@ router.put('/:id/addresses/:addressId', async (req, res) => {
 // ─────────────────────────────────────────────
 router.patch('/:id/profile', async (req, res) => {
     const { name, dob, pincode, city, state, bio, saved_materials } = req.body;
+    if (dob && calculateAge(dob) < 13) {
+        return res.status(400).json({ error: 'You must be at least 13 years old.' });
+    }
     if (pincode && !isValidIndianPincode(pincode)) {
         return res.status(400).json({ error: 'Please enter a valid 6-digit Indian PIN code.' });
     }

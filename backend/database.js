@@ -127,6 +127,10 @@ async function getDb() {
     } catch (e) {}
 
     try {
+        db.run(`ALTER TABLE pickups ADD COLUMN assigned_at TEXT`);
+    } catch (e) {}
+
+    try {
         db.run(`ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0`);
     } catch (e) {}
 
