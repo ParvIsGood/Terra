@@ -54,15 +54,74 @@ router.post('/', async (req, res) => {
 // ─────────────────────────────────────────────
 router.get('/', async (req, res) => {
     try {
-        const db      = await getDb();
+        const db = await getDb();
         const { user_id } = req.query;
-        const sql     = user_id
-            ? `SELECT p.*, c.name as collector_name FROM pickups p LEFT JOIN collectors c ON p.collector_id = c.id WHERE p.user_id = ${Number(user_id)} ORDER BY p.id DESC`
-            : `SELECT p.*, c.name as collector_name FROM pickups p LEFT JOIN collectors c ON p.collector_id = c.id ORDER BY p.id DESC`;
-        const stmt    = db.prepare(sql);
-        const pickups = [];
-        while (stmt.step()) pickups.push(stmt.getAsObject());
-        stmt.free();
+        let pickups = [];
+
+        if (user_id) {
+            const uid = Number(user_id);
+            // Fetch user's hh_code
+            const uStmt = db.prepare('SELECT hh_code FROM users WHERE id = ?');
+            uStmt.bind([uid]);
+            let hhCode = null;
+            if (uStmt.step()) {
+                const u = uStmt.getAsObject();
+                hhCode = u.hh_code;
+            }
+            uStmt.free();
+
+            let stmt;
+            if (hhCode && hhCode.trim() !== '') {
+                stmt = db.prepare(`
+                    SELECT p.*, 
+                           c.name as collector_name, 
+                           c.phone_number as collector_phone_num,
+                           u.name as booked_by_name,
+                           u.phone as booked_by_phone,
+                           u.hh_code as household_code
+                    FROM pickups p 
+                    JOIN users u ON p.user_id = u.id
+                    LEFT JOIN collectors c ON p.collector_id = c.id 
+                    WHERE p.user_id = ? OR (u.hh_code = ? AND u.hh_code IS NOT NULL AND u.hh_code != '')
+                    ORDER BY p.id DESC
+                `);
+                stmt.bind([uid, hhCode]);
+            } else {
+                stmt = db.prepare(`
+                    SELECT p.*, 
+                           c.name as collector_name, 
+                           c.phone_number as collector_phone_num,
+                           u.name as booked_by_name,
+                           u.phone as booked_by_phone,
+                           u.hh_code as household_code
+                    FROM pickups p 
+                    JOIN users u ON p.user_id = u.id
+                    LEFT JOIN collectors c ON p.collector_id = c.id 
+                    WHERE p.user_id = ? 
+                    ORDER BY p.id DESC
+                `);
+                stmt.bind([uid]);
+            }
+
+            while (stmt.step()) pickups.push(stmt.getAsObject());
+            stmt.free();
+        } else {
+            const stmt = db.prepare(`
+                SELECT p.*, 
+                       c.name as collector_name, 
+                       c.phone_number as collector_phone_num,
+                       u.name as booked_by_name,
+                       u.phone as booked_by_phone,
+                       u.hh_code as household_code
+                FROM pickups p 
+                JOIN users u ON p.user_id = u.id
+                LEFT JOIN collectors c ON p.collector_id = c.id 
+                ORDER BY p.id DESC
+            `);
+            while (stmt.step()) pickups.push(stmt.getAsObject());
+            stmt.free();
+        }
+
         return res.json({ count: pickups.length, pickups });
     } catch (err) {
         return res.status(500).json({ error: 'Database error.', details: err.message });

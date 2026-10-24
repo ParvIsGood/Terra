@@ -69,6 +69,15 @@ router.get('/:id', async (req, res) => {
         }
         const user = stmt.getAsObject();
         stmt.free();
+
+        // Ensure user has a valid, shareable Household Code
+        if (!user.hh_code || user.hh_code.trim() === '' || user.hh_code === '—') {
+            const genCode = `HH-${Math.floor(1000 + Math.random() * 9000)}`;
+            db.run('UPDATE users SET hh_code = ? WHERE id = ?', [genCode, user.id]);
+            persist();
+            user.hh_code = genCode;
+        }
+
         return res.json({ user });
     } catch (err) {
         return res.status(500).json({ error: 'Database error.', details: err.message });
@@ -144,11 +153,12 @@ router.post('/register', async (req, res) => {
 
         const generatedEmail = `${cleanPhone}@whatsapp.terra`;
         const defaultPasswordHash = 'WHATSAPP_OTP_AUTH';
+        const finalHhCode = (hh_code && hh_code.trim()) ? hh_code.trim().toUpperCase() : `HH-${Math.floor(1000 + Math.random() * 9000)}`;
 
         db.run(
             `INSERT INTO users (name, email, password_hash, dob, address, pincode, city, state, role, hh_code, phone)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name.trim(), generatedEmail, defaultPasswordHash, dob, address.trim(), pincode.trim(), resolvedCity, resolvedState, role, hh_code || null, cleanPhone]
+            [name.trim(), generatedEmail, defaultPasswordHash, dob, address.trim(), pincode.trim(), resolvedCity, resolvedState, role, finalHhCode, cleanPhone]
         );
         persist();
 
@@ -264,6 +274,68 @@ router.patch('/:id/hh-code', async (req, res) => {
         return res.json({ message: 'Household code updated.', user });
     } catch (err) {
         return res.status(500).json({ error: 'Database error.', details: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/users/:id/join-household
+// Links user to another household via hh_code
+// ─────────────────────────────────────────────
+router.post('/:id/join-household', async (req, res) => {
+    try {
+        const { hh_code } = req.body;
+        const targetUserId = parseInt(req.params.id, 10);
+        if (!hh_code || !hh_code.trim()) {
+            return res.status(400).json({ error: 'Please enter a valid Household Code.' });
+        }
+
+        const cleanCode = hh_code.trim().toUpperCase();
+        const db = await getDb();
+
+        // Check if household exists (any user currently holding this hh_code)
+        const checkStmt = db.prepare('SELECT id, name, address, pincode, city, state, hh_code FROM users WHERE UPPER(hh_code) = ? AND id != ? LIMIT 1');
+        checkStmt.bind([cleanCode, targetUserId]);
+        let primaryUser = null;
+        if (checkStmt.step()) {
+            primaryUser = checkStmt.getAsObject();
+        }
+        checkStmt.free();
+
+        if (!primaryUser) {
+            return res.status(404).json({ 
+                error: `Household code "${cleanCode}" was not found. Please verify the code with your family member or flatmate.` 
+            });
+        }
+
+        // Link this user to the household and sync address & pincode
+        db.run(`
+            UPDATE users 
+            SET hh_code = ?,
+                address = COALESCE(NULLIF(address, ''), ?),
+                pincode = COALESCE(NULLIF(pincode, ''), ?),
+                city = COALESCE(NULLIF(city, ''), ?),
+                state = COALESCE(NULLIF(state, ''), ?)
+            WHERE id = ?
+        `, [cleanCode, primaryUser.address, primaryUser.pincode, primaryUser.city, primaryUser.state, targetUserId]);
+
+        persist();
+
+        // Fetch updated user
+        const stmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, phone, bio, saved_materials, points, wallet_balance FROM users WHERE id = ?');
+        stmt.bind([targetUserId]);
+        let updatedUser = null;
+        if (stmt.step()) updatedUser = stmt.getAsObject();
+        stmt.free();
+
+        return res.json({
+            success: true,
+            message: `Successfully linked to ${primaryUser.name}'s household (${cleanCode})!`,
+            user: updatedUser,
+            householdOwner: primaryUser.name
+        });
+    } catch (err) {
+        console.error('Join household error:', err);
+        return res.status(500).json({ error: 'Failed to join household.', details: err.message });
     }
 });
 

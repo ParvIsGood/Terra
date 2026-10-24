@@ -1840,6 +1840,102 @@
     </div>
 </div>
 
+<!-- Support Our Mission UPI QR Modal -->
+<div id="modal-support-mission" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-support-mission')">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95 text-center overflow-hidden" id="modal-support-mission-content">
+        <!-- Close Button -->
+        <button onclick="closeModal('modal-support-mission')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200 transition-colors cursor-pointer z-10">
+            <i class="ph-bold ph-x text-sm"></i>
+        </button>
+
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl mx-auto mb-2.5 shadow-xs">
+            <i class="ph-fill ph-heart"></i>
+        </div>
+
+        <h3 class="text-lg font-black text-brand-dark tracking-tight leading-snug">Support Our Mission</h3>
+        <p class="text-xs text-brand-grayText font-medium mt-1 mb-4 leading-relaxed">
+            Help us empower local Kabadiwalas with digital scales, safety gear, and expand clean segregated scrap collection.
+        </p>
+
+        <!-- UPI QR Code Frame -->
+        <div class="bg-gradient-to-b from-gray-50 to-white rounded-2xl p-4 border border-brand-border shadow-inner mb-4 relative">
+            <div class="bg-white p-2 rounded-xl shadow-xs border border-gray-100 inline-block mb-3">
+                <img src="assets/donation-qr.jpg" alt="UPI Donation QR Code" class="w-52 h-52 object-contain mx-auto rounded-lg">
+            </div>
+
+            <!-- Payee Name & UPI ID -->
+            <div class="bg-brand-bg rounded-xl p-2.5 border border-brand-border/60">
+                <p class="text-xs font-black text-brand-dark mb-0.5">Amogh Anand</p>
+                <div class="flex items-center justify-center gap-1.5">
+                    <span class="text-[11px] font-mono font-bold text-brand-grayText" id="donation-upi-id">amogh.9798anand@okaxis</span>
+                    <button type="button" onclick="copyDonationUPI()" class="text-emerald-800 hover:text-emerald-900 text-xs font-bold p-1 rounded hover:bg-emerald-50 transition-colors cursor-pointer" title="Copy UPI ID">
+                        <i class="ph-bold ph-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-2">
+            <a href="upi://pay?pa=amogh.9798anand@okaxis&pn=Amogh%20Anand&cu=INR" 
+               class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold py-3.5 rounded-full text-xs shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer">
+                <i class="ph-bold ph-lightning text-sm text-yellow-300"></i>
+                <span>Open in UPI App (GPay / PhonePe / Paytm)</span>
+            </a>
+            <button type="button" onclick="copyDonationUPI()" 
+                    class="w-full bg-white border border-brand-border text-brand-dark font-bold py-2.5 rounded-full text-xs hover:bg-gray-50 transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+                <i class="ph-bold ph-copy text-sm"></i>
+                <span>Copy UPI ID</span>
+            </button>
+        </div>
+
+        <p class="text-[10px] text-gray-400 font-medium mt-3">Scan with Google Pay, PhonePe, Paytm, BHIM, or any banking app.</p>
+    </div>
+</div>
+
+<!-- Join / Link Shared Household Modal -->
+<div id="modal-join-household" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm" onclick="if(event.target===this) closeModal('modal-join-household')">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-join-household-content">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center text-lg">
+                    <i class="ph-bold ph-users-three"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-brand-dark leading-tight">Shared Household</h3>
+                    <p class="text-[11px] font-semibold text-brand-grayText">Link accounts with family/roommates</p>
+                </div>
+            </div>
+            <button onclick="closeModal('modal-join-household')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200 cursor-pointer">
+                <i class="ph-bold ph-x text-sm"></i>
+            </button>
+        </div>
+
+        <form onsubmit="handleJoinHouseholdSubmit(event)" class="space-y-4">
+            <div class="bg-indigo-50/70 border border-indigo-200/70 rounded-2xl p-3.5 text-xs text-indigo-950 font-medium leading-relaxed">
+                🏠 <b>How it works:</b><br>
+                When you link to another member's Household Code, both of you can see active pickups, share Doorstep Security PINs, and verify waste handover when the other is away!
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-brand-grayText uppercase tracking-wider mb-1.5">Enter Household Code</label>
+                <div class="relative">
+                    <input type="text" id="input-join-hhcode" required placeholder="e.g. HH-7281" maxlength="10"
+                        class="w-full bg-white border border-brand-border rounded-xl px-4 py-3 text-base font-mono font-black uppercase text-brand-dark focus:outline-none focus:border-brand-dark shadow-xs tracking-wider transition-colors">
+                </div>
+                <p class="text-[10px] text-brand-grayText font-medium mt-1">Ask your family member or flatmate for their code found in their Settings tab.</p>
+            </div>
+
+            <p id="join-hh-msg" class="text-red-600 text-xs text-center font-bold min-h-[16px]"></p>
+
+            <button type="submit" id="btn-join-hh-submit" class="w-full bg-brand-dark text-white font-extrabold py-3.5 rounded-full text-xs shadow-md hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>Link to Household</span>
+                <i class="ph-bold ph-arrow-right text-xs"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- Confirmation Modal for Cancel -->
 <div id="modal-confirm" class="modal fixed inset-0 z-[60] items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm">
     <div class="bg-white rounded-[32px] p-6 w-full max-w-[300px] shadow-2xl text-center transform transition-transform scale-95" id="modal-confirm-content">
@@ -3264,12 +3360,41 @@
         }
 
         const commonContent = `
+            <!-- Household Management -->
+            <div class="mb-5">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1 flex items-center justify-between">
+                    <span>Household Management</span>
+                    <span class="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Shared Access</span>
+                </div>
+                <div class="bg-white rounded-2xl border border-brand-border shadow-sm p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="text-xs font-bold text-brand-dark">Active Household Code</p>
+                            <p class="text-[11px] text-brand-grayText font-medium">Share this code with family or roommates</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-mono text-sm font-black text-brand-dark bg-brand-light px-2.5 py-1 rounded-lg border border-brand-border" id="settings-hhcode-display">${u.hh_code || 'HH-0000'}</span>
+                            <button type="button" onclick="copyHouseholdCode('${u.hh_code || ''}')" class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-brand-dark flex items-center justify-center text-sm transition-colors cursor-pointer" title="Copy Code">
+                                <i class="ph-bold ph-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-brand-bg rounded-xl p-3 border border-brand-border/60 mb-3 text-[11px] text-brand-grayText leading-relaxed">
+                        💡 Anyone linked to this code can see doorstep pickups, check the <b>Doorstep PIN</b>, and verify collection if you're away.
+                    </div>
+                    <button type="button" onclick="openJoinHouseholdModal()" class="w-full bg-white border border-brand-border hover:border-brand-dark text-brand-dark font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-[0.98] cursor-pointer">
+                        <i class="ph-bold ph-users-three text-sm"></i>
+                        <span>Link or Join Another Household</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Community -->
             <div class="mb-5">
                 <div class="text-[11px] font-bold uppercase tracking-wider text-brand-grayText mb-2 px-1">Community</div>
                 <div class="bg-white rounded-2xl border border-brand-border shadow-sm divide-y divide-gray-100">
                     ${renderSettingLink('Share the app', 'Invite friends and neighbours', 'shareApp()', 'Share ›')}
-                    ${renderSettingLink('Support our mission', 'Help us reach more neighbourhoods', "toast('Donations feature coming soon!')", 'Support ›')}
+                    ${renderSettingLink('Support our mission', 'UPI Donation & Community Fund', "openModal('modal-support-mission')", 'Contribute ›')}
                 </div>
             </div>
 
@@ -4137,6 +4262,77 @@
         }
     }
 
+    // ─── Support Our Mission (UPI Donation) ───────────────────────────────────
+    function copyDonationUPI() {
+        const upi = 'amogh.9798anand@okaxis';
+        navigator.clipboard.writeText(upi).then(() => {
+            toast('✅ UPI ID copied: ' + upi);
+        }).catch(() => {
+            toast(upi);
+        });
+    }
+
+    // ─── Household Management & Shared Pickups ────────────────────────────────
+    function copyHouseholdCode(code) {
+        const c = code || appState.user?.hh_code || 'HH-0000';
+        navigator.clipboard.writeText(c).then(() => {
+            toast(`✅ Household Code ${c} copied to clipboard! Share it with family/roommates.`);
+        }).catch(() => {
+            toast(`Household Code: ${c}`);
+        });
+    }
+
+    function openJoinHouseholdModal() {
+        document.getElementById('input-join-hhcode').value = '';
+        document.getElementById('join-hh-msg').textContent = '';
+        openModal('modal-join-household');
+    }
+
+    async function handleJoinHouseholdSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('input-join-hhcode');
+        const msgEl = document.getElementById('join-hh-msg');
+        const btn = document.getElementById('btn-join-hh-submit');
+        const code = input.value.trim().toUpperCase();
+
+        if (!code) {
+            msgEl.textContent = 'Please enter a Household Code.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-base"></i> Linking...';
+
+        try {
+            const res = await fetch(`${API_BASE}/users/${appState.user.id}/join-household`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hh_code: code })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                msgEl.textContent = data.error || 'Failed to join household.';
+                btn.disabled = false;
+                btn.innerHTML = 'Link to Household';
+                return;
+            }
+
+            appState.user = { ...appState.user, ...data.user };
+            saveSession(appState.user);
+            applyUserToDOM();
+            closeModal('modal-join-household');
+            toast(`🎉 ${data.message}`);
+            renderSettings();
+            await loadPickupsFromDB();
+        } catch (err) {
+            msgEl.textContent = 'Network error while linking household.';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Link to Household';
+        }
+    }
+
     // ─── Household Pickup ─────────────────────────────────────────────────────
     function updateHHCatState() {
         const seg = document.getElementById('hh-seg-toggle')?.checked;
@@ -4324,7 +4520,10 @@
                 assignedAt: p.assigned_at,
                 completedAt: p.completed_at,
                 collectorName: p.collector_name,
-                collectorPhone: p.collector_phone
+                collectorPhone: p.collector_phone,
+                userId: p.user_id,
+                bookedByName: p.booked_by_name,
+                householdCode: p.household_code
             }));
             renderPickups();
             renderPickupPanel();
@@ -4383,6 +4582,7 @@
             const st = (p.status || '').toLowerCase();
             const isCompleted = st === 'completed';
             const isCancelled = st === 'cancelled';
+            const isSharedHouseholdBooking = p.bookedByName && appState.user && p.userId !== appState.user.id;
 
             let badgeClass = 'bg-brand-light text-brand-dark';
             let badgeIcon = '';
@@ -4410,18 +4610,27 @@
             } else {
                 actionButtons = `
                     <div class="flex gap-2 pt-3 border-t border-gray-100">
-                        <button onclick="openQRModal('${p.id}')" class="flex-1 bg-brand-dark text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all">
+                        <button onclick="openQRModal('${p.id}')" class="flex-1 bg-brand-dark text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all cursor-pointer">
                             <i class="ph-bold ph-qr-code text-sm"></i> Show QR
                         </button>
-                        <button onclick="openActionSheet(${i})" class="flex-1 bg-white border border-brand-border text-brand-dark font-bold py-2.5 rounded-xl text-xs hover:bg-gray-50 active:scale-95 transition-all">
+                        <button onclick="openActionSheet(${i})" class="flex-1 bg-white border border-brand-border text-brand-dark font-bold py-2.5 rounded-xl text-xs hover:bg-gray-50 active:scale-95 transition-all cursor-pointer">
                             Reschedule / Cancel
                         </button>
                     </div>`;
             }
 
+            const sharedBadge = isSharedHouseholdBooking 
+                ? `<div class="mb-2"><span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-full"><i class="ph-bold ph-users"></i> Booked by ${escapeHtml(p.bookedByName)} (Household)</span></div>` 
+                : '';
+
+            const pinBadge = (!isCompleted && !isCancelled && p.pin)
+                ? `<div class="mt-2 mb-3 flex items-center justify-between bg-brand-light/70 border border-brand-border rounded-xl px-3 py-1.5"><span class="text-[11px] font-bold text-brand-dark flex items-center gap-1.5"><i class="ph-bold ph-key text-emerald-800"></i> Doorstep PIN:</span><span class="font-mono text-xs font-black text-emerald-900 tracking-wider">${p.pin}</span></div>`
+                : '';
+
             const card = document.createElement('div');
             card.className = 'bg-white rounded-2xl p-5 shadow-sm border border-brand-border';
             card.innerHTML = `
+                ${sharedBadge}
                 <div class="flex justify-between items-start mb-3">
                     <div class="${badgeClass} text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide flex items-center gap-1">
                         ${badgeIcon}${p.status}
@@ -4429,7 +4638,8 @@
                     <span class="text-xs font-semibold text-brand-grayText">#${p.id}</span>
                 </div>
                 <h3 class="font-bold text-brand-dark text-base leading-tight mb-1">${escapeHtml(p.items)}</h3>
-                <p class="text-xs text-brand-grayText mb-3 flex items-center gap-1.5"><i class="ph-fill ph-clock"></i> ${escapeHtml(p.time)}${p.qty ? ` • <i class="ph-fill ph-scales"></i> ${escapeHtml(p.qty)}` : ''}</p>
+                <p class="text-xs text-brand-grayText mb-2 flex items-center gap-1.5"><i class="ph-fill ph-clock"></i> ${escapeHtml(p.time)}${p.qty ? ` • <i class="ph-fill ph-scales"></i> ${escapeHtml(p.qty)}` : ''}</p>
+                ${pinBadge}
                 <button onclick="openPickupTimeline('${p.id}')" class="w-full mb-3 py-2 px-3 bg-emerald-50/70 hover:bg-emerald-100/90 text-emerald-950 border border-emerald-200/70 rounded-xl text-xs font-bold flex items-center justify-between transition-all active:scale-98 cursor-pointer">
                     <span class="flex items-center gap-1.5"><i class="ph-fill ph-git-commit text-emerald-700 text-sm"></i> Track Timeline</span>
                     <span class="text-[11px] font-semibold text-emerald-700 flex items-center gap-0.5">Details <i class="ph-bold ph-caret-right"></i></span>
