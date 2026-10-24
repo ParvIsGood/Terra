@@ -73,6 +73,115 @@ function parseMaterialWeights(inputStr) {
     return { items: parsed, totalWeight };
 }
 
+// ─────────────────────────────────────────────────────────────
+// AI-POWERED FUZZY WEIGHT PARSER (Groq LLM)
+// Corrects typos (plastoc, gata, lohaa) and parses spoken Hindi/Hinglish
+// ─────────────────────────────────────────────────────────────
+async function parseMaterialWeightsSmart(inputStr) {
+    if (!inputStr) return { items: [], totalWeight: 0 };
+
+    // 1. First run fast local regex
+    const local = parseMaterialWeights(inputStr);
+
+    // If local regex found specific materials, return immediately
+    const hasSpecificMaterials = local.items.some(it => it.material !== "Recyclables (Total)" && it.material !== "Others");
+    if (hasSpecificMaterials) {
+        return local;
+    }
+
+    // 2. Otherwise invoke Groq AI to handle typos (e.g. plastoc, gata, lohaa, Hindi words)
+    const groqKey = process.env.GROQ_API_KEY;
+    if (groqKey && groqKey.startsWith('gsk_')) {
+        try {
+            const prompt = `You are an AI scrap & waste weight extractor for Circular by Terra in India.
+Extract all materials and their weights in kg from this message sent by a local Kabadiwala/collector: "${inputStr}"
+Correct any typos, slang, or Hindi/Hinglish terms:
+- "plastoc", "plasstic", "panni", "bottles", "botle" -> "Plastic"
+- "gatta", "gata", "carton", "dabba", "cardbord", "box" -> "Cardboard"
+- "loha", "lohaa", "steel", "iron", "aluminium", "tin", "tamba" -> "Metals"
+- "raddi", "paper", "akhbar", "akbar", "books", "kitab" -> "Paper"
+- "kaanch", "glass", "sheesha" -> "Glass"
+- "kapda", "clothes", "fabric" -> "Cloth"
+- "wet", "gila", "sabzi", "food" -> "Wet Waste"
+- "dry", "sukha" -> "Dry Waste"
+
+Respond ONLY with valid JSON in this exact structure, nothing else:
+{"items":[{"material":"Plastic","weight":10}],"totalWeight":10}
+If only a single total weight is given without material name, use material "Recyclables (Total)".
+If no weight is found, return {"items":[],"totalWeight":0}`;
+
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: "openai/gpt-oss-120b",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.1,
+                    response_format: { type: "json_object" }
+                })
+            });
+            const data = await res.json();
+            if (data.choices && data.choices[0]?.message?.content) {
+                const aiResult = JSON.parse(data.choices[0].message.content);
+                if (aiResult.items && Array.isArray(aiResult.items) && aiResult.items.length > 0) {
+                    const totalW = aiResult.totalWeight || aiResult.items.reduce((s, it) => s + (Number(it.weight) || 0), 0);
+                    return {
+                        items: aiResult.items.map(it => ({ material: it.material, weight: Number(it.weight) || 0 })),
+                        totalWeight: Math.round(totalW * 10) / 10
+                    };
+                }
+            }
+        } catch (e) {
+            console.warn('AI weight parsing fallback to local:', e.message);
+        }
+    }
+
+    return local;
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONVERSATIONAL AI ASSISTANT FOR WHATSAPP (Groq LLM)
+// Answers inquiries from Kabadiwalas or residents in natural Hindi/Hinglish
+// ─────────────────────────────────────────────────────────────
+async function getWhatsAppAIReply(userQuery, userName = 'Partner') {
+    const groqKey = process.env.GROQ_API_KEY;
+    if (!groqKey || !groqKey.startsWith('gsk_')) return null;
+
+    try {
+        const prompt = `You are "Terra AI", the official WhatsApp eco-assistant for "Circular by Terra" in India.
+You are talking to a local Kabadiwala (collector) or resident on WhatsApp named ${userName}.
+Respond in clear, respectful, polite Hindi/Hinglish (mix of Hindi & simple English).
+Keep response brief (2-3 sentences max), helpful, with suitable emojis.
+Key Circular Knowledge:
+- Scrap Payouts: Doorstep weigh-in upon confirmation gives initial 20% payout, remaining 20% disbursed after Recycling Unit batch confirmation.
+- Green Points: 1 point per kg of recyclables (+50 points awarded per verified pickup).
+- Segregation: Wet (kitchen/food waste to compost), Dry (paper, plastic, metal, cardboard), E-Waste (gadgets/chargers), Harmful (syringes/chemicals).
+- Available Collector Commands:
+  • "PICKUPS" - view assigned/pending pickups in area.
+  • "DUTY" - toggle on/off duty status.
+  • Send live location on WhatsApp to update coordinates.
+
+User Query: "${userQuery}"`;
+
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: "openai/gpt-oss-120b",
+                messages: [{ role: "user", content: prompt }],
+                max_tokens: 180,
+                temperature: 0.6
+            })
+        });
+
+        const data = await res.json();
+        return data.choices?.[0]?.message?.content?.trim() || null;
+    } catch (e) {
+        console.warn('WhatsApp AI reply failed:', e.message);
+        return null;
+    }
+}
+
 function resolvePhoneAndLid(rawId) {
     if (!rawId) return { phone: '', lid: '', jid: '' };
     const clean = rawId.replace(/[@a-z\._]/gi, '').trim();
@@ -483,7 +592,7 @@ async function startWhatsApp() {
                 // ── B. MATERIAL-WISE WEIGHT VERIFICATION & OFFICIAL COMPLETION ────────────
                 if (pendingVerifications[phone]) {
                     const session = pendingVerifications[phone];
-                    const parsedWeight = parseMaterialWeights(text);
+                    const parsedWeight = await parseMaterialWeightsSmart(text);
 
                     if (parsedWeight.items.length > 0 && parsedWeight.totalWeight > 0) {
                         const { items: weightItems, totalWeight } = parsedWeight;
@@ -735,7 +844,20 @@ async function startWhatsApp() {
                             break;
                         }
 
-                        // 3. For any other regular chat message or greeting, NEVER reset!
+                        // 3. Conversational AI Assistant check before falling back to menu
+                        if (!isGreeting && text.length > 2) {
+                            const aiReply = await getWhatsAppAIReply(text, collector.name);
+                            if (aiReply) {
+                                await reply(
+                                    `🤖 *Terra AI:*\n${aiReply}\n\n` +
+                                    `─────────────\n` +
+                                    `_Tip: Orders dekhne ke liye *PICKUPS* ya duty badalne ke liye *DUTY* bhejein._`
+                                );
+                                break;
+                            }
+                        }
+
+                        // For greetings or fallback, display the command menu
                         await reply(
                             `Namaste *${collector.name || 'Partner'}* ji! 🙏\n\n` +
                             `Commands:\n` +
