@@ -1084,6 +1084,127 @@
     </div>
 
     <!-- ==========================================
+         VIEW: WALLET TAB
+         ========================================== -->
+    <div id="view-wallet" class="view bg-brand-bg">
+        <div class="view-content px-5 pt-7 pb-32">
+            <!-- Top Header: Back + Title + Refresh -->
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="returnToHome()" class="w-9 h-9 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-xs border border-brand-border hover:bg-gray-50 active:scale-95 transition-transform" title="Back to Home">
+                    <i class="ph ph-arrow-left text-lg"></i>
+                </button>
+                <div class="text-center">
+                    <h1 class="text-base font-black text-brand-dark tracking-tight">My Wallet</h1>
+                    <p class="text-[11px] font-semibold text-brand-grayText">Earnings, Payouts &amp; Rewards</p>
+                </div>
+                <button onclick="loadWalletData(true)" class="w-9 h-9 flex items-center justify-center text-brand-dark rounded-full bg-white shadow-xs border border-brand-border hover:bg-gray-50 active:scale-95 transition-transform" title="Refresh">
+                    <i id="wallet-refresh-icon" class="ph ph-arrows-clockwise text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Main Wallet Balance Card (Emerald eco-gradient) -->
+            <div class="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#123824] via-[#0E2E1D] to-[#071F13] text-white p-6 shadow-xl shadow-emerald-950/20 mb-4 border border-emerald-500/20">
+                <i class="ph-fill ph-wallet absolute -bottom-5 -right-5 text-9xl text-white/5 pointer-events-none"></i>
+                <i class="ph-fill ph-leaf absolute -top-6 right-10 text-7xl text-emerald-400/10 pointer-events-none rotate-45"></i>
+
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-200/80 flex items-center gap-1.5">
+                            <i class="ph-fill ph-shield-check text-emerald-400"></i> Available Cash Balance
+                        </span>
+                        <span class="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active
+                        </span>
+                    </div>
+
+                    <div class="flex items-baseline gap-1 mb-3">
+                        <span class="text-2xl font-bold text-emerald-300">₹</span>
+                        <span id="wallet-balance-display" class="text-4xl font-black tracking-tight text-white">0.00</span>
+                    </div>
+
+                    <!-- Green Points Row -->
+                    <div class="flex items-center justify-between bg-white/10 rounded-2xl p-2.5 px-3 mb-4 backdrop-blur-xs border border-white/10">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-sm font-bold">
+                                ⭐
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-semibold text-emerald-100/70 uppercase tracking-wide">Green Eco Points</p>
+                                <p id="wallet-points-display" class="text-xs font-bold text-white">0 pts</p>
+                            </div>
+                        </div>
+                        <button onclick="openRedeemModal()" class="text-[11px] font-bold text-emerald-300 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 px-2.5 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1 cursor-pointer">
+                            <span>Redeem to Cash</span>
+                            <i class="ph-bold ph-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button onclick="openWithdrawModal()" class="w-full bg-emerald-400 hover:bg-emerald-300 text-brand-dark font-extrabold py-2.5 px-3 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="ph-bold ph-arrow-up-right text-sm"></i>
+                            <span>Withdraw Cash</span>
+                        </button>
+                        <button onclick="openPoints()" class="w-full bg-white/15 hover:bg-white/20 text-white font-bold py-2.5 px-3 rounded-xl text-xs border border-white/15 transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="ph-bold ph-sparkle text-amber-300 text-sm"></i>
+                            <span>Points Sheet</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Summary Cards -->
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <div class="bg-white rounded-2xl p-3.5 border border-brand-border shadow-xs">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">
+                            <i class="ph-bold ph-recycle"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-brand-grayText uppercase">Scrap Earnings</span>
+                    </div>
+                    <p id="wallet-earned-display" class="text-lg font-black text-brand-dark">₹0.00</p>
+                    <p class="text-[10px] text-brand-grayText font-medium mt-0.5">From doorstep pickups</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-3.5 border border-brand-border shadow-xs">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs">
+                            <i class="ph-bold ph-arrow-circle-up-right"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-brand-grayText uppercase">Withdrawn</span>
+                    </div>
+                    <p id="wallet-withdrawn-display" class="text-lg font-black text-brand-dark">₹0.00</p>
+                    <p class="text-[10px] text-brand-grayText font-medium mt-0.5">To UPI &amp; Bank</p>
+                </div>
+            </div>
+
+            <!-- Transaction History Header & Filter Pills -->
+            <div class="mb-3">
+                <div class="flex items-center justify-between mb-2.5">
+                    <h3 class="text-sm font-black text-brand-dark flex items-center gap-1.5">
+                        <i class="ph-bold ph-receipt text-base text-emerald-800"></i>
+                        <span>Transaction History</span>
+                    </h3>
+                    <span id="wallet-tx-count" class="text-[11px] font-bold text-brand-grayText bg-white px-2 py-0.5 rounded-full border border-brand-border">0 transactions</span>
+                </div>
+
+                <!-- Filter Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                    <button onclick="filterWalletTxns('all')" id="wallet-filter-all" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-bold bg-brand-dark text-white shrink-0 transition-all cursor-pointer">All</button>
+                    <button onclick="filterWalletTxns('scrap_payout')" id="wallet-filter-scrap_payout" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-medium bg-white text-brand-grayText border border-brand-border hover:bg-gray-50 shrink-0 transition-all cursor-pointer">Scrap Payouts</button>
+                    <button onclick="filterWalletTxns('bonus')" id="wallet-filter-bonus" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-medium bg-white text-brand-grayText border border-brand-border hover:bg-gray-50 shrink-0 transition-all cursor-pointer">Rewards &amp; Bonus</button>
+                    <button onclick="filterWalletTxns('withdrawal')" id="wallet-filter-withdrawal" class="wallet-f-btn px-3 py-1 rounded-full text-xs font-medium bg-white text-brand-grayText border border-brand-border hover:bg-gray-50 shrink-0 transition-all cursor-pointer">Withdrawals</button>
+                </div>
+            </div>
+
+            <!-- Transaction List Container -->
+            <div id="wallet-transactions-list" class="space-y-2.5">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
          VIEW: PROFILE TAB
          ========================================== -->
     <div id="view-profile" class="view bg-brand-bg">
@@ -1211,9 +1332,9 @@
             <i class="ph ph-clock-counter-clockwise text-2xl"></i>
             <span class="text-[10px] font-medium">Activity</span>
         </button>
-        <button onclick="nav('profile')" id="nav-btn-profile" class="flex flex-col items-center gap-1 text-brand-grayText w-20">
-            <i class="ph ph-user text-2xl"></i>
-            <span class="text-[10px] font-medium">Profile</span>
+        <button onclick="nav('wallet')" id="nav-btn-wallet" class="flex flex-col items-center gap-1 text-brand-grayText w-20 cursor-pointer">
+            <i class="ph ph-wallet text-2xl"></i>
+            <span class="text-[10px] font-medium">Wallet</span>
         </button>
     </div>
 
@@ -1583,6 +1704,139 @@
 <div id="sheet-points" class="modal fixed inset-0 z-50 items-end justify-center bg-brand-dark/40 backdrop-blur-sm" onclick="if(event.target===this) closeModal('sheet-points')">
     <div class="bg-white w-full max-w-[420px] rounded-t-[32px] pb-8 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar transform transition-transform" id="sheet-points-content">
         <!-- Rendered dynamically by renderPointsSheet() -->
+    </div>
+</div>
+
+<!-- Wallet Withdrawal Modal -->
+<div id="modal-wallet-withdraw" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-wallet-withdraw-content">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg">
+                    <i class="ph-bold ph-arrow-up-right"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-brand-dark leading-tight">Withdraw Cash</h3>
+                    <p class="text-[11px] font-semibold text-brand-grayText">Available: <span id="withdraw-modal-bal" class="text-emerald-700 font-bold">₹0.00</span></p>
+                </div>
+            </div>
+            <button onclick="closeModal('modal-wallet-withdraw')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200 cursor-pointer">
+                <i class="ph-bold ph-x text-sm"></i>
+            </button>
+        </div>
+
+        <form onsubmit="handleWalletWithdrawSubmit(event)" class="space-y-4">
+            <!-- Amount Input -->
+            <div>
+                <label class="block text-[11px] font-bold text-brand-grayText uppercase tracking-wider mb-1.5">Withdrawal Amount (₹)</label>
+                <div class="relative">
+                    <span class="absolute left-3.5 top-3 text-lg font-black text-brand-dark">₹</span>
+                    <input type="number" id="withdraw-amount-input" step="1" min="1" required placeholder="0"
+                        class="w-full bg-white border border-brand-border rounded-xl pl-8 pr-4 py-2.5 text-base font-black text-brand-dark focus:outline-none focus:border-brand-dark shadow-xs transition-colors">
+                </div>
+                <!-- Quick Amount Chips -->
+                <div class="flex items-center gap-1.5 mt-2">
+                    <button type="button" onclick="setWithdrawQuickAmount(100)" class="flex-1 py-1 text-[11px] font-bold bg-brand-bg border border-brand-border rounded-lg text-brand-dark hover:bg-gray-100 transition-colors cursor-pointer">₹100</button>
+                    <button type="button" onclick="setWithdrawQuickAmount(250)" class="flex-1 py-1 text-[11px] font-bold bg-brand-bg border border-brand-border rounded-lg text-brand-dark hover:bg-gray-100 transition-colors cursor-pointer">₹250</button>
+                    <button type="button" onclick="setWithdrawQuickAmount(500)" class="flex-1 py-1 text-[11px] font-bold bg-brand-bg border border-brand-border rounded-lg text-brand-dark hover:bg-gray-100 transition-colors cursor-pointer">₹500</button>
+                    <button type="button" onclick="setWithdrawQuickAmount('max')" class="flex-1 py-1 text-[11px] font-bold bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 hover:bg-emerald-100 transition-colors cursor-pointer">All</button>
+                </div>
+            </div>
+
+            <!-- Transfer Method Switcher -->
+            <div>
+                <label class="block text-[11px] font-bold text-brand-grayText uppercase tracking-wider mb-1.5">Transfer Method</label>
+                <div class="flex p-1 bg-gray-100 rounded-2xl gap-1">
+                    <button type="button" id="withdraw-tab-upi" onclick="selectWithdrawMethod('upi')" class="flex-1 py-2 text-xs font-bold rounded-xl bg-brand-dark text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="ph-bold ph-lightning"></i> UPI Instant
+                    </button>
+                    <button type="button" id="withdraw-tab-bank" onclick="selectWithdrawMethod('bank')" class="flex-1 py-2 text-xs font-bold rounded-xl bg-transparent text-brand-grayText hover:bg-gray-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="ph-bold ph-bank"></i> Bank A/C
+                    </button>
+                </div>
+            </div>
+
+            <!-- UPI Section -->
+            <div id="withdraw-sec-upi" class="space-y-1">
+                <label class="block text-[11px] font-bold text-brand-grayText uppercase tracking-wider mb-1">UPI ID / VPA</label>
+                <input type="text" id="withdraw-upi-input" placeholder="e.g. mobile@upi or name@okaxis"
+                    class="w-full bg-white border border-brand-border rounded-xl px-3.5 py-2.5 text-xs font-medium text-brand-dark focus:outline-none focus:border-brand-dark shadow-xs transition-colors">
+                <p class="text-[10px] text-brand-grayText font-medium mt-1">Instant transfer directly to Google Pay, PhonePe, or Paytm.</p>
+            </div>
+
+            <!-- Bank Section (Hidden by default) -->
+            <div id="withdraw-sec-bank" class="space-y-2.5 hidden">
+                <div>
+                    <label class="block text-[10px] font-bold text-brand-grayText uppercase mb-1">Account Number</label>
+                    <input type="text" id="withdraw-bank-acc" placeholder="e.g. 9182390182301"
+                        class="w-full bg-white border border-brand-border rounded-xl px-3.5 py-2 text-xs font-medium text-brand-dark focus:outline-none focus:border-brand-dark shadow-xs">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-brand-grayText uppercase mb-1">IFSC Code</label>
+                    <input type="text" id="withdraw-bank-ifsc" placeholder="e.g. HDFC0000123" maxlength="11"
+                        class="w-full bg-white border border-brand-border rounded-xl px-3.5 py-2 text-xs font-medium text-brand-dark uppercase focus:outline-none focus:border-brand-dark shadow-xs">
+                </div>
+            </div>
+
+            <p id="withdraw-msg" class="text-red-600 text-xs text-center font-bold min-h-[16px]"></p>
+
+            <button type="submit" id="btn-withdraw-submit" class="w-full bg-brand-dark text-white font-extrabold py-3.5 rounded-full text-xs shadow-md hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>Transfer Instantly</span>
+                <i class="ph-bold ph-arrow-right text-xs"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Green Points Redemption Modal -->
+<div id="modal-wallet-redeem" class="modal fixed inset-0 z-50 items-center justify-center p-4 bg-brand-dark/50 backdrop-blur-sm">
+    <div class="bg-white rounded-[32px] p-6 w-full max-w-[360px] shadow-2xl relative transform transition-transform scale-95" id="modal-wallet-redeem-content">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg">
+                    ⭐
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-brand-dark leading-tight">Redeem Green Points</h3>
+                    <p class="text-[11px] font-semibold text-brand-grayText">Available: <span id="redeem-pts-avail" class="text-amber-700 font-bold">0 pts</span></p>
+                </div>
+            </div>
+            <button onclick="closeModal('modal-wallet-redeem')" class="w-8 h-8 rounded-full bg-brand-bg flex items-center justify-center text-brand-dark hover:bg-gray-200 cursor-pointer">
+                <i class="ph-bold ph-x text-sm"></i>
+            </button>
+        </div>
+
+        <form onsubmit="handleWalletRedeemSubmit(event)" class="space-y-4">
+            <div class="bg-amber-50/60 border border-amber-200/60 rounded-2xl p-3 text-center">
+                <p class="text-[11px] font-bold text-amber-900 mb-0.5">Instant 1:1 Value Conversion</p>
+                <p class="text-xs text-amber-800 font-medium">1 Green Eco Point = <b class="font-extrabold text-amber-900">₹1.00 Cash</b> in your wallet</p>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-brand-grayText uppercase tracking-wider mb-1.5">Points to Convert</label>
+                <input type="number" id="redeem-pts-input" step="10" min="10" required placeholder="50" oninput="updateRedeemCalculation()"
+                    class="w-full bg-white border border-brand-border rounded-xl px-4 py-2.5 text-base font-black text-brand-dark focus:outline-none focus:border-brand-dark shadow-xs transition-colors">
+                
+                <div class="flex items-center gap-1.5 mt-2">
+                    <button type="button" onclick="setRedeemQuickPts(50)" class="flex-1 py-1 text-[11px] font-bold bg-brand-bg border border-brand-border rounded-lg text-brand-dark hover:bg-gray-100 transition-colors cursor-pointer">50 pts</button>
+                    <button type="button" onclick="setRedeemQuickPts(100)" class="flex-1 py-1 text-[11px] font-bold bg-brand-bg border border-brand-border rounded-lg text-brand-dark hover:bg-gray-100 transition-colors cursor-pointer">100 pts</button>
+                    <button type="button" onclick="setRedeemQuickPts('max')" class="flex-1 py-1 text-[11px] font-bold bg-amber-100/70 border border-amber-300 rounded-lg text-amber-900 hover:bg-amber-200 transition-colors cursor-pointer">All Points</button>
+                </div>
+            </div>
+
+            <!-- Preview Cash Credited -->
+            <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+                <span class="text-xs font-bold text-emerald-900">Cash Added to Wallet:</span>
+                <span id="redeem-cash-calculated" class="text-base font-black text-emerald-700">₹50.00</span>
+            </div>
+
+            <p id="redeem-msg" class="text-red-600 text-xs text-center font-bold min-h-[16px]"></p>
+
+            <button type="submit" id="btn-redeem-submit" class="w-full bg-emerald-800 text-white font-extrabold py-3.5 rounded-full text-xs shadow-md hover:bg-emerald-900 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>Convert to Cash</span>
+                <i class="ph-bold ph-sparkle text-xs text-yellow-300"></i>
+            </button>
+        </form>
     </div>
 </div>
 
@@ -2019,7 +2273,7 @@
         }
 
         const aiBtn = document.getElementById('btn-terra-ai');
-        const showAiViews = ['home-hh', 'home-biz', 'home-vol', 'pickups', 'profile', 'schedule-hh', 'schedule-biz', 'seg-guide'];
+        const showAiViews = ['home-hh', 'home-biz', 'home-vol', 'pickups', 'wallet', 'profile', 'schedule-hh', 'schedule-biz', 'seg-guide'];
         if (aiBtn) {
             if (showAiViews.includes(viewId)) {
                 aiBtn.classList.remove('hidden');
@@ -2031,6 +2285,7 @@
         renderPickupPanel();
 
         if (viewId === 'pickups') loadPickupsFromDB();
+        if (viewId === 'wallet') loadWalletData();
         if (viewId === 'profile') loadProfileAddresses();
         if (viewId === 'settings') renderSettings();
         if (viewId === 'faq') renderFaq();
@@ -2062,7 +2317,7 @@
         const btns = {
             home:    document.getElementById('nav-btn-home'),
             pickups: document.getElementById('nav-btn-pickups'),
-            profile: document.getElementById('nav-btn-profile')
+            wallet:  document.getElementById('nav-btn-wallet')
         };
 
         // Reset all
@@ -2078,7 +2333,7 @@
         let active = null;
         if (viewId.startsWith('home'))    active = btns.home;
         else if (viewId === 'pickups')    active = btns.pickups;
-        else if (viewId === 'profile')    active = btns.profile;
+        else if (viewId === 'wallet')     active = btns.wallet;
 
         if (active) {
             active.classList.replace('text-brand-grayText', 'text-brand-dark');
@@ -3537,6 +3792,349 @@
         }
         renderPointsSheet(); 
         openModal('sheet-points'); 
+    }
+
+    // ─── In-App Wallet & Transaction History ──────────────────────────────────
+    let walletActiveFilter = 'all';
+
+    async function loadWalletData(isManualRefresh = false) {
+        if (!appState.user?.id) return;
+        const icon = document.getElementById('wallet-refresh-icon');
+        if (icon) icon.classList.add('animate-spin');
+
+        try {
+            const res = await fetch(`${API_BASE}/wallet?user_id=${appState.user.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                appState.walletData = data;
+                appState.walletTransactions = data.transactions || [];
+                
+                // Update balance displays
+                const balEl = document.getElementById('wallet-balance-display');
+                if (balEl) balEl.textContent = Number(data.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                
+                const ptsEl = document.getElementById('wallet-points-display');
+                if (ptsEl) ptsEl.textContent = `${data.points || 0} pts`;
+
+                const earnedEl = document.getElementById('wallet-earned-display');
+                if (earnedEl) earnedEl.textContent = `₹${Number(data.total_earned || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                const withEl = document.getElementById('wallet-withdrawn-display');
+                if (withEl) withEl.textContent = `₹${Number(data.total_withdrawn || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                // Update Green Points display globally
+                appState.points = data.points;
+                document.querySelectorAll('#home-pts-display').forEach(el => el.textContent = `${data.points} pts`);
+
+                renderWalletTransactions();
+                if (isManualRefresh) toast('Wallet updated.');
+            }
+        } catch (e) {
+            console.error('Failed to load wallet data:', e);
+            if (isManualRefresh) toast('Failed to update wallet.');
+        } finally {
+            if (icon) setTimeout(() => icon.classList.remove('animate-spin'), 400);
+        }
+    }
+
+    function filterWalletTxns(type) {
+        walletActiveFilter = type;
+        document.querySelectorAll('.wallet-f-btn').forEach(btn => {
+            btn.className = 'wallet-f-btn px-3 py-1 rounded-full text-xs font-medium bg-white text-brand-grayText border border-brand-border hover:bg-gray-50 shrink-0 transition-all cursor-pointer';
+        });
+        const activeBtn = document.getElementById(`wallet-filter-${type}`);
+        if (activeBtn) {
+            activeBtn.className = 'wallet-f-btn px-3 py-1 rounded-full text-xs font-bold bg-brand-dark text-white shrink-0 transition-all cursor-pointer';
+        }
+        renderWalletTransactions();
+    }
+
+    function renderWalletTransactions() {
+        const container = document.getElementById('wallet-transactions-list');
+        const countEl = document.getElementById('wallet-tx-count');
+        if (!container) return;
+
+        const all = appState.walletTransactions || [];
+        let list = all;
+        if (walletActiveFilter === 'scrap_payout') {
+            list = all.filter(t => t.type === 'scrap_payout');
+        } else if (walletActiveFilter === 'bonus') {
+            list = all.filter(t => t.type === 'bonus' || t.type === 'reward_cashback');
+        } else if (walletActiveFilter === 'withdrawal') {
+            list = all.filter(t => t.type === 'withdrawal');
+        }
+
+        if (countEl) countEl.textContent = `${list.length} transaction${list.length === 1 ? '' : 's'}`;
+
+        if (list.length === 0) {
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl p-8 border border-brand-border text-center shadow-xs">
+                    <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto mb-3 text-2xl">
+                        <i class="ph ph-receipt"></i>
+                    </div>
+                    <p class="text-sm font-bold text-brand-dark mb-1">No transactions found</p>
+                    <p class="text-xs text-brand-grayText mb-4">Complete your doorstep recyclable pickup to earn cash and green points!</p>
+                    <button onclick="nav('schedule-hh')" class="bg-brand-dark text-white text-xs font-bold px-4 py-2.5 rounded-full hover:opacity-90 active:scale-95 transition-all cursor-pointer">
+                        Schedule Pickup
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = list.map(t => {
+            const isCredit = t.direction === 'credit';
+            const sign = isCredit ? '+' : '-';
+            const amountColor = isCredit ? 'text-emerald-700' : 'text-slate-800';
+            
+            // Format date nicely
+            let dateStr = t.created_at || '';
+            try {
+                const d = new Date(t.created_at);
+                if (!isNaN(d.getTime())) {
+                    dateStr = d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+                }
+            } catch (e) {}
+
+            let iconHtml = '';
+            let typeLabel = '';
+            if (t.type === 'scrap_payout') {
+                iconHtml = '<div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-arrow-down-left"></i></div>';
+                typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-800 border border-emerald-200/60 px-1.5 py-0.5 rounded-md">Scrap Payout</span>';
+            } else if (t.type === 'bonus') {
+                iconHtml = '<div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-gift"></i></div>';
+                typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded-md">Community Bonus</span>';
+            } else if (t.type === 'reward_cashback') {
+                iconHtml = '<div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-sparkle"></i></div>';
+                typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-purple-50 text-purple-800 border border-purple-200/60 px-1.5 py-0.5 rounded-md">Points Redeemed</span>';
+            } else if (t.type === 'withdrawal') {
+                iconHtml = '<div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-arrow-up-right"></i></div>';
+                typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-blue-50 text-blue-800 border border-blue-200/60 px-1.5 py-0.5 rounded-md">Payout Transfer</span>';
+            } else {
+                iconHtml = '<div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-800 flex items-center justify-center text-lg shrink-0"><i class="ph-bold ph-receipt"></i></div>';
+                typeLabel = '<span class="text-[9px] font-extrabold uppercase tracking-wide bg-gray-50 text-gray-800 border border-gray-200/60 px-1.5 py-0.5 rounded-md">Transaction</span>';
+            }
+
+            const pointsBadge = t.points ? `<span class="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full ml-1.5">⭐ ${t.points > 0 ? '+' : ''}${t.points} pts</span>` : '';
+
+            const statusBadge = t.status === 'Completed'
+                ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full"><span class="w-1 h-1 rounded-full bg-emerald-500"></span> Completed</span>`
+                : `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full"><span class="w-1 h-1 rounded-full bg-amber-500"></span> ${t.status}</span>`;
+
+            return `
+                <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-xs hover:border-brand-dark/20 transition-all">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-3 flex-1 min-w-0">
+                            ${iconHtml}
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-0.5">
+                                    <h4 class="text-xs font-black text-brand-dark truncate">${t.title || 'Transaction'}</h4>
+                                    ${typeLabel}
+                                </div>
+                                <p class="text-[11px] text-brand-grayText font-medium line-clamp-2 leading-relaxed mb-1.5">${t.description || ''}</p>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-[10px] text-gray-400 font-medium">${dateStr}</span>
+                                    ${pointsBadge}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-sm font-black ${amountColor} tracking-tight">
+                                ${sign} ₹${Number(t.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <div class="mt-1 flex justify-end">
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ── Withdrawal Modal Actions ──
+    function openWithdrawModal() {
+        const bal = appState.walletData?.balance || 0;
+        document.getElementById('withdraw-modal-bal').textContent = `₹${bal.toFixed(2)}`;
+        document.getElementById('withdraw-amount-input').value = '';
+        document.getElementById('withdraw-amount-input').max = bal;
+        document.getElementById('withdraw-upi-input').value = '';
+        document.getElementById('withdraw-msg').textContent = '';
+        selectWithdrawMethod('upi');
+        openModal('modal-wallet-withdraw');
+    }
+
+    function selectWithdrawMethod(method) {
+        const upiSec = document.getElementById('withdraw-sec-upi');
+        const bankSec = document.getElementById('withdraw-sec-bank');
+        const tabUpi = document.getElementById('withdraw-tab-upi');
+        const tabBank = document.getElementById('withdraw-tab-bank');
+
+        if (method === 'upi') {
+            upiSec.classList.remove('hidden');
+            bankSec.classList.add('hidden');
+            tabUpi.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-brand-dark text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer';
+            tabBank.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-transparent text-brand-grayText hover:bg-gray-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer';
+            upiSec.dataset.method = 'upi';
+        } else {
+            upiSec.classList.add('hidden');
+            bankSec.classList.remove('hidden');
+            tabUpi.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-transparent text-brand-grayText hover:bg-gray-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer';
+            tabBank.className = 'flex-1 py-2 text-xs font-bold rounded-xl bg-brand-dark text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer';
+            upiSec.dataset.method = 'bank';
+        }
+    }
+
+    function setWithdrawQuickAmount(val) {
+        const bal = appState.walletData?.balance || 0;
+        const input = document.getElementById('withdraw-amount-input');
+        if (val === 'max') {
+            input.value = Math.floor(bal);
+        } else {
+            input.value = Math.min(bal, val);
+        }
+    }
+
+    async function handleWalletWithdrawSubmit(e) {
+        e.preventDefault();
+        const amt = parseFloat(document.getElementById('withdraw-amount-input').value);
+        const bal = appState.walletData?.balance || 0;
+        const msgEl = document.getElementById('withdraw-msg');
+        const btn = document.getElementById('btn-withdraw-submit');
+
+        if (isNaN(amt) || amt <= 0) {
+            msgEl.textContent = 'Please enter a valid withdrawal amount.';
+            return;
+        }
+        if (amt > bal) {
+            msgEl.textContent = `Amount exceeds current balance (₹${bal.toFixed(2)}).`;
+            return;
+        }
+
+        const isUpi = !document.getElementById('withdraw-sec-upi').classList.contains('hidden');
+        const upiId = document.getElementById('withdraw-upi-input').value.trim();
+        const bankAcc = document.getElementById('withdraw-bank-acc').value.trim();
+        const bankIfsc = document.getElementById('withdraw-bank-ifsc').value.trim();
+
+        if (isUpi && (!upiId || !upiId.includes('@'))) {
+            msgEl.textContent = 'Please enter a valid UPI ID (e.g. mobile@upi or name@okaxis).';
+            return;
+        }
+        if (!isUpi && (!bankAcc || !bankIfsc)) {
+            msgEl.textContent = 'Please provide Bank Account Number and IFSC Code.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-base"></i> Processing Transfer...';
+
+        try {
+            const res = await fetch(`${API_BASE}/wallet/withdraw`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: appState.user.id,
+                    amount: amt,
+                    method: isUpi ? 'upi' : 'bank',
+                    upi_id: upiId,
+                    bank_account: bankAcc,
+                    ifsc: bankIfsc
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                msgEl.textContent = data.error || 'Withdrawal failed.';
+                btn.disabled = false;
+                btn.innerHTML = 'Transfer Instantly';
+                return;
+            }
+
+            closeModal('modal-wallet-withdraw');
+            toast(`✅ ${data.message}`);
+            await loadWalletData();
+        } catch (err) {
+            msgEl.textContent = 'Network error while processing transfer.';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Transfer Instantly';
+        }
+    }
+
+    // ── Redeem Points Modal Actions ──
+    function openRedeemModal() {
+        const pts = appState.points || 0;
+        document.getElementById('redeem-pts-avail').textContent = `${pts} pts`;
+        document.getElementById('redeem-pts-input').value = pts >= 50 ? 50 : pts;
+        document.getElementById('redeem-pts-input').max = pts;
+        updateRedeemCalculation();
+        document.getElementById('redeem-msg').textContent = '';
+        openModal('modal-wallet-redeem');
+    }
+
+    function setRedeemQuickPts(val) {
+        const pts = appState.points || 0;
+        const input = document.getElementById('redeem-pts-input');
+        if (val === 'max') {
+            input.value = pts;
+        } else {
+            input.value = Math.min(pts, val);
+        }
+        updateRedeemCalculation();
+    }
+
+    function updateRedeemCalculation() {
+        const pts = parseInt(document.getElementById('redeem-pts-input').value, 10) || 0;
+        const cash = pts * 1.0;
+        document.getElementById('redeem-cash-calculated').textContent = `₹${cash.toFixed(2)}`;
+    }
+
+    async function handleWalletRedeemSubmit(e) {
+        e.preventDefault();
+        const pts = parseInt(document.getElementById('redeem-pts-input').value, 10);
+        const availPts = appState.points || 0;
+        const msgEl = document.getElementById('redeem-msg');
+        const btn = document.getElementById('btn-redeem-submit');
+
+        if (isNaN(pts) || pts < 10) {
+            msgEl.textContent = 'Minimum 10 Green Points required to convert.';
+            return;
+        }
+        if (pts > availPts) {
+            msgEl.textContent = `You only have ${availPts} points available.`;
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-base"></i> Converting...';
+
+        try {
+            const res = await fetch(`${API_BASE}/wallet/redeem-points`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: appState.user.id,
+                    points: pts
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                msgEl.textContent = data.error || 'Conversion failed.';
+                btn.disabled = false;
+                btn.innerHTML = 'Convert to Cash';
+                return;
+            }
+
+            closeModal('modal-wallet-redeem');
+            toast(`🎉 Converted ${pts} pts to ₹${pts.toFixed(2)} wallet balance!`);
+            await loadWalletData();
+        } catch (err) {
+            msgEl.textContent = 'Network error while redeeming points.';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Convert to Cash';
+        }
     }
 
     // ─── Household Pickup ─────────────────────────────────────────────────────

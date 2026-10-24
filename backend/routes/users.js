@@ -61,7 +61,7 @@ router.get('/pincode-lookup/:pin', (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const db = await getDb();
-        const stmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, phone, bio, saved_materials, points FROM users WHERE id = ?');
+        const stmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, phone, bio, saved_materials, points, wallet_balance FROM users WHERE id = ?');
         stmt.bind([req.params.id]);
         if (!stmt.step()) {
             stmt.free();

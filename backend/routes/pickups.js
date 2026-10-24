@@ -185,7 +185,21 @@ router.patch('/:id/complete', async (req, res) => {
             WHERE id = ?
         `, [measuredWeight, payout, collector_phone || 'WhatsApp Collector', pickup.id]);
 
-        db.run(`UPDATE users SET points = COALESCE(points, 0) + ? WHERE id = ?`, [ptsEarned, pickup.user_id]);
+        db.run(`UPDATE users SET points = COALESCE(points, 0) + ?, wallet_balance = COALESCE(wallet_balance, 0) + ? WHERE id = ?`, [ptsEarned, payout, pickup.user_id]);
+
+        // Record credit transaction into wallet history
+        db.run(`
+            INSERT INTO transactions (user_id, type, title, description, amount, points, direction, status, reference_id, created_at)
+            VALUES (?, 'scrap_payout', ?, ?, ?, ?, 'credit', 'Completed', ?, datetime('now', 'localtime'))
+        `, [
+            pickup.user_id,
+            `Scrap Payout • #${pickup.request_id}`,
+            `Doorstep weigh-in verified (${measuredWeight} kg recyclables)`,
+            payout,
+            ptsEarned,
+            pickup.request_id
+        ]);
+
         persist();
 
         return res.json({ message: 'Pickup completed.', weight: measuredWeight, payout, points_earned: ptsEarned });

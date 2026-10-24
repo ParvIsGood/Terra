@@ -766,22 +766,39 @@ async function startWhatsApp() {
                         const weightSummaryStr = weightItems.map(it => `${it.material}: ${it.weight} kg`).join(', ');
                         const ptsEarned = session.ptsEarned || 50;
 
-                        // NOW officially complete the pickup in SQLite & record verified weights
+                        const payout = Math.round(totalWeight * 10);
+
+                        // NOW officially complete the pickup in SQLite & record verified weights & payout
                         db.run(`
                             UPDATE pickups 
                             SET status = 'Completed',
                                 actual_weight = ?, 
                                 material_weights = ?,
+                                payout_amount = ?,
                                 completed_at = datetime('now', 'localtime')
                             WHERE id = ?
-                        `, [totalWeight, weightSummaryStr, session.pickupId]);
+                        `, [totalWeight, weightSummaryStr, payout, session.pickupId]);
 
-                        // NOW award Green Points to user
+                        // NOW award Green Points and wallet cash to user
                         db.run(`
                             UPDATE users 
-                            SET points = COALESCE(points, 0) + ? 
+                            SET points = COALESCE(points, 0) + ?,
+                                wallet_balance = COALESCE(wallet_balance, 0) + ?
                             WHERE id = ?
-                        `, [ptsEarned, session.userId]);
+                        `, [ptsEarned, payout, session.userId]);
+
+                        // Record credit transaction into wallet history
+                        db.run(`
+                            INSERT INTO transactions (user_id, type, title, description, amount, points, direction, status, reference_id, created_at)
+                            VALUES (?, 'scrap_payout', ?, ?, ?, ?, 'credit', 'Completed', ?, datetime('now', 'localtime'))
+                        `, [
+                            session.userId,
+                            `Scrap Payout • #${session.requestId}`,
+                            `Doorstep weigh-in verified (${totalWeight} kg recyclables)`,
+                            payout,
+                            ptsEarned,
+                            session.requestId
+                        ]);
 
                         persist();
                         delete pendingVerifications[phone];

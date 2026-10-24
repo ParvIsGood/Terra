@@ -75,6 +75,21 @@ async function getDb() {
             created_at  TEXT    DEFAULT (datetime('now', 'localtime')),
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
+
+        CREATE TABLE IF NOT EXISTS transactions (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id      INTEGER NOT NULL,
+            type         TEXT    NOT NULL,
+            title        TEXT    NOT NULL,
+            description  TEXT,
+            amount       REAL    DEFAULT 0.0,
+            points       INTEGER DEFAULT 0,
+            direction    TEXT    DEFAULT 'credit',
+            status       TEXT    DEFAULT 'Completed',
+            reference_id TEXT,
+            created_at   TEXT    DEFAULT (datetime('now', 'localtime')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
     `);
 
     // Check if collector_id column exists in existing pickups table; add if missing
@@ -135,7 +150,26 @@ async function getDb() {
     } catch (e) {}
 
     try {
-        db.run(`ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0`);
+        db.run(`ALTER TABLE users ADD COLUMN wallet_balance REAL DEFAULT 0.0`);
+    } catch (e) {}
+
+    try {
+        db.run(`
+            CREATE TABLE IF NOT EXISTS transactions (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id      INTEGER NOT NULL,
+                type         TEXT    NOT NULL,
+                title        TEXT    NOT NULL,
+                description  TEXT,
+                amount       REAL    DEFAULT 0.0,
+                points       INTEGER DEFAULT 0,
+                direction    TEXT    DEFAULT 'credit',
+                status       TEXT    DEFAULT 'Completed',
+                reference_id TEXT,
+                created_at   TEXT    DEFAULT (datetime('now', 'localtime')),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        `);
     } catch (e) {}
 
     try {
