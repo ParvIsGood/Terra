@@ -692,9 +692,23 @@
 </div>
 
 <script>
-    const API_BASE  = window.location.protocol.startsWith('http') 
+    const CLOUDFLARE_BACKEND = 'https://independent-luxury-limit-update.trycloudflare.com/api';
+    let   API_BASE  = window.location.protocol.startsWith('http') 
         ? `${window.location.origin}/api` 
         : 'http://localhost:3001/api';
+
+    // Auto-detect Cloudflare Pages / external hosting and fallback if /api proxy isn't on same origin
+    if (window.location.protocol.startsWith('http') && 
+        window.location.hostname !== 'localhost' && 
+        window.location.hostname !== '127.0.0.1' &&
+        !window.location.hostname.includes('trycloudflare.com')) {
+        fetch(`${API_BASE}/health`).then(res => {
+            if (!res.ok) API_BASE = CLOUDFLARE_BACKEND;
+        }).catch(() => {
+            API_BASE = CLOUDFLARE_BACKEND;
+        });
+    }
+
     const ADMIN_KEY = 'circular-admin-2024';
     let   adminKey  = '';
 
@@ -712,20 +726,37 @@
         if (!key) { document.getElementById('gate-error').textContent = 'Enter the admin key.'; return; }
 
         adminKey = key;
-        fetch(`${API_BASE}/admin/users`, { headers: { 'x-admin-key': adminKey } })
-            .then(res => {
-                if (res.status === 403) {
-                    document.getElementById('gate-error').textContent = 'Invalid admin key.';
-                    adminKey = '';
-                    return;
-                }
-                return res.json().then(data => {
-                    document.getElementById('admin-gate').classList.add('hidden');
-                    document.getElementById('admin-dashboard').classList.remove('hidden');
-                    loadAll();
+
+        function attemptFetch(base) {
+            return fetch(`${base}/admin/users`, { headers: { 'x-admin-key': adminKey } })
+                .then(res => {
+                    if (res.status === 404 && base !== CLOUDFLARE_BACKEND) {
+                        API_BASE = CLOUDFLARE_BACKEND;
+                        return attemptFetch(CLOUDFLARE_BACKEND);
+                    }
+                    if (res.status === 403) {
+                        document.getElementById('gate-error').textContent = 'Invalid admin key.';
+                        adminKey = '';
+                        return;
+                    }
+                    return res.json().then(data => {
+                        document.getElementById('admin-gate').classList.add('hidden');
+                        document.getElementById('admin-dashboard').classList.remove('hidden');
+                        loadAll();
+                    });
                 });
-            })
-            .catch(() => { document.getElementById('gate-error').textContent = 'Cannot reach server.'; });
+        }
+
+        attemptFetch(API_BASE).catch(() => {
+            if (API_BASE !== CLOUDFLARE_BACKEND) {
+                API_BASE = CLOUDFLARE_BACKEND;
+                attemptFetch(CLOUDFLARE_BACKEND).catch(() => {
+                    document.getElementById('gate-error').textContent = 'Cannot reach server.';
+                });
+            } else {
+                document.getElementById('gate-error').textContent = 'Cannot reach server.';
+            }
+        });
     }
 
     function lockAdmin() {

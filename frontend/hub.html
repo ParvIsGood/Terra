@@ -123,9 +123,22 @@
 </div>
 
 <script>
-    const API_BASE = window.location.protocol.startsWith('http') 
+    const CLOUDFLARE_BACKEND = 'https://independent-luxury-limit-update.trycloudflare.com/api';
+    let   API_BASE = window.location.protocol.startsWith('http') 
         ? `${window.location.origin}/api` 
         : 'http://localhost:3001/api';
+
+    // Auto-detect Cloudflare Pages / external hosting and fallback if /api proxy isn't on same origin
+    if (window.location.protocol.startsWith('http') && 
+        window.location.hostname !== 'localhost' && 
+        window.location.hostname !== '127.0.0.1' &&
+        !window.location.hostname.includes('trycloudflare.com')) {
+        fetch(`${API_BASE}/health`).then(res => {
+            if (!res.ok) API_BASE = CLOUDFLARE_BACKEND;
+        }).catch(() => {
+            API_BASE = CLOUDFLARE_BACKEND;
+        });
+    }
 
     const MATERIALS = [
         'Paper', 'Cardboard', 'Plastic', 'Copper', 'Steel', 'Aluminium', 
