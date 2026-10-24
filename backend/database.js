@@ -131,6 +131,10 @@ async function getDb() {
     } catch (e) {}
 
     try {
+        db.run(`ALTER TABLE collectors ADD COLUMN language TEXT DEFAULT 'hinglish'`);
+    } catch (e) {}
+
+    try {
         db.run(`ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0`);
     } catch (e) {}
 

@@ -144,16 +144,27 @@ If no weight is found, return {"items":[],"totalWeight":0}`;
 
 // ─────────────────────────────────────────────────────────────
 // CONVERSATIONAL AI ASSISTANT FOR WHATSAPP (Groq LLM)
-// Answers inquiries from Kabadiwalas or residents in natural Hindi/Hinglish
+// Answers inquiries from Kabadiwalas or residents in chosen language (Hindi/Hinglish/English)
 // ─────────────────────────────────────────────────────────────
-async function getWhatsAppAIReply(userQuery, userName = 'Partner') {
+async function getWhatsAppAIReply(userQuery, userName = 'Partner', lang = 'hinglish') {
     const groqKey = process.env.GROQ_API_KEY;
     if (!groqKey || !groqKey.startsWith('gsk_')) return null;
+
+    let langInstruction = 'Respond STRICTLY in polite Hinglish (Hindi written in Roman/English alphabet, mixed with simple English words). DO NOT write in Devanagari script or pure English.';
+    if (lang === 'hindi') {
+        langInstruction = 'Respond STRICTLY in polite, respectful Hindi written entirely in Devanagari script (हिंदी लिपि). DO NOT reply in English or Roman Hinglish.';
+    } else if (lang === 'english') {
+        langInstruction = 'Respond STRICTLY in clear, polite, simple English. DO NOT use any Hindi or Hinglish words.';
+    }
 
     try {
         const prompt = `You are "Terra AI", the official WhatsApp eco-assistant for "Circular by Terra" in India.
 You are talking to a local Kabadiwala (collector) or resident on WhatsApp named ${userName}.
-Respond in clear, respectful, polite Hindi/Hinglish (mix of Hindi & simple English).
+
+CRITICAL LANGUAGE REQUIREMENT:
+${langInstruction}
+You must strictly adhere to this language without switching.
+
 Keep response brief (2-3 sentences max), helpful, with suitable emojis.
 Key Circular Knowledge:
 - Scrap Payouts: Doorstep weigh-in upon confirmation gives initial 20% payout, remaining 20% disbursed after Recycling Unit batch confirmation.
@@ -162,6 +173,7 @@ Key Circular Knowledge:
 - Available Collector Commands:
   • "PICKUPS" - view assigned/pending pickups in area.
   • "DUTY" - toggle on/off duty status.
+  • "LANG" - switch preferred language (Hindi, Hinglish, English).
   • Send live location on WhatsApp to update coordinates.
 
 User Query: "${userQuery}"`;
@@ -227,7 +239,7 @@ async function dispatchPickup(pickup, customer) {
     try {
         const db = await getDb();
         const stmt = db.prepare(`
-            SELECT id, name, phone_number 
+            SELECT id, name, phone_number, language 
             FROM collectors 
             WHERE is_available = 1 AND onboarding_step = 'COMPLETED'
             ORDER BY id ASC
@@ -291,23 +303,57 @@ async function offerPickupToCurrentCandidate(reqId) {
 
     const currentCollector = dispatch.candidates[dispatch.currentIndex];
     const collectorPhone = currentCollector.phone_number;
+    const lang = currentCollector.language || 'hinglish';
 
-    console.log(`[Dispatch] Offering #${reqId} to collector #${currentCollector.id} (${currentCollector.name}) with 60s timeout...`);
+    console.log(`[Dispatch] Offering #${reqId} to collector #${currentCollector.id} (${currentCollector.name}) [Lang: ${lang}] with 60s timeout...`);
 
-    const offerMsg = 
-        `🔔 *NAYA PICKUP OFFER! (New Request)* 🔔\n\n` +
-        `Namaste *${currentCollector.name || 'Partner'}* ji!\n` +
-        `Aapke area me naya pickup book hua hai:\n\n` +
-        `• Order ID: *#${dispatch.requestId}*\n` +
-        `• Customer: *${dispatch.customer?.name || 'Resident'}*\n` +
-        `• Address: *${dispatch.customer?.address || 'Local'}* (PIN: ${dispatch.customer?.pincode || '—'})\n` +
-        `• Items: *${dispatch.items}* (${dispatch.quantity || 'Standard'})\n` +
-        `• Time Slot: *${dispatch.time_slot}*\n\n` +
-        `⏱️ *Aapke paas accept karne ke liye 60 SECONDS hain!*\n\n` +
-        `Accept karne ke liye reply karein:\n` +
-        `👉 *ACCEPT*\n\n` +
-        `Reject karne ke liye reply karein:\n` +
-        `👉 *REJECT*`;
+    let offerMsg = '';
+    if (lang === 'hindi') {
+        offerMsg = 
+            `🔔 *नया पिकअप ऑफर! (New Request)* 🔔\n\n` +
+            `नमस्ते *${currentCollector.name || 'पार्टनर'}* जी!\n` +
+            `आपके एरिया में नया पिकअप बुक हुआ है:\n\n` +
+            `• ऑर्डर आईडी: *#${dispatch.requestId}*\n` +
+            `• कस्टमर: *${dispatch.customer?.name || 'नागरिक'}*\n` +
+            `• पता: *${dispatch.customer?.address || 'लोकल'}* (पिन: ${dispatch.customer?.pincode || '—'})\n` +
+            `• सामग्री: *${dispatch.items}* (${dispatch.quantity || 'Standard'})\n` +
+            `• समय: *${dispatch.time_slot}*\n\n` +
+            `⏱️ *स्वीकार करने के लिए आपके पास 60 सेकंड हैं!*\n\n` +
+            `स्वीकार करने के लिए लिखें:\n` +
+            `👉 *ACCEPT*\n\n` +
+            `अस्वीकार करने के लिए लिखें:\n` +
+            `👉 *REJECT*`;
+    } else if (lang === 'english') {
+        offerMsg = 
+            `🔔 *NEW PICKUP OFFER!* 🔔\n\n` +
+            `Hello *${currentCollector.name || 'Partner'}*!\n` +
+            `A new pickup has been requested in your area:\n\n` +
+            `• Order ID: *#${dispatch.requestId}*\n` +
+            `• Customer: *${dispatch.customer?.name || 'Resident'}*\n` +
+            `• Address: *${dispatch.customer?.address || 'Local'}* (PIN: ${dispatch.customer?.pincode || '—'})\n` +
+            `• Items: *${dispatch.items}* (${dispatch.quantity || 'Standard'})\n` +
+            `• Time Slot: *${dispatch.time_slot}*\n\n` +
+            `⏱️ *You have 60 SECONDS to accept this pickup!*\n\n` +
+            `To accept, reply:\n` +
+            `👉 *ACCEPT*\n\n` +
+            `To reject, reply:\n` +
+            `👉 *REJECT*`;
+    } else {
+        offerMsg = 
+            `🔔 *NAYA PICKUP OFFER! (New Request)* 🔔\n\n` +
+            `Namaste *${currentCollector.name || 'Partner'}* ji!\n` +
+            `Aapke area me naya pickup book hua hai:\n\n` +
+            `• Order ID: *#${dispatch.requestId}*\n` +
+            `• Customer: *${dispatch.customer?.name || 'Resident'}*\n` +
+            `• Address: *${dispatch.customer?.address || 'Local'}* (PIN: ${dispatch.customer?.pincode || '—'})\n` +
+            `• Items: *${dispatch.items}* (${dispatch.quantity || 'Standard'})\n` +
+            `• Time Slot: *${dispatch.time_slot}*\n\n` +
+            `⏱️ *Aapke paas accept karne ke liye 60 SECONDS hain!*\n\n` +
+            `Accept karne ke liye reply karein:\n` +
+            `👉 *ACCEPT*\n\n` +
+            `Reject karne ke liye reply karein:\n` +
+            `👉 *REJECT*`;
+    }
 
     await sendWhatsAppAlert(collectorPhone, offerMsg);
 
@@ -315,9 +361,13 @@ async function offerPickupToCurrentCandidate(reqId) {
     dispatch.timer = setTimeout(async () => {
         console.log(`[Dispatch] 60s timeout elapsed for collector ${currentCollector.name} on #${reqId}`);
         
-        sendWhatsAppAlert(collectorPhone,
-            `⏱️ *Time Expired!* #${dispatch.requestId} ka 60-second samay pura ho gaya. Yeh offer agle partner ko forward kar di gayi hai.`
-        ).catch(e => console.error(e));
+        const timeoutMsg = (lang === 'hindi')
+            ? `⏱️ *समय समाप्त!* #${dispatch.requestId} का 60-सेकंड समय पूरा हो गया। यह ऑफर अगले पार्टनर को भेज दिया गया है।`
+            : (lang === 'english')
+            ? `⏱️ *Time Expired!* The 60-second window for #${dispatch.requestId} has expired. Offer forwarded to next partner.`
+            : `⏱️ *Time Expired!* #${dispatch.requestId} ka 60-second samay pura ho gaya. Yeh offer agle partner ko forward kar di gayi hai.`;
+
+        sendWhatsAppAlert(collectorPhone, timeoutMsg).catch(e => console.error(e));
 
         dispatch.currentIndex++;
         offerPickupToCurrentCandidate(reqId);
@@ -458,27 +508,34 @@ async function startWhatsApp() {
                 };
 
                 // ── 0. PICKUP ACCEPT / REJECT HANDLER (60s Dispatch System) ─────
-                const acceptMatch = text.match(/^\s*(?:ACCEPT(?:[_\s]+([A-Za-z0-9\-_]+))?|1|YES|HAAN?)\s*$/i);
-                const rejectMatch = text.match(/^\s*(?:REJECT(?:[_\s]+([A-Za-z0-9\-_]+))?|2|NO|NAHI?)\s*$/i);
+                // First check if this collector is currently offered an active dispatch
+                const targetDispatchForCollector = Object.values(activeDispatches).find(d => {
+                    const cur = d.candidates[d.currentIndex];
+                    if (!cur) return false;
+                    const curDigits = cur.phone_number.replace(/\D/g, '');
+                    return (
+                        curDigits === cleanDigits ||
+                        cur.phone_number === phone ||
+                        (resolved.lid && curDigits === resolved.lid)
+                    );
+                });
+
+                const explicitAccept = text.match(/^\s*ACCEPT(?:[_\s]+([A-Za-z0-9\-_]+))?\s*$/i);
+                const explicitReject = text.match(/^\s*REJECT(?:[_\s]+([A-Za-z0-9\-_]+))?\s*$/i);
+                const quickAccept = targetDispatchForCollector && text.match(/^\s*(?:1|YES|HAAN?)\s*$/i);
+                const quickReject = targetDispatchForCollector && text.match(/^\s*(?:2|NO|NAHI?)\s*$/i);
+
+                const acceptMatch = explicitAccept || quickAccept;
+                const rejectMatch = explicitReject || quickReject;
 
                 if (acceptMatch || rejectMatch) {
-                    const specifiedReqId = (acceptMatch ? acceptMatch[1] : rejectMatch[1])?.trim().toUpperCase();
+                    const specifiedReqId = (explicitAccept ? explicitAccept[1] : (explicitReject ? explicitReject[1] : null))?.trim().toUpperCase();
                     let targetDispatch = null;
 
                     if (specifiedReqId && activeDispatches[specifiedReqId]) {
                         targetDispatch = activeDispatches[specifiedReqId];
                     } else {
-                        // Find active dispatch where this collector is the candidate
-                        targetDispatch = Object.values(activeDispatches).find(d => {
-                            const cur = d.candidates[d.currentIndex];
-                            if (!cur) return false;
-                            const curDigits = cur.phone_number.replace(/\D/g, '');
-                            return (
-                                curDigits === cleanDigits ||
-                                cur.phone_number === phone ||
-                                (resolved.lid && curDigits === resolved.lid)
-                            );
-                        });
+                        targetDispatch = targetDispatchForCollector;
                     }
 
                     if (!targetDispatch) {
@@ -499,6 +556,8 @@ async function startWhatsApp() {
                         continue;
                     }
 
+                    const collLang = currentCandidate?.language || collector?.language || 'hinglish';
+
                     if (acceptMatch) {
                         // Clear 60-second timer
                         if (targetDispatch.timer) clearTimeout(targetDispatch.timer);
@@ -518,17 +577,40 @@ async function startWhatsApp() {
                         `, [assignedCollector.id, assignedCollector.phone_number, pickupId]);
                         persist();
 
-                        // Confirmation to Collector
-                        await reply(
-                            `🎉 *Pickup Accepted!* 🎉\n\n` +
-                            `Order *#${reqId}* aapko successfully assign kar diya gaya hai.\n\n` +
-                            `• Customer: *${targetDispatch.customer?.name || 'Resident'}*\n` +
-                            `• Address: *${targetDispatch.customer?.address || 'Local'}* (PIN: ${targetDispatch.customer?.pincode || '—'})\n` +
-                            `• Items: *${targetDispatch.items}*\n` +
-                            `• Time Slot: *${targetDispatch.time_slot}*\n\n` +
-                            `📍 Doorstep par pahunch kar customer ke app se QR code scan karein.\n\n` +
-                            `Kripya time par pahunch kar waste collect karein! Dhanyawad 🙏`
-                        );
+                        // Confirmation to Collector in their chosen language
+                        let acceptConfirmation = '';
+                        if (collLang === 'hindi') {
+                            acceptConfirmation = 
+                                `🎉 *पिकअप स्वीकार कर लिया गया!* 🎉\n\n` +
+                                `ऑर्डर *#${reqId}* आपको सफलतापूर्वक असाइन कर दिया गया है।\n\n` +
+                                `• कस्टमर: *${targetDispatch.customer?.name || 'नागरिक'}*\n` +
+                                `• पता: *${targetDispatch.customer?.address || 'लोकल'}* (पिन: ${targetDispatch.customer?.pincode || '—'})\n` +
+                                `• सामग्री: *${targetDispatch.items}*\n` +
+                                `• समय: *${targetDispatch.time_slot}*\n\n` +
+                                `📍 कस्टमर के घर पहुँचकर उनके ऐप से QR कोड स्कैन करें।\n\n` +
+                                `कृपया समय पर पहुँचकर कचरा कलेक्ट करें! धन्यवाद 🙏`;
+                        } else if (collLang === 'english') {
+                            acceptConfirmation = 
+                                `🎉 *Pickup Accepted!* 🎉\n\n` +
+                                `Order *#${reqId}* has been successfully assigned to you.\n\n` +
+                                `• Customer: *${targetDispatch.customer?.name || 'Resident'}*\n` +
+                                `• Address: *${targetDispatch.customer?.address || 'Local'}* (PIN: ${targetDispatch.customer?.pincode || '—'})\n` +
+                                `• Items: *${targetDispatch.items}*\n` +
+                                `• Time Slot: *${targetDispatch.time_slot}*\n\n` +
+                                `📍 Upon arrival at the doorstep, scan the QR code from the customer's phone.\n\n` +
+                                `Please collect the waste on time! Thank you 🙏`;
+                        } else {
+                            acceptConfirmation = 
+                                `🎉 *Pickup Accepted!* 🎉\n\n` +
+                                `Order *#${reqId}* aapko successfully assign kar diya gaya hai.\n\n` +
+                                `• Customer: *${targetDispatch.customer?.name || 'Resident'}*\n` +
+                                `• Address: *${targetDispatch.customer?.address || 'Local'}* (PIN: ${targetDispatch.customer?.pincode || '—'})\n` +
+                                `• Items: *${targetDispatch.items}*\n` +
+                                `• Time Slot: *${targetDispatch.time_slot}*\n\n` +
+                                `📍 Doorstep par pahunch kar customer ke app se QR code scan karein.\n\n` +
+                                `Kripya time par pahunch kar waste collect karein! Dhanyawad 🙏`;
+                        }
+                        await reply(acceptConfirmation);
 
                         // Alert to Customer on WhatsApp
                         if (targetDispatch.customer?.phone) {
@@ -545,7 +627,12 @@ async function startWhatsApp() {
                     } else if (rejectMatch) {
                         if (targetDispatch.timer) clearTimeout(targetDispatch.timer);
 
-                        await reply(`Aapne #${targetDispatch.requestId} decline kar diya hai. Dhanyawad.`);
+                        const declineMsg = (collLang === 'hindi')
+                            ? `आपने #${targetDispatch.requestId} अस्वीकार कर दिया है। धन्यवाद।`
+                            : (collLang === 'english')
+                            ? `You have declined order #${targetDispatch.requestId}. Thank you.`
+                            : `Aapne #${targetDispatch.requestId} decline kar diya hai. Dhanyawad.`;
+                        await reply(declineMsg);
 
                         // Cascade to next collector in queue
                         targetDispatch.currentIndex++;
@@ -609,6 +696,7 @@ async function startWhatsApp() {
                     persist();
 
                     // Save session in pendingVerifications with all details & booked waste items
+                    const collLang = collector.language || 'hinglish';
                     pendingVerifications[phone] = {
                         pickupId: pickup.id,
                         requestId: pickup.request_id,
@@ -618,29 +706,59 @@ async function startWhatsApp() {
                         items: pickup.items,
                         role: pickup.role,
                         ptsEarned: ptsEarned,
+                        lang: collLang,
                         timestamp: Date.now()
                     };
 
-                    await reply(
-                        `🔍 *Doorstep Verification In-Progress!* ⚖️\n\n` +
-                        `• Order ID: *#${pickup.request_id}*\n` +
-                        `• Customer: *${pickup.customer_name || 'Resident'}*\n` +
-                        `• Address: ${pickup.customer_address || ''} (${pickup.customer_pincode || ''})\n\n` +
-                        `📋 *Customer Waste in this Pickup:*\n` +
-                        `👉 *${pickup.items}*\n\n` +
-                        `⚖️ *Kripya inka weight (kg) naapein aur reply karein:*\n` +
-                        `• Jaise: *Cardboard 10, Plastic 4, Paper 5*\n` +
-                        `• ya: *Gatta 8 kg, Loha 2 kg*\n` +
-                        `• ya Kul weight: *15 kg*\n\n` +
-                        `⚠️ *Note:* Weight enter karne ke baad hi pickup *Officially Complete* hoga aur customer ko Green Points credit honge.`
-                    );
+                    let verifyPrompt = '';
+                    if (collLang === 'hindi') {
+                        verifyPrompt = 
+                            `🔍 *डोरस्टेप वेरिफिकेशन जारी है!* ⚖️\n\n` +
+                            `• ऑर्डर आईडी: *#${pickup.request_id}*\n` +
+                            `• कस्टमर: *${pickup.customer_name || 'नागरिक'}*\n` +
+                            `• पता: ${pickup.customer_address || ''} (${pickup.customer_pincode || ''})\n\n` +
+                            `📋 *इस पिकअप में बुक किया गया कचरा:*\n` +
+                            `👉 *${pickup.items}*\n\n` +
+                            `⚖️ *कृपया इनका वजन (kg) नापकर रिप्लाई करें:*\n` +
+                            `• जैसे: *Cardboard 10, Plastic 4, Paper 5*\n` +
+                            `• या: *गत्ता 8 kg, लोहा 2 kg*\n` +
+                            `• या कुल वजन: *15 kg*\n\n` +
+                            `⚠️ *नोट:* वजन दर्ज करने के बाद ही पिकअप *सफलतापूर्वक पूर्ण (Completed)* होगा।`;
+                    } else if (collLang === 'english') {
+                        verifyPrompt = 
+                            `🔍 *Doorstep Verification In-Progress!* ⚖️\n\n` +
+                            `• Order ID: *#${pickup.request_id}*\n` +
+                            `• Customer: *${pickup.customer_name || 'Resident'}*\n` +
+                            `• Address: ${pickup.customer_address || ''} (${pickup.customer_pincode || ''})\n\n` +
+                            `📋 *Booked Waste Items:*\n` +
+                            `👉 *${pickup.items}*\n\n` +
+                            `⚖️ *Please weigh the scrap and reply with the weight in kg:*\n` +
+                            `• e.g.: *Cardboard 10, Plastic 4, Paper 5*\n` +
+                            `• or total: *15 kg*\n\n` +
+                            `⚠️ *Note:* Pickup will only be officially completed after weight entry.`;
+                    } else {
+                        verifyPrompt = 
+                            `🔍 *Doorstep Verification In-Progress!* ⚖️\n\n` +
+                            `• Order ID: *#${pickup.request_id}*\n` +
+                            `• Customer: *${pickup.customer_name || 'Resident'}*\n` +
+                            `• Address: ${pickup.customer_address || ''} (${pickup.customer_pincode || ''})\n\n` +
+                            `📋 *Customer Waste in this Pickup:*\n` +
+                            `👉 *${pickup.items}*\n\n` +
+                            `⚖️ *Kripya inka weight (kg) naapein aur reply karein:*\n` +
+                            `• Jaise: *Cardboard 10, Plastic 4, Paper 5*\n` +
+                            `• ya: *Gatta 8 kg, Loha 2 kg*\n` +
+                            `• ya Kul weight: *15 kg*\n\n` +
+                            `⚠️ *Note:* Weight enter karne ke baad hi pickup *Officially Complete* hoga aur customer ko Green Points credit honge.`;
+                    }
 
+                    await reply(verifyPrompt);
                     continue;
                 }
 
                 // ── B. MATERIAL-WISE WEIGHT VERIFICATION & OFFICIAL COMPLETION ────────────
                 if (pendingVerifications[phone]) {
                     const session = pendingVerifications[phone];
+                    const collLang = session.lang || collector?.language || 'hinglish';
                     const parsedWeight = await parseMaterialWeightsSmart(text);
 
                     if (parsedWeight.items.length > 0 && parsedWeight.totalWeight > 0) {
@@ -672,17 +790,40 @@ async function startWhatsApp() {
                             .map(it => `• ${it.material}: *${it.weight} kg*`)
                             .join('\n');
 
-                        // Confirmation to Collector
-                        await reply(
-                            `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
-                            `• Order ID: *#${session.requestId}*\n` +
-                            `• Customer: *${session.customerName}*\n\n` +
-                            `*Segregated Weight Breakdown:*\n` +
-                            `${breakdownLines}\n` +
-                            `──────────────────\n` +
-                            `📦 *Total Weight:* *${totalWeight} kg*\n\n` +
-                            `Pickup status *Completed* mark ho gaya hai aur customer ko *+${ptsEarned} Green Points* credit kar diye gaye hain. Dhanyawad!`
-                        );
+                        // Confirmation to Collector in their language
+                        let compMsg = '';
+                        if (collLang === 'hindi') {
+                            compMsg = 
+                                `✅ *पिकअप सफलतापूर्वक वेरीफाई और पूर्ण हो गया!* 🎉\n\n` +
+                                `• ऑर्डर आईडी: *#${session.requestId}*\n` +
+                                `• कस्टमर: *${session.customerName}*\n\n` +
+                                `*दर्ज किया गया वजन विवरण:*\n` +
+                                `${breakdownLines}\n` +
+                                `──────────────────\n` +
+                                `📦 *कुल वजन (Total Weight):* *${totalWeight} kg*\n\n` +
+                                `पिकअप स्टेटस *Completed* मार्क हो गया है और कस्टमर को *+${ptsEarned} Green Points* क्रेडिट कर दिए गए हैं। धन्यवाद!`;
+                        } else if (collLang === 'english') {
+                            compMsg = 
+                                `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
+                                `• Order ID: *#${session.requestId}*\n` +
+                                `• Customer: *${session.customerName}*\n\n` +
+                                `*Segregated Weight Breakdown:*\n` +
+                                `${breakdownLines}\n` +
+                                `──────────────────\n` +
+                                `📦 *Total Weight:* *${totalWeight} kg*\n\n` +
+                                `Status marked *Completed* and customer awarded *+${ptsEarned} Green Points*. Thank you!`;
+                        } else {
+                            compMsg = 
+                                `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
+                                `• Order ID: *#${session.requestId}*\n` +
+                                `• Customer: *${session.customerName}*\n\n` +
+                                `*Segregated Weight Breakdown:*\n` +
+                                `${breakdownLines}\n` +
+                                `──────────────────\n` +
+                                `📦 *Total Weight:* *${totalWeight} kg*\n\n` +
+                                `Pickup status *Completed* mark ho gaya hai aur customer ko *+${ptsEarned} Green Points* credit kar diye gaye hain. Dhanyawad!`;
+                        }
+                        await reply(compMsg);
 
                         // Official completion & weight alert to Customer on WhatsApp
                         if (session.customerPhone) {
@@ -701,13 +842,12 @@ async function startWhatsApp() {
                         continue;
                     } else if (text && !text.startsWith('#') && text.toLowerCase() !== 'duty' && text.toLowerCase() !== 'status') {
                         // Gentle reminder if message is received during active weighing
-                        await reply(
-                            `⚖️ *Order #${session.requestId} ke liye weight pending hai!*\n\n` +
-                            `Customer ka booked waste: *${session.items}*\n\n` +
-                            `Kripya measured weight (kg) likh kar bhejein:\n` +
-                            `• Jaise: *Cardboard 8, Plastic 3*\n` +
-                            `• ya total: *12 kg*`
-                        );
+                        const remMsg = (collLang === 'hindi')
+                            ? `⚖️ *ऑर्डर #${session.requestId} के लिए वजन पेंडिंग है!*\n\nकस्टमर का कचरा: *${session.items}*\n\nकृपया नापा हुआ वजन (kg) लिखकर भेजें:\n• जैसे: *Cardboard 8, Plastic 3*\n• या कुल: *12 kg*`
+                            : (collLang === 'english')
+                            ? `⚖️ *Weight entry pending for #${session.requestId}!*\n\nBooked items: *${session.items}*\n\nPlease reply with measured weight (kg):\n• e.g. *Cardboard 8, Plastic 3*\n• or total: *12 kg*`
+                            : `⚖️ *Order #${session.requestId} ke liye weight pending hai!*\n\nCustomer ka booked waste: *${session.items}*\n\nKripya measured weight (kg) likh kar bhejein:\n• Jaise: *Cardboard 8, Plastic 3*\n• ya total: *12 kg*`;
+                        await reply(remMsg);
                         continue;
                     }
                 }
@@ -717,49 +857,156 @@ async function startWhatsApp() {
                 const latitude = loc ? loc.degreesLatitude : null;
                 const longitude = loc ? loc.degreesLongitude : null;
 
-                // 2. BRAND NEW NUMBER
+                // 2. BRAND NEW NUMBER (First-time onboarding: Choose Language first)
                 if (!collector) {
                     db.run(
-                        `INSERT INTO collectors (phone_number, onboarding_step) VALUES (?, 'AWAITING_NAME')`,
+                        `INSERT INTO collectors (phone_number, onboarding_step, language) VALUES (?, 'AWAITING_LANGUAGE', 'hinglish')`,
                         [phone]
                     );
                     persist();
 
                     await reply(
                         `🌿 *Namaste! Welcome to Circular Partner!* 🌿\n\n` +
-                        `Aapka swagat hai. Waste collection partner banne ke liye kripya apna *Poora Naam (Full Name)* likh kar bhejein:`
+                        `Kripya apni pasandeeda bhasha chunein:\n` +
+                        `Please select your preferred language:\n\n` +
+                        `1️⃣ *हिंदी* (Hindi)\n` +
+                        `2️⃣ *Hinglish* (Hindi in English letters)\n` +
+                        `3️⃣ *English*\n\n` +
+                        `_Reply with *1*, *2*, or *3*:_`
                     );
                     continue;
                 }
 
                 // 3. EXPLICIT RESET COMMAND (Protected with #RESET to avoid accidental trigger)
                 if (lowerBody === '#reset' || lowerBody === 'reset profile') {
-                    db.run(`UPDATE collectors SET onboarding_step = 'AWAITING_NAME' WHERE id = ?`, [collector.id]);
+                    db.run(`UPDATE collectors SET onboarding_step = 'AWAITING_LANGUAGE' WHERE id = ?`, [collector.id]);
                     persist();
-                    await reply(`🔄 Aapka profile reset kar diya gaya hai.\n\nKripya apna *Poora Naam (Full Name)* bhejein:`);
+                    await reply(
+                        `🔄 *Profile Reset!*\n\n` +
+                        `Kripya apni pasandeeda bhasha chunein:\n` +
+                        `Please select your preferred language:\n\n` +
+                        `1️⃣ *हिंदी* (Hindi)\n` +
+                        `2️⃣ *Hinglish* (Hindi in English letters)\n` +
+                        `3️⃣ *English*\n\n` +
+                        `_Reply with *1*, *2*, or *3*:_`
+                    );
                     continue;
                 }
 
-                // 4. ON / OFF DUTY TOGGLE
+                // 4. LANGUAGE SWITCH COMMAND ANYTIME
+                if (lowerBody === 'lang' || lowerBody === 'language' || lowerBody === 'bhasha') {
+                    db.run(`UPDATE collectors SET onboarding_step = 'AWAITING_LANGUAGE' WHERE id = ?`, [collector.id]);
+                    persist();
+                    await reply(
+                        `🌐 *Change Language / भाषा बदलें:*\n\n` +
+                        `1️⃣ *हिंदी* (Hindi)\n` +
+                        `2️⃣ *Hinglish* (Hindi in English letters)\n` +
+                        `3️⃣ *English*\n\n` +
+                        `_Reply with *1*, *2*, or *3*:_`
+                    );
+                    continue;
+                }
+
+                // 5. ON / OFF DUTY TOGGLE
                 if (lowerBody === 'duty' || lowerBody === 'status') {
                     const newStatus = collector.is_available ? 0 : 1;
                     db.run(`UPDATE collectors SET is_available = ? WHERE id = ?`, [newStatus, collector.id]);
                     persist();
-                    const statusText = newStatus ? '🟢 ON DUTY (Available for pickups)' : '🔴 OFF DUTY (Inactive)';
-                    await reply(`Aapka current status badal diya gaya hai:\n\n*${statusText}*`);
+                    const lang = collector.language || 'hinglish';
+                    let dutyMsg = '';
+                    if (lang === 'hindi') {
+                        const statusText = newStatus ? '🟢 ON DUTY (पिकअप के लिए उपलब्ध)' : '🔴 OFF DUTY (अनुपलब्ध)';
+                        dutyMsg = `आपका करंट स्टेटस बदल दिया गया है:\n\n*${statusText}*\n\n_ड्यूटी बदलने के लिए *DUTY* लिखें।_`;
+                    } else if (lang === 'english') {
+                        const statusText = newStatus ? '🟢 ON DUTY (Available for pickups)' : '🔴 OFF DUTY (Inactive)';
+                        dutyMsg = `Your duty status has been updated:\n\n*${statusText}*\n\n_Type *DUTY* anytime to toggle._`;
+                    } else {
+                        const statusText = newStatus ? '🟢 ON DUTY (Available for pickups)' : '🔴 OFF DUTY (Inactive)';
+                        dutyMsg = `Aapka current status badal diya gaya hai:\n\n*${statusText}*\n\n_Duty on/off karne ke liye *DUTY* likhein._`;
+                    }
+                    await reply(dutyMsg);
                     continue;
                 }
 
                 // Common greetings filter
                 const isGreeting = ['hi', 'hello', 'hey', 'namaste', 'pranam', 'hii', 'hlo'].includes(lowerBody);
 
-                // 5. CONVERSATION STATE MACHINE
+                // 6. CONVERSATION STATE MACHINE
                 switch (collector.onboarding_step) {
 
+                    case 'AWAITING_LANGUAGE': {
+                        let chosenLang = null;
+                        const cleanChoice = lowerBody.trim();
+
+                        if (cleanChoice === '1' || cleanChoice.includes('hindi') || cleanChoice.includes('हिन्दी') || cleanChoice.includes('हिंदी')) {
+                            chosenLang = 'hindi';
+                        } else if (cleanChoice === '2' || cleanChoice.includes('hinglish')) {
+                            chosenLang = 'hinglish';
+                        } else if (cleanChoice === '3' || cleanChoice.includes('english') || cleanChoice.includes('angrezi')) {
+                            chosenLang = 'english';
+                        }
+
+                        if (!chosenLang) {
+                            await reply(
+                                `Kripya 1, 2, ya 3 bhej kar chunein:\n` +
+                                `Please select a valid option (1, 2, or 3):\n\n` +
+                                `1️⃣ हिंदी (Hindi)\n` +
+                                `2️⃣ Hinglish\n` +
+                                `3️⃣ English`
+                            );
+                            break;
+                        }
+
+                        const nextStep = (collector.name && collector.operating_area && collector.pincode && collector.materials) 
+                            ? 'COMPLETED' 
+                            : 'AWAITING_NAME';
+
+                        db.run(`UPDATE collectors SET language = ?, onboarding_step = ? WHERE id = ?`, [chosenLang, nextStep, collector.id]);
+                        persist();
+                        collector.language = chosenLang;
+                        collector.onboarding_step = nextStep;
+
+                        if (nextStep === 'COMPLETED') {
+                            if (chosenLang === 'hindi') {
+                                await reply(`✅ भाषा बदलकर *हिंदी* कर दी गई है।\n\nऑर्डर्स देखने के लिए *PICKUPS* या ड्यूटी के लिए *DUTY* लिखें।`);
+                            } else if (chosenLang === 'english') {
+                                await reply(`✅ Preferred language updated to *English*.\n\nType *PICKUPS* to view orders or *DUTY* to toggle duty.`);
+                            } else {
+                                await reply(`✅ Bhasha badalkar *Hinglish* kar di gayi hai.\n\nOrders dekhne ke liye *PICKUPS* ya duty ke liye *DUTY* bhejein.`);
+                            }
+                            break;
+                        }
+
+                        if (chosenLang === 'hindi') {
+                            await reply(
+                                `धन्यवाद! 🙏\n\n` +
+                                `वेस्ट कलेक्शन पार्टनर बनने के लिए कृपया अपना *पूरा नाम (Full Name)* लिखकर भेजें:`
+                            );
+                        } else if (chosenLang === 'english') {
+                            await reply(
+                                `Thank you! 🙏\n\n` +
+                                `To register as a Waste Collection Partner, please reply with your *Full Name*:`
+                            );
+                        } else {
+                            await reply(
+                                `Dhanyawad! 🙏\n\n` +
+                                `Waste collection partner banne ke liye kripya apna *Poora Naam (Full Name)* likh kar bhejein:`
+                            );
+                        }
+                        break;
+                    }
+
                     case 'AWAITING_NAME': {
+                        const lang = collector.language || 'hinglish';
                         // Prevent greetings or 1-letter garbage as name
                         if (isGreeting || text.length < 2 || !/^[a-zA-Z\s\u0900-\u097F]+$/.test(text)) {
-                            await reply(`Kripya apna asali naam likh kar bhejein (jaise: *Ramesh Kumar*):`);
+                            if (lang === 'hindi') {
+                                await reply(`कृपया अपना असली नाम लिखकर भेजें (जैसे: *रमेश कुमार*):`);
+                            } else if (lang === 'english') {
+                                await reply(`Please reply with your real name (e.g. *Ramesh Kumar*):`);
+                            } else {
+                                await reply(`Kripya apna asali naam likh kar bhejein (jaise: *Ramesh Kumar*):`);
+                            }
                             break;
                         }
 
@@ -768,17 +1015,37 @@ async function startWhatsApp() {
                             [text, collector.id]
                         );
                         persist();
+                        collector.name = text;
 
-                        await reply(
-                            `Dhanyawad *${text}* ji! 🙏\n\n` +
-                            `Aap kis area / locality me collection karte hain? (Complete area name ya locality likhein):`
-                        );
+                        if (lang === 'hindi') {
+                            await reply(
+                                `धन्यवाद *${text}* जी! 🙏\n\n` +
+                                `आप किस एरिया / मोहल्ले में कलेक्शन करते हैं? (अपने क्षेत्र या लोकलिटी का नाम लिखें):`
+                            );
+                        } else if (lang === 'english') {
+                            await reply(
+                                `Thank you *${text}*! 🙏\n\n` +
+                                `Which locality / area do you operate in? (Please reply with your operating area name):`
+                            );
+                        } else {
+                            await reply(
+                                `Dhanyawad *${text}* ji! 🙏\n\n` +
+                                `Aap kis area / locality me collection karte hain? (Complete area name ya locality likhein):`
+                            );
+                        }
                         break;
                     }
 
                     case 'AWAITING_AREA': {
+                        const lang = collector.language || 'hinglish';
                         if (isGreeting || text.length < 3) {
-                            await reply(`Kripya apni sahi locality / area ka naam likhein (jaise: *Model Town* ya *Sector 14*):`);
+                            if (lang === 'hindi') {
+                                await reply(`कृपया अपने सही एरिया / मोहल्ले का नाम लिखें (जैसे: *मॉडल टाउन* या *सेक्टर 14*):`);
+                            } else if (lang === 'english') {
+                                await reply(`Please enter your operating area or locality (e.g. *Model Town* or *Sector 14*):`);
+                            } else {
+                                await reply(`Kripya apni sahi locality / area ka naam likhein (jaise: *Model Town* ya *Sector 14*):`);
+                            }
                             break;
                         }
 
@@ -787,15 +1054,29 @@ async function startWhatsApp() {
                             [text, collector.id]
                         );
                         persist();
+                        collector.operating_area = text;
 
-                        await reply(`Badhiya! Ab apne area ka *6-digit Pincode* bhejein (jaise: 110020):`);
+                        if (lang === 'hindi') {
+                            await reply(`बहुत बढ़िया! अब अपने एरिया का *6-अंकों का पिनकोड* भेजें (जैसे: 110020):`);
+                        } else if (lang === 'english') {
+                            await reply(`Great! Now please send your area's *6-digit Pincode* (e.g. 110020):`);
+                        } else {
+                            await reply(`Badhiya! Ab apne area ka *6-digit Pincode* bhejein (jaise: 110020):`);
+                        }
                         break;
                     }
 
                     case 'AWAITING_PINCODE': {
+                        const lang = collector.language || 'hinglish';
                         const pincode = text.replace(/\D/g, '');
                         if (pincode.length !== 6) {
-                            await reply(`Kripya 6-digit ka sahi pincode bhejein (jaise: 110020):`);
+                            if (lang === 'hindi') {
+                                await reply(`कृपया 6-अंकों का सही पिनकोड भेजें (जैसे: 110020):`);
+                            } else if (lang === 'english') {
+                                await reply(`Please enter a valid 6-digit pincode (e.g. 110020):`);
+                            } else {
+                                await reply(`Kripya 6-digit ka sahi pincode bhejein (jaise: 110020):`);
+                            }
                             break;
                         }
 
@@ -804,19 +1085,41 @@ async function startWhatsApp() {
                             [pincode, collector.id]
                         );
                         persist();
+                        collector.pincode = pincode;
 
-                        await reply(
-                            `Aap kis type ka waste collect karte hain? Number likh kar reply karein:\n\n` +
-                            `1️⃣ Raddi / Paper / Cardboard\n` +
-                            `2️⃣ Plastic & Bottles\n` +
-                            `3️⃣ Scrap Metal / Loha\n` +
-                            `4️⃣ Sabhi Tarah Ka (All Items)\n\n` +
-                            `_(1, 2, 3 ya 4 bhej kar chunein)_`
-                        );
+                        if (lang === 'hindi') {
+                            await reply(
+                                `आप किस प्रकार का कबाड़ / वेस्ट कलेक्ट करते हैं? नंबर लिखकर रिप्लाई करें:\n\n` +
+                                `1️⃣ रद्दी / कागज़ / गत्ता (Paper & Cardboard)\n` +
+                                `2️⃣ प्लास्टिक और बोतलें (Plastic & Bottles)\n` +
+                                `3️⃣ लोहा / कबाड़ मेटल (Scrap Metal)\n` +
+                                `4️⃣ सभी प्रकार का कबाड़ (All Items)\n\n` +
+                                `_(1, 2, 3 या 4 लिखकर चुनें)_`
+                            );
+                        } else if (lang === 'english') {
+                            await reply(
+                                `What types of scrap waste do you collect? Reply with a number:\n\n` +
+                                `1️⃣ Paper, Books & Cardboard\n` +
+                                `2️⃣ Plastic & Bottles\n` +
+                                `3️⃣ Scrap Metal\n` +
+                                `4️⃣ All Categories (Paper, Plastic, Metal)\n\n` +
+                                `_(Reply with 1, 2, 3 or 4)_`
+                            );
+                        } else {
+                            await reply(
+                                `Aap kis type ka waste collect karte hain? Number likh kar reply karein:\n\n` +
+                                `1️⃣ Raddi / Paper / Cardboard\n` +
+                                `2️⃣ Plastic & Bottles\n` +
+                                `3️⃣ Scrap Metal / Loha\n` +
+                                `4️⃣ Sabhi Tarah Ka (All Items)\n\n` +
+                                `_(1, 2, 3 ya 4 bhej kar chunein)_`
+                            );
+                        }
                         break;
                     }
 
                     case 'AWAITING_MATERIALS': {
+                        const lang = collector.language || 'hinglish';
                         let mats = '';
                         if (text === '1') mats = 'Paper, Books, Cardboard';
                         else if (text === '2') mats = 'Plastic, Bottles';
@@ -824,7 +1127,9 @@ async function startWhatsApp() {
                         else if (text === '4') mats = 'All Categories (Paper, Plastic, Metal)';
                         else {
                             if (isGreeting) {
-                                await reply(`Kripya 1, 2, 3 ya 4 number likh kar chunein:`);
+                                if (lang === 'hindi') await reply(`कृपया 1, 2, 3 या 4 नंबर लिखकर चुनें:`);
+                                else if (lang === 'english') await reply(`Please choose 1, 2, 3, or 4:`);
+                                else await reply(`Kripya 1, 2, 3 ya 4 number likh kar chunein:`);
                                 break;
                             }
                             mats = text;
@@ -839,25 +1144,59 @@ async function startWhatsApp() {
                         }
                         persist();
 
-                        await reply(
-                            `🎉 *Badhaai ho! Aap Circular Partner ban chuke hain!* 🎉\n\n` +
-                            `📋 *Aapki Details:*\n` +
-                            `• Naam: *${collector.name}*\n` +
-                            `• Area: *${collector.operating_area}* (${collector.pincode})\n` +
-                            `• Material: *${mats}*\n` +
-                            `• Status: 🟢 *Active / On Duty*\n\n` +
-                            `Aapke area me jab bhi naya pickup aayega, hum aapko WhatsApp par notify karenge.\n\n` +
-                            `_Duty on/off karne ke liye kisi bhi time *DUTY* likh kar bhejein._`
-                        );
+                        if (lang === 'hindi') {
+                            await reply(
+                                `🎉 *बधाई हो! आप Circular Partner बन चुके हैं!* 🎉\n\n` +
+                                `📋 *आपकी डिटेल्स:*\n` +
+                                `• नाम: *${collector.name}*\n` +
+                                `• एरिया: *${collector.operating_area}* (${collector.pincode})\n` +
+                                `• सामग्री: *${mats}*\n` +
+                                `• भाषा: *हिंदी*\n` +
+                                `• स्टेटस: 🟢 *एक्टिव / On Duty*\n\n` +
+                                `आपके एरिया में जब भी नया पिकअप आएगा, हम आपको WhatsApp पर तुरंत सूचित करेंगे।\n\n` +
+                                `_ड्यूटी बदलने के लिए *DUTY*, भाषा बदलने के लिए *LANG* लिखें।_`
+                            );
+                        } else if (lang === 'english') {
+                            await reply(
+                                `🎉 *Congratulations! You are now an official Circular Partner!* 🎉\n\n` +
+                                `📋 *Your Profile:*\n` +
+                                `• Name: *${collector.name}*\n` +
+                                `• Area: *${collector.operating_area}* (${collector.pincode})\n` +
+                                `• Materials: *${mats}*\n` +
+                                `• Language: *English*\n` +
+                                `• Status: 🟢 *Active / On Duty*\n\n` +
+                                `Whenever a new pickup is booked in your area, you will be notified on WhatsApp.\n\n` +
+                                `_Type *DUTY* to toggle duty, or *LANG* to switch language anytime._`
+                            );
+                        } else {
+                            await reply(
+                                `🎉 *Badhaai ho! Aap Circular Partner ban chuke hain!* 🎉\n\n` +
+                                `📋 *Aapki Details:*\n` +
+                                `• Naam: *${collector.name}*\n` +
+                                `• Area: *${collector.operating_area}* (${collector.pincode})\n` +
+                                `• Material: *${mats}*\n` +
+                                `• Language: *Hinglish*\n` +
+                                `• Status: 🟢 *Active / On Duty*\n\n` +
+                                `Aapke area me jab bhi naya pickup aayega, hum aapko WhatsApp par notify karenge.\n\n` +
+                                `_Duty on/off karne ke liye *DUTY*, bhasha badalne ke liye *LANG* likhein._`
+                            );
+                        }
                         break;
                     }
 
                     case 'COMPLETED': {
+                        const lang = collector.language || 'hinglish';
+
                         // 1. Live location sharing
                         if (latitude && longitude) {
                             db.run(`UPDATE collectors SET latitude = ?, longitude = ? WHERE id = ?`, [latitude, longitude, collector.id]);
                             persist();
-                            await reply(`📍 Location update ho gayi hai!`);
+                            const locAck = (lang === 'hindi')
+                                ? `📍 लोकेशन अपडेट हो गई है!`
+                                : (lang === 'english')
+                                ? `📍 Live location updated successfully!`
+                                : `📍 Location update ho gayi hai!`;
+                            await reply(locAck);
                             break;
                         }
 
@@ -876,11 +1215,21 @@ async function startWhatsApp() {
                             pickupStmt.free();
 
                             if (activeList.length === 0) {
-                                await reply(`📦 *Abhi koi naya pickup pending nahi hai.*\n\nJaise hi naya request aayega, yahan show hoga.`);
+                                const emptyMsg = (lang === 'hindi')
+                                    ? `📦 *अभी कोई नया पिकअप पेंडिंग नहीं है।*\n\nजैसे ही नया अनुरोध आएगा, यहाँ दिखाई देगा।`
+                                    : (lang === 'english')
+                                    ? `📦 *No pending pickups in your area right now.*\n\nNew requests will appear here as soon as booked.`
+                                    : `📦 *Abhi koi naya pickup pending nahi hai.*\n\nJaise hi naya request aayega, yahan show hoga.`;
+                                await reply(emptyMsg);
                                 break;
                             }
 
-                            let replyText = `📦 *Current Pending Pickups (${activeList.length}):*\n\n`;
+                            let replyText = (lang === 'hindi')
+                                ? `📦 *वर्तमान पेंडिंग पिकअप्स (${activeList.length}):*\n\n`
+                                : (lang === 'english')
+                                ? `📦 *Current Pending Pickups (${activeList.length}):*\n\n`
+                                : `📦 *Current Pending Pickups (${activeList.length}):*\n\n`;
+
                             activeList.forEach((p, idx) => {
                                 replyText += `*${idx + 1}. #${p.request_id}*\n`;
                                 replyText += `• Items: *${p.items}* (${p.quantity || 'Standard'})\n`;
@@ -888,33 +1237,66 @@ async function startWhatsApp() {
                                 replyText += `• Address: ${p.customer_address || 'Local'} (PIN: ${p.customer_pincode || '—'})\n`;
                                 replyText += `• Time: ${p.time_slot}\n\n`;
                             });
-                            replyText += `_Pickup complete hone par website admin panel par status Collected mark ho jayega._`;
+                            replyText += (lang === 'hindi')
+                                ? `_पिकअप पूरा होने पर वेबसाइट पैनल पर स्टेटस Collected मार्क हो जाएगा।_`
+                                : (lang === 'english')
+                                ? `_Status will automatically update upon doorstep verification._`
+                                : `_Pickup complete hone par website admin panel par status Collected mark ho jayega._`;
                             await reply(replyText);
                             break;
                         }
 
                         // 3. Conversational AI Assistant check before falling back to menu
                         if (!isGreeting && text.length > 2) {
-                            const aiReply = await getWhatsAppAIReply(text, collector.name);
+                            const aiReply = await getWhatsAppAIReply(text, collector.name, collector.language || 'hinglish');
                             if (aiReply) {
+                                const tipText = (lang === 'hindi')
+                                    ? `_सलाह: ऑर्डर्स देखने के लिए *PICKUPS*, ड्यूटी के लिए *DUTY*, भाषा के लिए *LANG* लिखें।_`
+                                    : (lang === 'english')
+                                    ? `_Tip: Type *PICKUPS* to view orders, *DUTY* to toggle status, or *LANG* for language._`
+                                    : `_Tip: Orders dekhne ke liye *PICKUPS*, duty ke liye *DUTY*, bhasha ke liye *LANG* bhejein._`;
+
                                 await reply(
                                     `🤖 *Terra AI:*\n${aiReply}\n\n` +
                                     `─────────────\n` +
-                                    `_Tip: Orders dekhne ke liye *PICKUPS* ya duty badalne ke liye *DUTY* bhejein._`
+                                    tipText
                                 );
                                 break;
                             }
                         }
 
-                        // For greetings or fallback, display the command menu
-                        await reply(
-                            `Namaste *${collector.name || 'Partner'}* ji! 🙏\n\n` +
-                            `Commands:\n` +
-                            `• *PICKUPS* - Area ke pending pickups check karein 📦\n` +
-                            `• *DUTY* - On/Off duty toggle karein 🟢/🔴\n` +
-                            `• Live location bhej kar apni location update karein 📍\n` +
-                            `• *#RESET* - Details dobara bharein (agar zaroorat ho) 🔄`
-                        );
+                        // For greetings or fallback, display the command menu in user's language
+                        if (lang === 'hindi') {
+                            await reply(
+                                `नमस्ते *${collector.name || 'पार्टनर'}* जी! 🙏\n\n` +
+                                `कमांड्स:\n` +
+                                `• *PICKUPS* - एरिया के पेंडिंग पिकअप्स देखें 📦\n` +
+                                `• *DUTY* - ड्यूटी ऑन/ऑफ करें 🟢/🔴\n` +
+                                `• *LANG* - भाषा बदलें (Hindi / Hinglish / English) 🌐\n` +
+                                `• लाइव लोकेशन भेजकर लोकेशन अपडेट करें 📍\n` +
+                                `• *#RESET* - प्रोफाइल दोबारा भरें 🔄`
+                            );
+                        } else if (lang === 'english') {
+                            await reply(
+                                `Welcome *${collector.name || 'Partner'}*! 🙏\n\n` +
+                                `Commands:\n` +
+                                `• *PICKUPS* - Check pending pickups in your area 📦\n` +
+                                `• *DUTY* - Toggle On/Off duty status 🟢/🔴\n` +
+                                `• *LANG* - Change preferred language 🌐\n` +
+                                `• Send live location to update coordinates 📍\n` +
+                                `• *#RESET* - Reset your profile 🔄`
+                            );
+                        } else {
+                            await reply(
+                                `Namaste *${collector.name || 'Partner'}* ji! 🙏\n\n` +
+                                `Commands:\n` +
+                                `• *PICKUPS* - Area ke pending pickups check karein 📦\n` +
+                                `• *DUTY* - On/Off duty toggle karein 🟢/🔴\n` +
+                                `• *LANG* - Bhasha badlein (Hindi / Hinglish / English) 🌐\n` +
+                                `• Live location bhej kar apni location update karein 📍\n` +
+                                `• *#RESET* - Details dobara bharein (agar zaroorat ho) 🔄`
+                            );
+                        }
                         break;
                     }
 
