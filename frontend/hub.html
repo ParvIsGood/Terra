@@ -1,248 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Circular Segregation Hub • Floor Station</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>circular. Segregation Hub • Floor Station</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            dark: '#0A3B2C',
+                            primary: '#145743',
+                            light: '#D4EBDC',
+                            bg: '#F4F7F4',
+                            border: '#E2ECE5',
+                            grayText: '#62756C'
+                        }
+                    },
+                    boxShadow: {
+                        'card': '0 8px 30px rgba(10, 59, 44, 0.06)',
+                        'float': '0 20px 40px rgba(10, 59, 44, 0.12)'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg: #eef3ef;
-            --card: #ffffff;
-            --tx: #12302a;
-            --mu: #62756c;
-            --g: #1c8a5c;
-            --gl: #dcf3e5;
-            --bd: #e4ebe6;
-            --wa: #d9780f;
-            --wl: #fdebd3;
-            --sb: #0c3a2b;
-        }
-        * { box-sizing: border-box; }
         body {
+            background-color: #e5e5e5;
+            -webkit-tap-highlight-color: transparent;
             margin: 0;
-            font: 14px/1.45 'Inter', system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--tx);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 16px;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
         }
-        .station-wrapper {
-            width: 100%;
-            max-width: 440px;
-            background: var(--card);
-            border: 1px solid var(--bd);
-            border-radius: 28px;
-            min-height: 700px;
+        .app-container {
+            max-width: 420px;
+            margin: 0 auto;
+            background-color: #F4F7F4;
+            height: 100dvh;
+            position: relative;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(12, 58, 43, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
-        .header {
-            background: var(--sb);
-            color: #fff;
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .header-title h1 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-        }
-        .header-title small {
-            color: #5fd29a;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-        .body {
-            padding: 20px 18px;
+        .view-content {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 96px;
         }
-        .tabs {
-            display: flex;
-            border-top: 1px solid var(--bd);
-            background: #fff;
-        }
-        .tabs button {
-            flex: 1;
-            padding: 12px 4px;
-            border: 0;
-            background: none;
-            color: var(--mu);
-            font: inherit;
-            font-size: 11px;
-            font-weight: 600;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .tabs button i { font-size: 18px; }
-        .tabs .on { color: var(--g); font-weight: 700; }
-        h2 { margin: 0 0 6px; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
-        h3 { margin: 18px 0 8px; font-size: 14px; font-weight: 700; }
-        .mu { color: var(--mu); font-size: 13px; }
-        .kp {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 14px 0;
-        }
-        .kp div {
-            background: var(--gl);
-            border-radius: 14px;
-            padding: 14px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--sb);
-        }
-        .kp b {
-            display: block;
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 2px;
-            color: var(--g);
-        }
-        .pb {
-            width: 100%;
-            padding: 13px;
-            border: 0;
-            border-radius: 12px;
-            background: var(--g);
-            color: #fff;
-            font: inherit;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            margin-top: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .pb:disabled { opacity: 0.4; cursor: not-allowed; }
-        .sb {
-            padding: 6px 12px;
-            border: 1px solid var(--g);
-            background: none;
-            color: var(--g);
-            border-radius: 8px;
-            font: inherit;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--bd);
-        }
-        .card {
-            border: 1px solid var(--bd);
-            border-radius: 14px;
-            padding: 14px;
-            margin-top: 12px;
-            background: #fff;
-        }
-        .seg { display: flex; gap: 8px; margin: 8px 0; }
-        .seg button {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid var(--bd);
-            background: none;
-            color: var(--tx);
-            border-radius: 10px;
-            font: inherit;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .seg .on { background: var(--g); color: #fff; border-color: var(--g); }
-        .tg {
-            font-style: normal;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 20px;
-            background: var(--gl);
-            color: var(--g);
-        }
-        .tg.w { background: var(--wl); color: var(--wa); }
-        input, select {
-            width: 100%;
-            padding: 12px;
-            font: inherit;
-            border: 1px solid var(--bd);
-            border-radius: 10px;
-            background: var(--bg);
-            color: var(--tx);
-            outline: none;
-        }
-        input.sm { width: 90px; text-align: right; padding: 8px; }
-        .ck {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            font-size: 12px;
-            font-weight: 500;
-            margin-top: 14px;
-            cursor: pointer;
-        }
-        .ck input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+        .view-content::-webkit-scrollbar { display: none; }
+        .view-content { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
 
-<div class="station-wrapper">
-    <!-- Header -->
-    <div class="header">
-        <div class="header-title">
-            <h1>circular.</h1>
-            <small>Segregation Hub • Floor Station</small>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="background: rgba(255,255,255,0.15); font-size: 11px; padding: 4px 8px; border-radius: 20px; color: #5fd29a; font-weight: 700;">
-                <i class="ph-bold ph-broadcast"></i> Live Hub
-            </span>
-        </div>
-    </div>
+<div class="app-container">
 
-    <!-- Body Area -->
-    <div class="body" id="hub-body">
-        <p class="mu" style="text-align: center; padding: 40px 0;">Loading Floor Station…</p>
-    </div>
+    <!-- Top Sticky Header Bar (Identical to Household Panel) -->
+    <header class="px-5 pt-6 pb-3.5 bg-white/90 backdrop-blur-md border-b border-brand-border flex items-center justify-between shrink-0 z-30">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-brand-dark text-emerald-300 flex items-center justify-center font-black text-sm shadow-xs border border-white/80">
+                AS
+            </div>
+            <div>
+                <h1 class="text-base font-black text-brand-dark tracking-tight leading-tight flex items-center gap-1.5">
+                    <span>circular.</span>
+                    <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand-light text-brand-dark border border-brand-border">Hub</span>
+                </h1>
+                <div class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 mt-0.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> Shift A &middot; Scale Online
+                </div>
+            </div>
+        </div>
 
-    <!-- Bottom Navigation -->
-    <div class="tabs">
-        <button id="nav-home" class="on" onclick="setTab('home')">
-            <i class="ph-bold ph-house"></i> Home
+        <div class="flex items-center gap-2">
+            <button onclick="loadData()" class="w-9 h-9 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-xs hover:bg-gray-50 active:scale-95 transition-transform" title="Refresh Data">
+                <i class="ph-bold ph-arrows-clockwise text-sm"></i>
+            </button>
+            <a href="admin.html" target="_blank" class="w-9 h-9 rounded-full bg-white border border-brand-border flex items-center justify-center text-brand-dark shadow-xs hover:bg-gray-50 active:scale-95 transition-transform" title="Open Admin Panel">
+                <i class="ph-bold ph-arrow-square-out text-sm"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Scrollable View Content -->
+    <main class="view-content px-5 pt-4" id="hub-content">
+        <!-- Injected via JavaScript -->
+    </main>
+
+    <!-- Bottom Navigation Bar (Mirrored exactly from Household Panel) -->
+    <nav class="absolute bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-brand-border flex justify-around items-center py-2.5 pb-6 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.03)]">
+        <button onclick="setTab('home')" id="nav-btn-home" class="flex flex-col items-center gap-1 text-brand-dark w-16 cursor-pointer">
+            <i class="ph-fill ph-house text-2xl" id="nav-icon-home"></i>
+            <span class="text-[10px] font-bold" id="nav-label-home">Home</span>
         </button>
-        <button id="nav-drop" onclick="setTab('drop', 0)">
-            <i class="ph-bold ph-scales"></i> Drop-off
+        <button onclick="setTab('drop', 0)" id="nav-btn-drop" class="flex flex-col items-center gap-1 text-brand-grayText w-16 cursor-pointer">
+            <i class="ph ph-scales text-2xl" id="nav-icon-drop"></i>
+            <span class="text-[10px] font-medium" id="nav-label-drop">Weigh-in</span>
         </button>
-        <button id="nav-disp" onclick="setTab('disp')">
-            <i class="ph-bold ph-truck"></i> Dispatches
+        <button onclick="setTab('silos')" id="nav-btn-silos" class="flex flex-col items-center gap-1 text-brand-grayText w-16 cursor-pointer">
+            <i class="ph ph-archive text-2xl" id="nav-icon-silos"></i>
+            <span class="text-[10px] font-medium" id="nav-label-silos">Silos</span>
         </button>
-        <button id="nav-prof" onclick="setTab('prof')">
-            <i class="ph-bold ph-user-circle"></i> Profile
+        <button onclick="setTab('disp')" id="nav-btn-disp" class="flex flex-col items-center gap-1 text-brand-grayText w-16 cursor-pointer">
+            <i class="ph ph-truck text-2xl" id="nav-icon-disp"></i>
+            <span class="text-[10px] font-medium" id="nav-label-disp">Dispatches</span>
         </button>
-    </div>
+        <button onclick="setTab('prof')" id="nav-btn-prof" class="flex flex-col items-center gap-1 text-brand-grayText w-16 cursor-pointer">
+            <i class="ph ph-user text-2xl" id="nav-icon-prof"></i>
+            <span class="text-[10px] font-medium" id="nav-label-prof">Profile</span>
+        </button>
+    </nav>
+
 </div>
 
 <script>
@@ -262,20 +139,23 @@
     let hubWeights = {}; // { material: kg }
     let lastDropoff = null;
 
-    let summary = { today_dropoffs: 0, today_kg: 0, storage_stock_kg: 0, weight_gaps: 0 };
+    let summary = { today_dropoffs: 0, today_kg: 0, storage_stock_kg: 0, storage_capacity_kg: 0, weight_gaps: 0 };
     let recentTrips = [];
     let dispatches = [];
+    let silos = [];
 
     async function loadData() {
         try {
-            const [sumRes, tripsRes, dispRes] = await Promise.all([
-                fetch(`${API_BASE}/hub/summary`).then(r => r.json()),
-                fetch(`${API_BASE}/hub/trips`).then(r => r.json()),
-                fetch(`${API_BASE}/hub/dispatches`).then(r => r.json())
+            const [sumRes, tripsRes, dispRes, binsRes] = await Promise.all([
+                fetch(`${API_BASE}/hub/summary`).then(r => r.json()).catch(() => ({})),
+                fetch(`${API_BASE}/hub/trips`).then(r => r.json()).catch(() => ({ trips: [] })),
+                fetch(`${API_BASE}/hub/dispatches`).then(r => r.json()).catch(() => ({ dispatches: [] })),
+                fetch(`${API_BASE}/hub/bins`).then(r => r.json()).catch(() => ({ bins: [] }))
             ]);
             summary = sumRes || summary;
             recentTrips = tripsRes.trips || [];
             dispatches = dispRes.dispatches || [];
+            silos = binsRes.bins || [];
             render();
         } catch (e) {
             console.error('Failed to load hub data:', e);
@@ -286,243 +166,506 @@
     function setTab(tab, step = 0) {
         currentTab = tab;
         dropStep = step;
-        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('on'));
-        const activeNav = document.getElementById(`nav-${tab}`);
-        if (activeNav) activeNav.classList.add('on');
+
+        const navTabs = ['home', 'drop', 'silos', 'disp', 'prof'];
+        const iconClasses = {
+            'home': ['ph-house', 'ph-fill ph-house'],
+            'drop': ['ph-scales', 'ph-fill ph-scales'],
+            'silos': ['ph-archive', 'ph-fill ph-archive'],
+            'disp': ['ph-truck', 'ph-fill ph-truck'],
+            'prof': ['ph-user', 'ph-fill ph-user']
+        };
+
+        navTabs.forEach(t => {
+            const btn = document.getElementById(`nav-btn-${t}`);
+            const icon = document.getElementById(`nav-icon-${t}`);
+            const label = document.getElementById(`nav-label-${t}`);
+            if (btn && icon && label) {
+                if (t === tab) {
+                    btn.className = 'flex flex-col items-center gap-1 text-brand-dark w-16 cursor-pointer';
+                    icon.className = `${iconClasses[t][1]} text-2xl`;
+                    label.className = 'text-[10px] font-bold';
+                } else {
+                    btn.className = 'flex flex-col items-center gap-1 text-brand-grayText w-16 cursor-pointer';
+                    icon.className = `${iconClasses[t][0]} text-2xl`;
+                    label.className = 'text-[10px] font-medium';
+                }
+            }
+        });
+
         render();
     }
 
     function render() {
-        const body = document.getElementById('hub-body');
+        const content = document.getElementById('hub-content');
 
-        // 1. HOME TAB
+        // ─────────────────────────────────────────────────────────────
+        // 1. HOME VIEW (Overview matching Household dashboard)
+        // ─────────────────────────────────────────────────────────────
         if (currentTab === 'home') {
-            const tripRows = recentTrips.slice(0, 5).map(t => `
-                <div class="row">
-                    <div>
-                        <div style="font-weight: 700; color: var(--tx);">${escapeHtml(t.collector_name || 'Partner')}</div>
-                        <small class="mu font-mono text-xs">${t.id} • ${t.hub_weight} kg measured</small>
-                    </div>
-                    <i class="tg ${t.is_flagged ? 'w' : ''}">${t.is_flagged ? 'Check weight' : 'OK'}</i>
-                </div>
-            `).join('') || '<p class="mu" style="text-align: center; padding: 20px 0;">No drop-offs recorded yet.</p>';
+            const tripRows = recentTrips.slice(0, 5).map(t => {
+                const isFlagged = t.is_flagged === 1;
+                const badge = isFlagged
+                    ? `<span class="bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                         <i class="ph-bold ph-warning"></i> +${t.gap_pct}% Gap
+                       </span>`
+                    : `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                         <i class="ph-bold ph-check"></i> Match (${t.gap_pct}%)
+                       </span>`;
 
-            body.innerHTML = `
-                <h2>Good morning, Anil</h2>
-                <p class="mu">Circular Segregation Hub • Shift A</p>
-                <div class="kp">
-                    <div><b>${summary.today_dropoffs}</b>Drop-offs today</div>
-                    <div><b>${summary.today_kg} kg</b>Received today</div>
+                return `
+                    <div class="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-brand-border shadow-xs">
+                        <div class="min-w-0 pr-2">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-extrabold text-xs text-brand-dark truncate">${escHtml(t.collector_name || 'Partner')}</span>
+                                <span class="text-[10px] font-mono text-gray-400">#${escHtml(t.id)}</span>
+                            </div>
+                            <p class="text-[11px] text-brand-grayText mt-0.5">${t.hub_weight || 0} kg &middot; ₹${t.payout_amount || 0} payout</p>
+                        </div>
+                        <div class="shrink-0">${badge}</div>
+                    </div>
+                `;
+            }).join('');
+
+            content.innerHTML = `
+                <!-- Greeting & Shift Pill -->
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-black text-brand-dark tracking-tight">Good morning, Anil</h2>
+                        <p class="text-xs text-brand-grayText font-medium">Patiala Segregation Hub &middot; Floor Terminal</p>
+                    </div>
+                    <div class="bg-white border border-brand-border px-2.5 py-1 rounded-full text-[11px] font-bold text-brand-dark shadow-xs flex items-center gap-1">
+                        <i class="ph-fill ph-scales text-emerald-700"></i> Shift A
+                    </div>
                 </div>
-                <button class="pb" onclick="setTab('drop', 0)">
-                    <i class="ph-bold ph-plus-circle"></i> New Drop-off (Weight 2)
-                </button>
-                <h3>Recent Hub Audit Logs</h3>
-                <div class="card" style="margin-top: 6px;">
-                    ${tripRows}
+
+                <!-- KPI Mini Cards -->
+                <div class="grid grid-cols-2 gap-2.5 mb-4">
+                    <div class="bg-white rounded-2xl p-3.5 border border-brand-border shadow-xs">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-brand-grayText block mb-0.5">Drop-offs Today</span>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-black text-brand-dark">${summary.today_dropoffs || 0}</span>
+                            <span class="text-[10px] font-semibold text-brand-grayText">trips</span>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-3.5 border border-brand-border shadow-xs">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-brand-grayText block mb-0.5">Received Today</span>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-black text-emerald-800">${summary.today_kg || 0}</span>
+                            <span class="text-[10px] font-semibold text-brand-grayText">kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dark Green Hero CTA Card (Identical to Household "Ready for Pickup" card) -->
+                <div class="bg-brand-dark rounded-3xl p-5 shadow-card relative overflow-hidden mb-5 text-white">
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 text-white font-extrabold text-sm mb-1">
+                            <i class="ph-bold ph-scales text-base text-emerald-300"></i> Weighbridge Check-in
+                        </div>
+                        <p class="text-white/80 text-xs mb-4 max-w-[240px] leading-relaxed">
+                            Weigh incoming Kabadiwala scrap (Weight 2) and audit against doorstep receipts.
+                        </p>
+                        <button onclick="setTab('drop', 0)" class="bg-white text-brand-dark px-4 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 hover:bg-gray-50 active:scale-95 transition-transform shadow-xs">
+                            Start New Weigh-in <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    </div>
+                    <i class="ph-fill ph-recycle absolute -bottom-6 -right-6 text-9xl text-white/5 pointer-events-none"></i>
+                </div>
+
+                <!-- Recent Audits List Header -->
+                <div class="flex items-center justify-between mb-2.5">
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-brand-grayText">Recent Hub Audit Logs</h3>
+                    <button onclick="setTab('drop', 0)" class="text-xs font-bold text-emerald-800 hover:underline">+ New</button>
+                </div>
+
+                <div class="space-y-2 mb-6">
+                    ${tripRows || '<div class="bg-white p-6 rounded-2xl border border-brand-border text-center text-xs text-brand-grayText">No drop-offs logged yet today.</div>'}
                 </div>
             `;
             return;
         }
 
-        // 2. DROP-OFF TAB
+        // ─────────────────────────────────────────────────────────────
+        // 2. WEIGH-IN / DROP-OFF VIEW
+        // ─────────────────────────────────────────────────────────────
         if (currentTab === 'drop') {
-            // STEP 0: Find Kabadiwala
+            // STEP 0: Find Collector
             if (dropStep === 0) {
-                body.innerHTML = `
-                    <h2>New Drop-off Check-in</h2>
-                    <p class="mu">Enter the Kabadiwala's Partner ID or Phone Number to pull their doorstep declared weights.</p>
-                    <label style="display:block; margin: 16px 0 6px; font-weight: 700; font-size: 13px;">Kabadiwala ID / Employee ID</label>
-                    <input id="inp-kid" placeholder="e.g. KW-1010 or 7814776666" value="${selectedCollector?.employee_id || ''}" style="font-weight: 700; font-family: monospace;">
-                    <button class="pb" onclick="searchCollector()">
-                        <i class="ph-bold ph-magnifying-glass"></i> Find Kabadiwala Records
-                    </button>
-                    <p id="kid-err" style="color: #dc2626; font-size: 12px; margin-top: 8px;"></p>
-                    <div style="background: var(--bg); padding: 12px; border-radius: 12px; margin-top: 20px; font-size: 12px;" class="mu">
-                        <b>Active Live Partners:</b> <a href="javascript:void(0)" onclick="document.getElementById('inp-kid').value='KW-1011'; searchCollector();" style="color: var(--g); font-weight: 700; text-decoration: underline;">KW-1011</a> (Parv Dua), <a href="javascript:void(0)" onclick="document.getElementById('inp-kid').value='KW-1012'; searchCollector();" style="color: var(--g); font-weight: 700; text-decoration: underline;">KW-1012</a> (Amogh)
+                content.innerHTML = `
+                    <div class="mb-4">
+                        <h2 class="text-xl font-black text-brand-dark tracking-tight">Weighbridge Check-in</h2>
+                        <p class="text-xs text-brand-grayText font-medium">Step 1 of 2: Look up collector</p>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-5 border border-brand-border shadow-xs mb-4">
+                        <label class="block text-[11px] font-bold text-brand-grayText uppercase tracking-wider mb-1.5">
+                            Kabadiwala ID or Phone Number
+                        </label>
+                        <div class="flex gap-2 mb-2">
+                            <input id="inp-kid" type="text" placeholder="e.g. KW-1011 or 7814776666" 
+                                value="${selectedCollector?.employee_id || ''}"
+                                onkeydown="if(event.key==='Enter') searchCollector()"
+                                class="flex-1 bg-brand-bg border border-brand-border rounded-xl px-3.5 py-2.5 text-sm font-bold font-mono text-brand-dark focus:outline-none focus:border-brand-dark">
+                            <button onclick="searchCollector()" class="bg-brand-dark text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:opacity-90 active:scale-95 transition-transform flex items-center gap-1.5 shadow-xs">
+                                <i class="ph-bold ph-magnifying-glass"></i> Find
+                            </button>
+                        </div>
+                        <p id="kid-err" class="text-red-600 text-xs font-semibold min-h-[16px]"></p>
+
+                        <div class="mt-4 pt-3 border-t border-brand-border">
+                            <span class="text-[11px] font-bold text-brand-grayText block mb-2">⚡ Quick Select Active Collector:</span>
+                            <div class="flex flex-col gap-2">
+                                <button onclick="document.getElementById('inp-kid').value='KW-1011'; searchCollector();" 
+                                    class="w-full text-left bg-brand-bg hover:bg-emerald-50 border border-brand-border p-2.5 rounded-xl flex items-center justify-between text-xs font-bold text-brand-dark transition-colors">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs">
+                                            <i class="ph-bold ph-user"></i>
+                                        </div>
+                                        <span>KW-1011 (Parv Dua)</span>
+                                    </div>
+                                    <span class="text-[10px] text-emerald-700 font-mono">76 kg pending</span>
+                                </button>
+                                <button onclick="document.getElementById('inp-kid').value='KW-1012'; searchCollector();" 
+                                    class="w-full text-left bg-brand-bg hover:bg-emerald-50 border border-brand-border p-2.5 rounded-xl flex items-center justify-between text-xs font-bold text-brand-dark transition-colors">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs">
+                                            <i class="ph-bold ph-user"></i>
+                                        </div>
+                                        <span>KW-1012 (Amogh)</span>
+                                    </div>
+                                    <span class="text-[10px] text-gray-400 font-mono">Patiala</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 `;
                 return;
             }
 
-            // STEP 1: Inspect Trip & Select Lot Type
+            // STEP 1: Doorstep Weight 1 Review & Lot Segregation
             if (dropStep === 1) {
                 const c = selectedCollector.collector;
                 const pickups = selectedCollector.pickups || [];
                 const declaredTotal = selectedCollector.declared_total || 0;
 
                 const pickupRows = pickups.map(p => `
-                    <div class="row">
+                    <div class="flex items-center justify-between p-2.5 bg-brand-bg rounded-xl border border-brand-border text-xs mb-1.5">
+                        <div class="min-w-0 pr-2">
+                            <p class="font-bold text-brand-dark truncate">${escHtml(p.customer_address || 'Doorstep Customer')}</p>
+                            <p class="text-[10px] text-brand-grayText truncate">${escHtml(p.material_weights || p.items || 'Scrap')}</p>
+                        </div>
+                        <span class="font-extrabold text-brand-dark text-xs font-mono shrink-0">${p.actual_weight || 0} kg</span>
+                    </div>
+                `).join('') || '<p class="text-xs text-brand-grayText py-3 text-center">No pickups recorded.</p>';
+
+                content.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
                         <div>
-                            <div style="font-weight: 600; font-size: 12px;">${escapeHtml(p.customer_address || 'Customer Doorstep')}</div>
-                            <small class="mu">${escapeHtml(p.customer_name || 'Customer')} • ${escapeHtml(p.material_weights || p.items || '')}</small>
+                            <h2 class="text-lg font-black text-brand-dark tracking-tight">${escHtml(c.name || 'Partner')}</h2>
+                            <p class="text-[11px] text-brand-grayText font-mono">${c.employee_id || ('KW-' + c.id)} &middot; ${c.phone_number}</p>
                         </div>
-                        <b style="font-size: 13px; color: var(--sb);">${p.actual_weight || 0} kg</b>
+                        <button onclick="dropStep=0; render();" class="text-xs font-bold text-brand-grayText hover:text-brand-dark">
+                            Change
+                        </button>
                     </div>
-                `).join('') || '<p class="mu">No pickup records found for this trip.</p>';
 
-                body.innerHTML = `
-                    <h2>${escapeHtml(c.name || 'Partner')}</h2>
-                    <p class="mu"><b style="color: var(--g); font-family: monospace;">${c.employee_id || 'KW-' + c.id}</b> • ${c.phone_number}<br>Area: ${c.operating_area || '—'} (PIN: ${c.pincode || '—'})</p>
-                    <div class="card">
-                        <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">Doorstep Declared Scrap (Weight 1)</div>
-                        ${pickupRows}
-                        <div class="row" style="margin-top: 6px; border-top: 2px solid var(--bd); border-bottom: 0;">
-                            <span>Declared Total (Weight 1)</span>
-                            <b style="font-size: 16px; color: var(--g);">${declaredTotal} kg</b>
+                    <!-- Doorstep Weight 1 Receipts Card -->
+                    <div class="bg-white rounded-3xl p-4 border border-brand-border shadow-xs mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-brand-dark">Doorstep Declared (Weight 1)</span>
+                            <span class="text-xs font-black text-emerald-800 font-mono">${declaredTotal} kg</span>
+                        </div>
+                        <div class="max-h-44 overflow-y-auto mb-2 pr-0.5">
+                            ${pickupRows}
                         </div>
                     </div>
 
-                    <label style="display:block; margin: 16px 0 6px; font-weight: 700; font-size: 13px;">Type of Lot</label>
-                    <div class="seg">
-                        <button class="${isSegregated ? 'on' : ''}" onclick="isSegregated=true; render();">Segregated (+₹50 Bonus)</button>
-                        <button class="${!isSegregated ? 'on' : ''}" onclick="isSegregated=false; render();">Unsegregated</button>
+                    <!-- Lot Type Toggle -->
+                    <div class="bg-white rounded-3xl p-4 border border-brand-border shadow-xs mb-5">
+                        <label class="block text-xs font-bold text-brand-dark mb-2">Segregation Status</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="isSegregated=true; render();" 
+                                class="p-3 rounded-2xl text-left border transition-all ${isSegregated ? 'bg-emerald-800 text-white border-emerald-800 shadow-xs' : 'bg-brand-bg text-brand-dark border-brand-border'}">
+                                <div class="font-bold text-xs flex items-center gap-1">
+                                    <i class="ph-bold ph-check"></i> Segregated
+                                </div>
+                                <span class="text-[10px] ${isSegregated ? 'text-emerald-200' : 'text-emerald-700'} font-semibold">+₹50 Bonus</span>
+                            </button>
+                            <button onclick="isSegregated=false; render();" 
+                                class="p-3 rounded-2xl text-left border transition-all ${!isSegregated ? 'bg-gray-800 text-white border-gray-800 shadow-xs' : 'bg-brand-bg text-brand-dark border-brand-border'}">
+                                <div class="font-bold text-xs flex items-center gap-1">
+                                    <i class="ph-bold ph-shuffle"></i> Mixed Lot
+                                </div>
+                                <span class="text-[10px] text-gray-400 font-semibold">Standard Pay</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <button class="pb" onclick="dropStep=2; render();">
-                        Continue to Hub Weighbridge <i class="ph-bold ph-arrow-right"></i>
+                    <button onclick="dropStep=2; render();" 
+                        class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <span>Continue to Hub Weighbridge</span>
+                        <i class="ph-bold ph-arrow-right"></i>
                     </button>
                 `;
                 return;
             }
 
-            // STEP 2: Re-weigh Scrap by Material (Weight 2)
+            // STEP 2: Scale Weighing (Weight 2)
             if (dropStep === 2) {
                 const c = selectedCollector.collector;
                 const declTotal = selectedCollector.declared_total || 0;
-
-                const matInputs = MATERIALS.map(m => `
-                    <div class="row">
-                        <div>
-                            <span style="font-weight: 600; font-size: 13px;">${m}</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <input class="sm" type="number" step="0.1" placeholder="0" 
-                                value="${hubWeights[m] || ''}" 
-                                oninput="setMatWeight('${m}', this.value)" style="font-weight: bold; font-family: monospace;">
-                            <span style="font-size: 11px; color: var(--mu);">kg</span>
-                        </div>
-                    </div>
-                `).join('');
-
                 const hubTotal = getHubTotal();
                 const gap = declTotal > 0 ? (Math.abs(declTotal - hubTotal) / declTotal) : 0;
                 const isFlagged = gap > 0.1;
 
+                const matInputs = MATERIALS.map(m => `
+                    <div class="flex items-center justify-between py-1.5 border-b border-brand-border last:border-0">
+                        <span class="font-bold text-brand-dark text-xs">${m}</span>
+                        <div class="flex items-center gap-1">
+                            <input type="number" step="0.1" min="0" placeholder="0"
+                                value="${hubWeights[m] || ''}"
+                                oninput="setMatWeight('${m}', this.value)"
+                                class="w-20 bg-brand-bg border border-brand-border rounded-xl px-2 py-1 text-right font-extrabold text-brand-dark text-xs font-mono focus:outline-none focus:border-brand-dark">
+                            <span class="text-[10px] text-brand-grayText font-bold">kg</span>
+                        </div>
+                    </div>
+                `).join('');
+
                 let gapBadge = '';
                 if (hubTotal > 0) {
                     if (isFlagged) {
-                        gapBadge = `<span class="tg w" style="font-size: 12px;">⚠️ Gap ${Math.round(gap * 100)}% (Admin will be alerted)</span>`;
+                        gapBadge = `<div class="bg-red-50 text-red-800 border border-red-200 text-xs font-bold p-2.5 rounded-xl flex items-center gap-2 mb-3">
+                            <i class="ph-bold ph-warning text-base text-red-600"></i>
+                            <div>
+                                <span class="block">⚠️ Gap ${Math.round(gap * 100)}% (Audit Alert)</span>
+                                <span class="text-[10px] font-normal text-red-600">Discrepancy exceeds 10% threshold.</span>
+                            </div>
+                        </div>`;
                     } else {
-                        gapBadge = `<span class="tg" style="font-size: 12px;">✅ Matches Weight 1</span>`;
+                        gapBadge = `<div class="bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold p-2.5 rounded-xl flex items-center gap-1.5 mb-3">
+                            <i class="ph-bold ph-check-circle text-base text-emerald-600"></i>
+                            <span>✅ Matches Weight 1 (${Math.round(gap * 100)}% diff)</span>
+                        </div>`;
                     }
                 }
 
-                body.innerHTML = `
-                    <h2>Hub Weighbridge Audit</h2>
-                    <p class="mu">${isSegregated ? 'Weigh each segregated scrap lot.' : 'Sort the mixed lot, then weigh each material.'}</p>
-                    <div class="card" style="max-height: 280px; overflow-y: auto;">
-                        ${matInputs}
+                content.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h2 class="text-base font-black text-brand-dark">Hub Floor Weighbridge</h2>
+                            <p class="text-[11px] text-brand-grayText">Enter scale readings per material</p>
+                        </div>
+                        <button onclick="dropStep=1; render();" class="text-xs font-bold text-brand-grayText">
+                            Back
+                        </button>
                     </div>
 
-                    <div style="background: var(--gl); padding: 12px; border-radius: 12px; margin-top: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <span style="font-weight: 700; font-size: 13px;">Declared (Weight 1):</span>
-                            <b>${declTotal} kg</b>
+                    <!-- Material Inputs Card -->
+                    <div class="bg-white rounded-3xl p-4 border border-brand-border shadow-xs mb-3">
+                        <div class="max-h-52 overflow-y-auto pr-0.5">
+                            ${matInputs}
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight: 700; font-size: 13px;">Hub Scale (Weight 2):</span>
-                            <b style="color: var(--g); font-size: 16px;">${hubTotal} kg</b>
-                        </div>
-                        <div style="margin-top: 6px;">${gapBadge}</div>
                     </div>
 
-                    <label class="ck">
-                        <input type="checkbox" id="chk-confirm" onchange="document.getElementById('btn-store').disabled = !(getHubTotal() > 0 && this.checked)">
-                        <span><b>${escapeHtml(c.name)}</b> confirmed the measured scale weights.</span>
+                    <!-- Comparison Card -->
+                    <div class="bg-brand-dark text-white rounded-3xl p-4 shadow-card mb-3 space-y-1.5 text-xs">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-white/80">Hub Scale Total (W2):</span>
+                            <span class="text-lg font-black text-white font-mono">${hubTotal} kg</span>
+                        </div>
+                        <div class="flex justify-between items-baseline text-white/60 text-[11px]">
+                            <span>Doorstep Declared (W1):</span>
+                            <span class="font-mono font-bold">${declTotal} kg</span>
+                        </div>
+                    </div>
+
+                    ${gapBadge}
+
+                    <label class="flex items-center gap-2 cursor-pointer select-none mb-4 text-xs font-medium text-brand-dark">
+                        <input type="checkbox" id="chk-confirm" onchange="checkCanStore()" class="w-4 h-4 rounded text-emerald-700">
+                        <span><b>${escHtml(c.name)}</b> verified the scale reading.</span>
                     </label>
 
-                    <button class="pb" id="btn-store" disabled onclick="submitDropoff()">
-                        <i class="ph-bold ph-check-circle"></i> Confirm Audit &amp; Deposit to Silos
+                    <button id="btn-store" disabled onclick="submitDropoff()"
+                        class="w-full bg-brand-dark hover:bg-brand-primary disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-full text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-check-circle text-base text-emerald-400"></i>
+                        <span>Confirm &amp; Deposit to Silos</span>
                     </button>
                 `;
                 return;
             }
 
-            // STEP 3: Drop-off Stored Successfully
+            // STEP 3: Success Screen
             if (dropStep === 3) {
-                body.innerHTML = `
-                    <h2>Drop-off Stored &amp; Verified! 🎉</h2>
-                    <p class="mu">Trip <b>${lastDropoff.trip_id}</b> recorded for ${lastDropoff.collector_name}.</p>
-                    <div class="card">
-                        <div class="row">
-                            <span style="font-weight: 600;">Trip Payout for Approval</span>
-                            <b style="color: var(--g); font-size: 18px;">₹${lastDropoff.payout}</b>
+                content.innerHTML = `
+                    <div class="bg-white rounded-3xl p-6 border border-brand-border shadow-xs text-center mt-2 mb-4">
+                        <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl font-black mx-auto mb-3">
+                            <i class="ph-bold ph-check"></i>
                         </div>
-                        <div class="row">
-                            <span>Hub Measured Weight</span>
-                            <b>${lastDropoff.hub_weight} kg</b>
+                        <h3 class="text-lg font-black text-brand-dark">Drop-off Verified!</h3>
+                        <p class="text-xs text-brand-grayText mt-0.5 mb-4">
+                            Trip <span class="font-mono font-bold text-brand-dark">${lastDropoff.trip_id}</span> recorded in silos.
+                        </p>
+
+                        <div class="bg-brand-bg rounded-2xl p-4 text-left border border-brand-border mb-5 space-y-2 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-brand-grayText font-medium">Partner:</span>
+                                <span class="font-bold text-brand-dark">${escHtml(lastDropoff.collector_name)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-brand-grayText font-medium">Hub Weight:</span>
+                                <span class="font-bold text-brand-dark font-mono">${lastDropoff.hub_weight} kg</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-brand-border">
+                                <span class="text-brand-dark font-bold">Settlement Payout:</span>
+                                <span class="text-lg font-black text-emerald-800">₹${lastDropoff.payout}</span>
+                            </div>
                         </div>
-                        <div class="row">
-                            <span>Adulteration Audit Status</span>
-                            <i class="tg ${lastDropoff.is_flagged ? 'w' : ''}">${lastDropoff.is_flagged ? 'Gap Flagged' : 'Verified OK'}</i>
+
+                        <div class="space-y-2">
+                            <button onclick="setTab('drop', 0)" class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-xs shadow-xs active:scale-95 transition-transform">
+                                + Next Weigh-in
+                            </button>
+                            <button onclick="setTab('home')" class="w-full bg-white border border-brand-border text-brand-dark font-bold py-3 rounded-full text-xs hover:bg-gray-50 active:scale-95 transition-transform">
+                                Return to Floor Home
+                            </button>
                         </div>
                     </div>
-                    <button class="pb" onclick="setTab('home')">
-                        <i class="ph-bold ph-arrow-left"></i> Back to Floor Home
-                    </button>
                 `;
                 return;
             }
         }
 
-        // 3. DISPATCH TAB
-        if (currentTab === 'disp') {
-            const dRows = dispatches.map(d => `
-                <div class="card">
-                    <div class="row">
-                        <b>${d.id} • ${d.material}</b>
-                        <i class="tg ${d.status === 'Planned' ? 'w' : ''}">${d.status}</i>
-                    </div>
-                    <p class="mu" style="margin: 4px 0 8px;">${d.weight_kg} kg batched for <b>${escapeHtml(d.recycling_unit)}</b></p>
-                    ${d.status === 'Planned' ? `
-                        <button class="sb" onclick="markLoaded('${d.id}')">
-                            <i class="ph-bold ph-check"></i> Mark Loaded into Truck
-                        </button>
-                    ` : '<span style="font-size: 11px; color: var(--g); font-weight: 700;">Dispatched &amp; En Route</span>'}
-                </div>
-            `).join('') || '<p class="mu" style="text-align: center; padding: 20px 0;">No active dispatches.</p>';
+        // ─────────────────────────────────────────────────────────────
+        // 3. SILOS VIEW
+        // ─────────────────────────────────────────────────────────────
+        if (currentTab === 'silos') {
+            const siloCards = silos.map(s => {
+                const pct = s.fill_pct || Math.min(100, Math.round((s.current_kg / s.capacity) * 100));
+                const barColor = pct >= 80 ? 'bg-amber-500' : 'bg-emerald-700';
 
-            body.innerHTML = `
-                <h2>Bulk Dispatches</h2>
-                <p class="mu">Load aggregated material lots into trucks for delivery to certified recycling units.</p>
-                ${dRows}
+                return `
+                    <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-xs">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-brand-dark leading-tight">${escHtml(s.material)}</h4>
+                                <span class="text-[10px] text-brand-grayText font-mono">Silo #${s.id} &middot; ${escHtml(s.recycling_unit)}</span>
+                            </div>
+                            <span class="text-xs font-black text-brand-dark font-mono">${s.current_kg} <span class="text-[10px] text-gray-400 font-normal">/ ${s.capacity} kg</span></span>
+                        </div>
+                        <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden mb-1.5">
+                            <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] font-bold text-brand-grayText">
+                            <span>${pct}% Filled</span>
+                            <button onclick="setTab('disp')" class="text-emerald-800 hover:underline">Dispatch Lot &rarr;</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            content.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="text-xl font-black text-brand-dark tracking-tight">Material Silos</h2>
+                        <p class="text-xs text-brand-grayText font-medium">Live storage inventory &amp; capacity</p>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">10 Silos</span>
+                </div>
+                <div class="space-y-2.5 mb-6">
+                    ${siloCards || '<p class="text-xs text-gray-400 py-8 text-center">Loading silos…</p>'}
+                </div>
             `;
             return;
         }
 
-        // 4. PROFILE TAB
+        // ─────────────────────────────────────────────────────────────
+        // 4. DISPATCHES VIEW
+        // ─────────────────────────────────────────────────────────────
+        if (currentTab === 'disp') {
+            const dispCards = dispatches.map(d => {
+                const statusBadge = d.status === 'Planned'
+                    ? '<span class="bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full">Planned</span>'
+                    : '<span class="bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-full">In transit</span>';
+
+                return `
+                    <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-xs">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="font-mono font-bold text-[11px] text-gray-400">${escHtml(d.id)}</span>
+                                <h4 class="font-bold text-sm text-brand-dark">${escHtml(d.material)} (${d.weight_kg} kg)</h4>
+                                <p class="text-[11px] text-brand-grayText mt-0.5">Dest: <b>${escHtml(d.recycling_unit)}</b></p>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        ${d.status === 'Planned' ? `
+                            <button onclick="markLoaded('${d.id}')" class="w-full mt-2 bg-brand-bg hover:bg-emerald-50 border border-brand-border text-emerald-800 font-bold py-2 rounded-xl text-xs transition-colors">
+                                <i class="ph-bold ph-check"></i> Mark Loaded into Truck
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            content.innerHTML = `
+                <div class="mb-3">
+                    <h2 class="text-xl font-black text-brand-dark tracking-tight">Recycler Dispatches</h2>
+                    <p class="text-xs text-brand-grayText font-medium">Direct shipments to industrial recyclers</p>
+                </div>
+                <div class="space-y-2.5 mb-6">
+                    ${dispCards || '<p class="text-xs text-gray-400 py-8 text-center">No dispatches planned.</p>'}
+                </div>
+            `;
+            return;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // 5. PROFILE VIEW
+        // ─────────────────────────────────────────────────────────────
         if (currentTab === 'prof') {
-            body.innerHTML = `
-                <h2>Anil Sharma</h2>
-                <p class="mu">Employee ID <b>E-201</b> • Floor Weighing &amp; Sorting<br>Shift A: 08:00 – 16:00 IST</p>
-                <div class="card">
-                    <div class="row">
-                        <span>Hub Location</span>
-                        <b>Patiala Central Hub #1</b>
+            content.innerHTML = `
+                <div class="mb-4">
+                    <h2 class="text-xl font-black text-brand-dark tracking-tight">Operator Profile</h2>
+                    <p class="text-xs text-brand-grayText font-medium">Floor station terminal details</p>
+                </div>
+
+                <div class="bg-white rounded-3xl p-5 border border-brand-border shadow-xs text-center mb-4">
+                    <div class="w-16 h-16 rounded-full bg-brand-dark text-emerald-300 flex items-center justify-center font-black text-2xl mx-auto mb-2.5 shadow-xs">
+                        AS
                     </div>
-                    <div class="row">
-                        <span>Weighbridge Status</span>
-                        <b style="color: var(--g);">Online &amp; Calibrated 🟢</b>
+                    <h3 class="font-extrabold text-base text-brand-dark">Anil Sharma</h3>
+                    <p class="text-xs text-brand-grayText font-medium">Weighbridge Operator &middot; Employee #E-201</p>
+                    <span class="inline-block bg-emerald-50 text-emerald-800 text-[10px] font-bold px-3 py-1 rounded-full border border-emerald-200 mt-2">
+                        Shift A (08:00 - 16:00 IST)
+                    </span>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 border border-brand-border shadow-xs space-y-2.5 text-xs">
+                    <div class="flex justify-between py-1 border-b border-brand-border">
+                        <span class="text-brand-grayText font-medium">Hub Facility:</span>
+                        <span class="font-bold text-brand-dark">Patiala Central Hub #1</span>
                     </div>
-                    <div class="row">
-                        <span>Language</span>
-                        <b>English / Hindi</b>
+                    <div class="flex justify-between py-1 border-b border-brand-border">
+                        <span class="text-brand-grayText font-medium">Floor Scale Calibration:</span>
+                        <span class="font-bold text-emerald-700">Verified &amp; Online 🟢</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-brand-border">
+                        <span class="text-brand-grayText font-medium">Floor Language:</span>
+                        <span class="font-bold text-brand-dark">English / Hinglish</span>
+                    </div>
+                    <div class="flex justify-between py-1">
+                        <span class="text-brand-grayText font-medium">Station Device:</span>
+                        <span class="font-bold text-brand-dark font-mono">Terminal #HUB-01</span>
                     </div>
                 </div>
-                <button class="pb" style="background: #e2e8f0; color: #334155;" onclick="alert('Floor Station is active and connected.')">
-                    Station Status: Active
-                </button>
+
+                <div class="mt-4">
+                    <a href="admin.html" target="_blank" class="w-full bg-white border border-brand-border text-brand-dark font-bold py-3.5 rounded-full text-xs flex items-center justify-center gap-2 hover:bg-gray-50 active:scale-95 transition-transform shadow-xs">
+                        <i class="ph-bold ph-arrow-square-out text-sm"></i>
+                        <span>Open Main Circular Admin Panel</span>
+                    </a>
+                </div>
             `;
         }
     }
@@ -552,11 +695,7 @@
 
     function setMatWeight(mat, val) {
         hubWeights[mat] = parseFloat(val) || 0;
-        const btn = document.getElementById('btn-store');
-        const chk = document.getElementById('chk-confirm');
-        if (btn && chk) {
-            btn.disabled = !(getHubTotal() > 0 && chk.checked);
-        }
+        checkCanStore();
         render();
     }
 
@@ -564,10 +703,24 @@
         return Math.round(Object.values(hubWeights).reduce((a, b) => a + (parseFloat(b) || 0), 0) * 10) / 10;
     }
 
+    function checkCanStore() {
+        const btn = document.getElementById('btn-store');
+        const chk = document.getElementById('chk-confirm');
+        if (btn && chk) {
+            btn.disabled = !(getHubTotal() > 0 && chk.checked);
+        }
+    }
+
     async function submitDropoff() {
         const hubTotal = getHubTotal();
         const declTotal = selectedCollector.declared_total || 0;
         const c = selectedCollector.collector;
+
+        const btn = document.getElementById('btn-store');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Recording…';
+        }
 
         try {
             const res = await fetch(`${API_BASE}/hub/dropoff`, {
@@ -597,9 +750,11 @@
                 loadData();
             } else {
                 alert(data.error || 'Failed to record dropoff.');
+                if (btn) btn.disabled = false;
             }
         } catch (e) {
             alert('Network error recording dropoff.');
+            if (btn) btn.disabled = false;
         }
     }
 
@@ -616,13 +771,12 @@
         }
     }
 
-    function escapeHtml(str) {
+    function escHtml(str) {
         return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     // Initial load
     loadData();
 </script>
-
 </body>
 </html>
