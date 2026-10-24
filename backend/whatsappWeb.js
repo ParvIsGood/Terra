@@ -39,6 +39,39 @@ function convertMp3ToOpusOgg(mp3Buffer) {
     });
 }
 
+// Generates warm, human-like neural voice audio (Microsoft Edge Neural Voice)
+function generateNeuralVoiceNote(text, voice = 'hi-IN-MadhurNeural') {
+    return new Promise((resolve, reject) => {
+        try {
+            const pyScript = path.join(__dirname, 'edge_tts_helper.py');
+            const pyProc = spawn('python3', [pyScript, text, voice, '+0%']);
+            const ffmpegProc = spawn(ffmpegPath, [
+                '-i', 'pipe:0',
+                '-c:a', 'libopus',
+                '-b:a', '32k',
+                '-vbr', 'on',
+                '-compression_level', '10',
+                '-f', 'ogg',
+                'pipe:1'
+            ]);
+
+            pyProc.stdout.pipe(ffmpegProc.stdin);
+
+            const chunks = [];
+            ffmpegProc.stdout.on('data', chunk => chunks.push(chunk));
+            ffmpegProc.on('close', code => {
+                if (code === 0 && chunks.length > 0) resolve(Buffer.concat(chunks));
+                else reject(new Error('Neural voice generation failed with code ' + code));
+            });
+
+            pyProc.on('error', err => reject(err));
+            ffmpegProc.on('error', err => reject(err));
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
 let sock = null;
 let qrCodeDataUrl = null;
 let isReady = false;
@@ -591,8 +624,8 @@ async function offerPickupToCurrentCandidate(reqId) {
 
     // Voice Note Addon for Kabadiwala
     const spokenOffer = (lang === 'hindi')
-        ? `नमस्ते ${currentCollector.name || 'पार्टनर'} जी! ऑर्डर ${dispatch.requestId} का नया पिकअप आया है। स्वीकार करने के लिए हाँ बोलें।`
-        : `Namaste ${currentCollector.name || 'Partner'} ji! Order ${dispatch.requestId} ka naya pickup aaya hai. Accept karne ke liye 'Haan' ya 'Accept' boliye.`;
+        ? `नमस्ते ${currentCollector.name || 'पार्टनर'} भाई! ऑर्डर ${dispatch.requestId} का नया पिकअप आया है। अगर आप यह ऑर्डर लेना चाहते हैं, तो माइक दबाकर 'हाँ ले लूँगा' बोलिए।`
+        : `Namaste ${currentCollector.name || 'Partner'} bhai! Order ${dispatch.requestId} ka naya pickup aaya hai. Agar aap lena chahte hain, toh mic daba kar 'Haan' ya 'Accept' boliye.`;
     sendWhatsAppVoiceNote(collectorPhone, spokenOffer, 'hi').catch(e => {});
 
     // 60-second countdown timer
@@ -892,8 +925,8 @@ async function startWhatsApp() {
                                 `Kripya time par pahunch kar waste collect karein! Dhanyawad 🙏`;
                         }
                         const spokenAccept = (collLang === 'hindi')
-                            ? `ऑर्डर ${reqId} आपके लिए कन्फर्म हो गया है। कस्टमर का पता स्क्रीन पर भेज दिया गया है।`
-                            : `Order ${reqId} aapke liye confirm ho gaya hai. Customer ka address chat mein bhej diya hai.`;
+                            ? `बधाई हो भाई जी! ऑर्डर ${reqId} आपके नाम कन्फर्म हो गया है। कस्टमर का पता स्क्रीन पर भेज दिया है।`
+                            : `Badhaai ho bhai ji! Order ${reqId} aapke naam confirm ho gaya hai. Customer ka address chat mein bhej diya hai.`;
                         await reply(acceptConfirmation, spokenAccept);
 
                         // Alert to Customer on WhatsApp
@@ -1127,8 +1160,8 @@ async function startWhatsApp() {
                                     `Pickup status *Completed* mark ho gaya hai aur Hub records me save ho chuka hai. Dhanyawad! 👍`;
                             }
                             const spokenComp = (collLang === 'hindi')
-                                ? `भाई जी, ऑर्डर ${session.requestId} पूरा हो गया है। कुल ${totalWeight} किलो का वजन दर्ज हो गया है, और कस्टमर का पेमेंट ट्रांसफर हो गया है। धन्यवाद!`
-                                : `Bhai ji, order ${session.requestId} poora ho gaya hai. Kul ${totalWeight} kilo ka weight darj ho chuka hai, aur customer ka payout bhej diya gaya hai. Shabaash!`;
+                                ? `शाबाश भाई जी! ऑर्डर ${session.requestId} पूरा हो गया है। कुल ${totalWeight} किलो का वजन नोट कर लिया है, और कस्टमर को पेमेंट भी भेज दिया गया है। बहुत बढ़िया काम!`
+                                : `Shabaash bhai ji! Order ${session.requestId} poora ho gaya hai. Kul ${totalWeight} kilo ka weight note kar liya hai, aur customer ko payout bhej diya gaya hai. Bahut badhiya!`;
                             await reply(compMsg, spokenComp);
 
                             // Official completion & weight alert to Customer on WhatsApp
@@ -1775,33 +1808,43 @@ async function sendWhatsAppVoiceNote(target, spokenText, lang = 'hi') {
 
         if (!cleanSpeech) return { success: false };
 
-        const truncatedSpeech = cleanSpeech.length > 200 ? cleanSpeech.substring(0, 195) + '...' : cleanSpeech;
+        const truncatedSpeech = cleanSpeech.length > 220 ? cleanSpeech.substring(0, 215) + '...' : cleanSpeech;
 
-        const base64Audio = await googleTTS.getAudioBase64(truncatedSpeech, {
-            lang: lang === 'en' ? 'en' : 'hi',
-            slow: false,
-            host: 'https://translate.google.com',
-            timeout: 10000,
-        });
+        let oggOpusBuffer = null;
 
-        if (base64Audio) {
-            const mp3Buffer = Buffer.from(base64Audio, 'base64');
-            let audioToSend = mp3Buffer;
-            let mimeType = 'audio/mp4';
+        // 1. Primary: Microsoft Edge Neural Voice (Warm natural conversational voice - MadhurNeural)
+        try {
+            const chosenVoice = lang === 'en' ? 'en-IN-PrabhatNeural' : 'hi-IN-MadhurNeural';
+            oggOpusBuffer = await generateNeuralVoiceNote(truncatedSpeech, chosenVoice);
+        } catch (neuralErr) {
+            console.warn('Edge Neural TTS notice, falling back to Google TTS:', neuralErr.message);
+        }
 
+        // 2. Secondary fallback: Google TTS if needed
+        if (!oggOpusBuffer) {
             try {
-                audioToSend = await convertMp3ToOpusOgg(mp3Buffer);
-                mimeType = 'audio/ogg; codecs=opus';
-            } catch (convErr) {
-                console.warn('Opus conversion warning, falling back to mp3:', convErr.message);
+                const base64Audio = await googleTTS.getAudioBase64(truncatedSpeech, {
+                    lang: lang === 'en' ? 'en' : 'hi',
+                    slow: false,
+                    host: 'https://translate.google.com',
+                    timeout: 10000,
+                });
+                if (base64Audio) {
+                    const mp3Buffer = Buffer.from(base64Audio, 'base64');
+                    oggOpusBuffer = await convertMp3ToOpusOgg(mp3Buffer);
+                }
+            } catch (fallbackErr) {
+                console.warn('Google TTS fallback error:', fallbackErr.message);
             }
+        }
 
+        if (oggOpusBuffer) {
             await sock.sendMessage(jid, {
-                audio: audioToSend,
-                mimetype: mimeType,
+                audio: oggOpusBuffer,
+                mimetype: 'audio/ogg; codecs=opus',
                 ptt: true
             });
-            console.log(`🎙️ [WhatsApp Voice Note Addon] Successfully sent native ${mimeType} to ${jid}`);
+            console.log(`🎙️ [WhatsApp Neural Voice Note] Successfully sent native OGG Opus to ${jid}`);
             return { success: true };
         }
     } catch (err) {
