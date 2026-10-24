@@ -889,7 +889,7 @@ async function startWhatsApp() {
                             `• Jaise: *Cardboard 10, Plastic 4, Paper 5*\n` +
                             `• ya: *Gatta 8 kg, Loha 2 kg*\n` +
                             `• ya Kul weight: *15 kg*\n\n` +
-                            `⚠️ *Note:* Weight enter karne ke baad hi pickup *Officially Complete* hoga aur customer ko Green Points credit honge.`;
+                            `⚠️ *Note:* Weight enter karne ke baad hi pickup *Officially Complete* hoga.`;
                     }
 
                     await reply(verifyPrompt);
@@ -959,7 +959,7 @@ async function startWhatsApp() {
                                     `──────────────────\n` +
                                     `📦 *कुल वजन (Total Weight):* *${totalWeight} kg*\n` +
                                     `💵 *कस्टमर भुगतान:* *₹${payout}*\n\n` +
-                                    `पिकअप स्टेटस *Completed* मार्क हो गया है और कस्टमर को *+${ptsEarned} Green Points* क्रेडिट कर दिए गए हैं। धन्यवाद!`;
+                                    `पिकअप स्टेटस *Completed* मार्क हो गया है और Hub रिकॉर्ड में दर्ज हो चुका है। धन्यवाद! 👍`;
                             } else if (collLang === 'english') {
                                 compMsg = 
                                     `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
@@ -970,7 +970,7 @@ async function startWhatsApp() {
                                     `──────────────────\n` +
                                     `📦 *Total Weight:* *${totalWeight} kg*\n` +
                                     `💵 *Customer Payout:* *₹${payout}*\n\n` +
-                                    `Status marked *Completed* and customer awarded *+${ptsEarned} Green Points*. Thank you!`;
+                                    `Pickup status marked *Completed* and logged to Hub floor records. Thank you! 👍`;
                             } else {
                                 compMsg = 
                                     `✅ *Pickup Officially Verified & Completed!* 🎉\n\n` +
@@ -981,7 +981,7 @@ async function startWhatsApp() {
                                     `──────────────────\n` +
                                     `📦 *Total Weight:* *${totalWeight} kg*\n` +
                                     `💵 *Customer Payout:* *₹${payout}*\n\n` +
-                                    `Pickup status *Completed* mark ho gaya hai aur customer ko *+${ptsEarned} Green Points* credit kar diye gaye hain. Dhanyawad!`;
+                                    `Pickup status *Completed* mark ho gaya hai aur Hub records me save ho chuka hai. Dhanyawad! 👍`;
                             }
                             await reply(compMsg);
 
