@@ -6,6 +6,7 @@ const { Jimp } = require('jimp');
 const path   = require('path');
 const fs     = require('fs');
 const { getDb, persist } = require('./database');
+const googleTTS = require('google-tts-api');
 
 let sock = null;
 let qrCodeDataUrl = null;
@@ -557,6 +558,12 @@ async function offerPickupToCurrentCandidate(reqId) {
 
     await sendWhatsAppAlert(collectorPhone, offerMsg);
 
+    // Voice Note Addon for Kabadiwala
+    const spokenOffer = (lang === 'hindi')
+        ? `नमस्ते ${currentCollector.name || 'पार्टनर'} जी! ऑर्डर ${dispatch.requestId} का नया पिकअप आया है। स्वीकार करने के लिए हाँ बोलें।`
+        : `Namaste ${currentCollector.name || 'Partner'} ji! Order ${dispatch.requestId} ka naya pickup aaya hai. Accept karne ke liye 'Haan' ya 'Accept' boliye.`;
+    sendWhatsAppVoiceNote(collectorPhone, spokenOffer, 'hi').catch(e => {});
+
     // 60-second countdown timer
     dispatch.timer = setTimeout(async () => {
         console.log(`[Dispatch] 60s timeout elapsed for collector ${currentCollector.name} on #${reqId}`);
@@ -648,7 +655,9 @@ async function startWhatsApp() {
                 ).trim();
 
                 // 🎙️ WHATSAPP VOICE NOTE HANDLER (Groq Whisper AI)
+                let isIncomingVoiceNote = false;
                 if (!text && msg.message.audioMessage) {
+                    isIncomingVoiceNote = true;
                     try {
                         console.log(`🎙️ [WhatsApp Voice Note] Audio received from ${phone}. Transcribing with Groq Whisper...`);
                         const audioBuffer = await downloadMediaMessage(
@@ -737,8 +746,12 @@ async function startWhatsApp() {
                 if (stmt.step()) collector = stmt.getAsObject();
                 stmt.free();
 
-                const reply = async (replyText) => {
+                const reply = async (replyText, spokenAddon = null) => {
                     await sock.sendMessage(remoteJid, { text: replyText });
+                    if (spokenAddon || isIncomingVoiceNote) {
+                        const toSpeak = spokenAddon || replyText;
+                        sendWhatsAppVoiceNote(remoteJid, toSpeak, 'hi').catch(e => {});
+                    }
                 };
 
                 // ── 0. PICKUP ACCEPT / REJECT HANDLER (60s Dispatch System) ─────
@@ -847,7 +860,10 @@ async function startWhatsApp() {
                                 `📍 Doorstep par pahunch kar customer ke app se QR code scan karein.\n\n` +
                                 `Kripya time par pahunch kar waste collect karein! Dhanyawad 🙏`;
                         }
-                        await reply(acceptConfirmation);
+                        const spokenAccept = (collLang === 'hindi')
+                            ? `ऑर्डर ${reqId} आपके लिए कन्फर्म हो गया है। कस्टमर का पता स्क्रीन पर भेज दिया गया है।`
+                            : `Order ${reqId} aapke liye confirm ho gaya hai. Customer ka address chat mein bhej diya hai.`;
+                        await reply(acceptConfirmation, spokenAccept);
 
                         // Alert to Customer on WhatsApp
                         if (targetDispatch.customer?.phone) {
@@ -1079,7 +1095,10 @@ async function startWhatsApp() {
                                     `💵 *Customer Payout:* *₹${payout}*\n\n` +
                                     `Pickup status *Completed* mark ho gaya hai aur Hub records me save ho chuka hai. Dhanyawad! 👍`;
                             }
-                            await reply(compMsg);
+                            const spokenComp = (collLang === 'hindi')
+                                ? `भाई जी, ऑर्डर ${session.requestId} पूरा हो गया है। कुल ${totalWeight} किलो का वजन दर्ज हो गया है, और कस्टमर का पेमेंट ट्रांसफर हो गया है। धन्यवाद!`
+                                : `Bhai ji, order ${session.requestId} poora ho gaya hai. Kul ${totalWeight} kilo ka weight darj ho chuka hai, aur customer ka payout bhej diya gaya hai. Shabaash!`;
+                            await reply(compMsg, spokenComp);
 
                             // Official completion & weight alert to Customer on WhatsApp
                             if (session.customerPhone) {
@@ -1691,6 +1710,61 @@ async function sendWhatsAppAlert(target, message) {
         return { success: true };
     } catch (err) {
         console.error(`❌ Failed to send WhatsApp alert to ${target}:`, err.message);
+        return { success: false, error: err.message };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// VOICE NOTE ADDON: Sends spoken Hindi voice note to Kabadiwala
+// ─────────────────────────────────────────────────────────────
+async function sendWhatsAppVoiceNote(target, spokenText, lang = 'hi') {
+    if (!isReady || !sock || !spokenText) return { success: false };
+
+    try {
+        let jid = target;
+        if (!target.includes('@')) {
+            const resolved = resolvePhoneAndLid(target);
+            if (resolved.phone) {
+                jid = `${resolved.phone.replace(/\D/g, '')}@s.whatsapp.net`;
+            } else {
+                jid = `${target.replace(/\D/g, '')}@s.whatsapp.net`;
+            }
+        }
+
+        // Clean any markdown symbols, asterisks, bullet points from spoken text
+        const cleanSpeech = spokenText
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/#{1,6}\s+/g, '')
+            .replace(/`{1,3}[^`]*`{1,3}/g, '')
+            .replace(/https?:\/\/[^\s]+/g, '')
+            .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        if (!cleanSpeech) return { success: false };
+
+        const truncatedSpeech = cleanSpeech.length > 200 ? cleanSpeech.substring(0, 195) + '...' : cleanSpeech;
+
+        const base64Audio = await googleTTS.getAudioBase64(truncatedSpeech, {
+            lang: lang === 'en' ? 'en' : 'hi',
+            slow: false,
+            host: 'https://translate.google.com',
+            timeout: 10000,
+        });
+
+        if (base64Audio) {
+            const buffer = Buffer.from(base64Audio, 'base64');
+            await sock.sendMessage(jid, {
+                audio: buffer,
+                mimetype: 'audio/mp4',
+                ptt: true
+            });
+            console.log(`🎙️ [WhatsApp Voice Note Addon] Successfully sent to ${jid}`);
+            return { success: true };
+        }
+    } catch (err) {
+        console.warn('Could not send WhatsApp voice note addon:', err.message);
         return { success: false, error: err.message };
     }
 }
