@@ -624,8 +624,8 @@ async function offerPickupToCurrentCandidate(reqId) {
 
     // Voice Note Addon for Kabadiwala
     const spokenOffer = (lang === 'hindi')
-        ? `नमस्ते ${currentCollector.name || 'पार्टनर'} भाई! ऑर्डर ${dispatch.requestId} का नया पिकअप आया है। अगर आप यह ऑर्डर लेना चाहते हैं, तो माइक दबाकर 'हाँ ले लूँगा' बोलिए।`
-        : `Namaste ${currentCollector.name || 'Partner'} bhai! Order ${dispatch.requestId} ka naya pickup aaya hai. Agar aap lena chahte hain, toh mic daba kar 'Haan' ya 'Accept' boliye.`;
+        ? `नमस्ते ${currentCollector.name || 'पार्टनर'} भाई! नया पिकअप ऑर्डर आया है। अगर आप यह ऑर्डर लेना चाहते हैं, तो माइक दबाकर 'हाँ ले लूँगा' बोलिए।`
+        : `Namaste ${currentCollector.name || 'Partner'} bhai! Naya pickup order aaya hai. Agar aap lena chahte hain, toh mic daba kar 'Haan' ya 'Accept' boliye.`;
     sendWhatsAppVoiceNote(collectorPhone, spokenOffer, 'hi').catch(e => {});
 
     // 60-second countdown timer
@@ -925,8 +925,8 @@ async function startWhatsApp() {
                                 `Kripya time par pahunch kar waste collect karein! Dhanyawad 🙏`;
                         }
                         const spokenAccept = (collLang === 'hindi')
-                            ? `बधाई हो भाई जी! ऑर्डर ${reqId} आपके नाम कन्फर्म हो गया है। कस्टमर का पता स्क्रीन पर भेज दिया है।`
-                            : `Badhaai ho bhai ji! Order ${reqId} aapke naam confirm ho gaya hai. Customer ka address chat mein bhej diya hai.`;
+                            ? `बधाई हो भाई जी! यह ऑर्डर आपके नाम कन्फर्म हो गया है। कस्टमर का पता स्क्रीन पर भेज दिया है।`
+                            : `Badhaai ho bhai ji! Yeh order aapke naam confirm ho gaya hai. Customer ka address chat mein bhej diya hai.`;
                         await reply(acceptConfirmation, spokenAccept);
 
                         // Alert to Customer on WhatsApp
@@ -1160,8 +1160,8 @@ async function startWhatsApp() {
                                     `Pickup status *Completed* mark ho gaya hai aur Hub records me save ho chuka hai. Dhanyawad! 👍`;
                             }
                             const spokenComp = (collLang === 'hindi')
-                                ? `शाबाश भाई जी! ऑर्डर ${session.requestId} पूरा हो गया है। कुल ${totalWeight} किलो का वजन नोट कर लिया है, और कस्टमर को पेमेंट भी भेज दिया गया है। बहुत बढ़िया काम!`
-                                : `Shabaash bhai ji! Order ${session.requestId} poora ho gaya hai. Kul ${totalWeight} kilo ka weight note kar liya hai, aur customer ko payout bhej diya gaya hai. Bahut badhiya!`;
+                                ? `शाबाश भाई जी! यह पिकअप पूरा हो गया है। कुल ${totalWeight} किलो का वजन नोट कर लिया है, और कस्टमर को पेमेंट भी भेज दिया गया है। बहुत बढ़िया काम!`
+                                : `Shabaash bhai ji! Yeh pickup poora ho gaya hai. Kul ${totalWeight} kilo ka weight note kar liya hai, aur customer ko payout bhej diya gaya hai. Bahut badhiya!`;
                             await reply(compMsg, spokenComp);
 
                             // Official completion & weight alert to Customer on WhatsApp
@@ -1795,8 +1795,9 @@ async function sendWhatsAppVoiceNote(target, spokenText, lang = 'hi') {
             }
         }
 
-        // Clean any markdown symbols, asterisks, bullet points from spoken text
+        // Clean any markdown symbols, asterisks, bullet points, and order IDs from spoken text
         const cleanSpeech = spokenText
+            .replace(/#?REQ[-_\s]?\d+/gi, '') // Strip order IDs completely from speech
             .replace(/\*\*(.*?)\*\*/g, '$1')
             .replace(/\*(.*?)\*/g, '$1')
             .replace(/#{1,6}\s+/g, '')
