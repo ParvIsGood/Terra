@@ -1300,14 +1300,14 @@ async function startWhatsApp() {
                                 `──────────────────\n` +
                                 `📦 *Kul Weight (Total):* *${totalWeight} kg*\n` +
                                 `💵 *Scrap Payout:* *₹${payout}*\n\n` +
-                                `❓ *Kya main ise confirm kar doon? (Should I confirm this?)*\n\n` +
+                                `❓ *Kya main isse confirm kar doon? (Should I confirm this?)*\n\n` +
                                 `1️⃣ Reply *HAAN*, *YES* ya *1* - Confirm & Complete karne ke liye\n` +
                                 `2️⃣ Reply *NAHI*, *NO* ya *2* - Dobara bolne/likhne ke liye\n\n` +
                                 `_Reply karein *HAAN* ya *NAHI*:_`;
                         }
                         const spokenConfirm = (collLang === 'hindi')
                             ? `भाई जी, कुल ${totalWeight} किलो का वजन नोट हुआ है। क्या मैं इसे कन्फर्म कर दूँ? हाँ या ना बोलिए।`
-                            : `Bhai ji, kul ${totalWeight} kilo ka weight note hua hai. Kya main ise confirm kar doon? Haan ya na boliye.`;
+                            : `Bhai ji, kul ${totalWeight} kilo ka weight note hua hai. Kya main isse confirm kar doon? Haan ya na boliye.`;
                         await reply(confirmPrompt, spokenConfirm);
                         continue;
                     } else if (session.pendingParsed) {
@@ -1872,9 +1872,10 @@ async function _sendWhatsAppVoiceNoteDirect(target, spokenText, lang = 'hi') {
             }
         }
 
-        // Clean any markdown symbols, asterisks, bullet points, and order IDs from spoken text
+        // Clean any markdown symbols, asterisks, bullet points, order IDs, and phonetic quirks from spoken text
         const cleanSpeech = spokenText
             .replace(/#?REQ[-_\s]?\d+/gi, '') // Strip order IDs completely from speech
+            .replace(/\bise\b/gi, 'isse')     // Phonetic fix: prevents English TTS 'ice' pronunciation, forces authentic 'इस-से'
             .replace(/\*\*(.*?)\*\*/g, '$1')
             .replace(/\*(.*?)\*/g, '$1')
             .replace(/#{1,6}\s+/g, '')
