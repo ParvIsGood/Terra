@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../database');
 const { GoogleGenAI } = require('@google/genai');
+const googleTTS = require('google-tts-api');
 
 const SYSTEM_INSTRUCTION = `
 You are "Terra AI", the official waste segregation, sustainability, and pickup assistant for "Circular by Terra".
@@ -221,6 +222,181 @@ You are on a live voice phone call right now with the customer.
     } catch (err) {
         console.error('AI chat route error:', err);
         return res.status(500).json({ error: 'AI Assistant error.', details: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────
+// GET /api/ai/voice-greeting
+// ─────────────────────────────────────────────
+router.get('/voice-greeting', async (req, res) => {
+    const lang = req.query.lang === 'en' ? 'en' : 'hi';
+    const text = lang === 'en'
+        ? "Hello! I am Terra AI. How can I help you with your waste segregation or scrap pickup today?"
+        : "नमस्ते! मैं टेरा एआई हूँ। कबाड़ के रेट या पिकअप के बारे में कुछ भी पूछिए।";
+
+    try {
+        const audioBase64 = await googleTTS.getAudioBase64(text, {
+            lang: lang,
+            slow: false,
+            host: 'https://translate.google.com',
+            timeout: 10000,
+        });
+        return res.json({ text, audioBase64, lang });
+    } catch (err) {
+        return res.json({ text, audioBase64: null, lang });
+    }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/ai/voice-chat
+// Body: { message?, audioBase64?, mimeType?, userId?, lang? }
+// ─────────────────────────────────────────────
+router.post('/voice-chat', async (req, res) => {
+    const { message, audioBase64, mimeType, userId, lang } = req.body;
+    const groqKey = process.env.GROQ_API_KEY;
+
+    let userQuery = (message || '').trim();
+
+    // 1. If audioBase64 is passed, transcribe with Groq Whisper
+    if (audioBase64 && groqKey && groqKey.startsWith('gsk_')) {
+        try {
+            const cleanBase64 = audioBase64.replace(/^data:audio\/[a-zA-Z0-9.\-_]+;base64,/, '');
+            const audioBuffer = Buffer.from(cleanBase64, 'base64');
+            const form = new FormData();
+            const blob = new Blob([audioBuffer], { type: mimeType || 'audio/webm' });
+            form.append('file', blob, 'user_voice.webm');
+            form.append('model', 'whisper-large-v3-turbo');
+            form.append('prompt', 'Hindi, Hinglish, and English waste segregation and scrap pickup: नमस्ते, कबाड़, गत्ता, कार्डबोर्ड, रद्दी, प्लास्टिक, लोहा, एल्युमिनियम, pickup, rate, payment, UPI, wallet, booking.');
+
+            const whisperRes = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${groqKey}` },
+                body: form
+            });
+            const whisperData = await whisperRes.json();
+            if (whisperData.text && whisperData.text.trim()) {
+                userQuery = whisperData.text.trim();
+            }
+        } catch (wErr) {
+            console.error('Whisper transcription error:', wErr.message);
+        }
+    }
+
+    if (!userQuery) {
+        return res.status(400).json({ error: 'Could not hear any speech. Please speak again.' });
+    }
+
+    try {
+        const db = await getDb();
+        let dbContextString = '';
+
+        if (userId) {
+            try {
+                const uStmt = db.prepare('SELECT id, name, points, role, address, pincode, wallet_balance FROM users WHERE id = ?');
+                uStmt.bind([userId]);
+                if (uStmt.step()) {
+                    const u = uStmt.getAsObject();
+                    dbContextString += `User Profile: Name: ${u.name}, Role: ${u.role}, Pincode: ${u.pincode}, Cash Wallet Balance: ₹${u.wallet_balance || 0}, Green Points: ${u.points || 0}.\n`;
+                }
+                uStmt.free();
+
+                const pStmt = db.prepare('SELECT id, request_id, items, time_slot, status, actual_weight, pin FROM pickups WHERE user_id = ? ORDER BY id DESC LIMIT 1');
+                pStmt.bind([userId]);
+                if (pStmt.step()) {
+                    const p = pStmt.getAsObject();
+                    dbContextString += `Recent Pickup: ID: #${p.request_id}, Items: ${p.items}, Status: ${p.status}, Time: ${p.time_slot}.\n`;
+                }
+                pStmt.free();
+            } catch (dbErr) {
+                console.error('Error reading context for voice AI:', dbErr.message);
+            }
+        }
+
+        const isEnglishRequested = lang === 'en';
+
+        const systemInstruction = `You are Terra AI, speaking on a live telephone call with a customer.
+STRICT VOICE RULES:
+1. Keep your reply strictly under 2 short conversational sentences (under 25 words total).
+2. If language is Hindi/Hinglish, write your response strictly in Hindi using Devanagari script (e.g. "नमस्ते! कार्डबोर्ड का रेट 7.60 रुपये प्रति किलो है।").
+3. If language is English, write in natural, spoken English.
+4. ABSOLUTELY NEVER use markdown symbols (**), bullet points, asterisks, emojis, or website links. Your output is spoken directly by a human voice speech synthesizer.
+5. Scrap rates: Cardboard ₹7.60/kg, Paper ₹8/kg, Plastic ₹10/kg, Iron ₹14/kg, Aluminium ₹44/kg, Copper ₹160/kg. Scheduled segregated pickups are 100% free.
+
+${dbContextString ? `[Customer Context]:\n${dbContextString}\n` : ''}`;
+
+        let aiReply = '';
+
+        if (groqKey && groqKey.startsWith('gsk_')) {
+            try {
+                const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${groqKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'qwen/qwen3.8-27b',
+                        messages: [
+                            { role: 'system', content: systemInstruction },
+                            { role: 'user', content: `${userQuery} (Preferred language: ${isEnglishRequested ? 'English' : 'Hindi Devanagari'})` }
+                        ],
+                        max_tokens: 100,
+                        temperature: 0.5
+                    })
+                });
+                const groqData = await groqRes.json();
+                if (groqData.choices && groqData.choices[0]?.message?.content) {
+                    aiReply = groqData.choices[0].message.content.trim();
+                }
+            } catch (err) {
+                console.warn('Groq voice completion error:', err.message);
+            }
+        }
+
+        if (!aiReply) {
+            aiReply = isEnglishRequested
+                ? "I am here to help you. You can schedule a free pickup on our website anytime."
+                : "मैं आपकी सहायता के लिए तैयार हूँ। आप कभी भी हमारे पोर्टल से पिकअप बुक कर सकते हैं।";
+        }
+
+        // Clean any stray asterisks, formatting, emojis
+        const cleanReply = aiReply
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/#{1,6}\s+/g, '')
+            .replace(/`{1,3}[^`]*`{1,3}/g, '')
+            .replace(/https?:\/\/[^\s]+/g, '')
+            .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        // Determine if reply contains Devanagari
+        const hasDevanagari = /[\u0900-\u097F]/.test(cleanReply);
+        const ttsLang = (hasDevanagari || !isEnglishRequested) ? 'hi' : 'en';
+
+        // Generate high quality Google voice audio
+        let audioBase64 = null;
+        try {
+            audioBase64 = await googleTTS.getAudioBase64(cleanReply, {
+                lang: ttsLang,
+                slow: false,
+                host: 'https://translate.google.com',
+                timeout: 10000,
+            });
+        } catch (ttsErr) {
+            console.error('Google TTS generation error:', ttsErr.message);
+        }
+
+        return res.json({
+            userText: userQuery,
+            reply: cleanReply,
+            audioBase64: audioBase64,
+            lang: ttsLang
+        });
+
+    } catch (err) {
+        console.error('Voice chat route error:', err);
+        return res.status(500).json({ error: 'Voice Assistant error.', details: err.message });
     }
 });
 
