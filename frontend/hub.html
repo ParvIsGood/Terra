@@ -179,6 +179,10 @@
     function setTab(tab, step = 0) {
         currentTab = tab;
         dropStep = step;
+        if (tab === 'drop' && step === 0) {
+            selectedCollector = null;
+            hubWeights = {};
+        }
 
         const navTabs = ['home', 'drop', 'silos', 'disp', 'prof'];
         const iconClasses = {
@@ -362,6 +366,8 @@
                 const pickups = selectedCollector.pickups || [];
                 const declaredTotal = selectedCollector.declared_total || 0;
 
+                const hasPending = pickups.length > 0 && declaredTotal > 0;
+
                 const pickupRows = pickups.map(p => `
                     <div class="flex items-center justify-between p-2.5 bg-brand-bg rounded-xl border border-brand-border text-xs mb-1.5">
                         <div class="min-w-0 pr-2">
@@ -370,19 +376,9 @@
                         </div>
                         <span class="font-extrabold text-brand-dark text-xs font-mono shrink-0">${p.actual_weight || 0} kg</span>
                     </div>
-                `).join('') || '<p class="text-xs text-brand-grayText py-3 text-center">No pickups recorded.</p>';
+                `).join('');
 
-                content.innerHTML = `
-                    <div class="flex items-center justify-between mb-3">
-                        <div>
-                            <h2 class="text-lg font-black text-brand-dark tracking-tight">${escHtml(c.name || 'Partner')}</h2>
-                            <p class="text-[11px] text-brand-grayText font-mono">${c.employee_id || ('KW-' + c.id)} &middot; ${c.phone_number}</p>
-                        </div>
-                        <button onclick="dropStep=0; render();" class="text-xs font-bold text-brand-grayText hover:text-brand-dark">
-                            Change
-                        </button>
-                    </div>
-
+                const pendingContent = hasPending ? `
                     <!-- Doorstep Weight 1 Receipts Card -->
                     <div class="bg-white rounded-3xl p-4 border border-brand-border shadow-xs mb-4">
                         <div class="flex items-center justify-between mb-2">
@@ -420,6 +416,40 @@
                         <span>Continue to Hub Weighbridge</span>
                         <i class="ph-bold ph-arrow-right"></i>
                     </button>
+                ` : `
+                    <!-- Empty / Already Deposited State -->
+                    <div class="bg-white rounded-3xl p-6 border border-brand-border shadow-xs text-center my-4 space-y-3">
+                        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl mx-auto">
+                            <i class="ph-bold ph-check-circle"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-brand-dark text-sm">All Collections Deposited!</h3>
+                            <p class="text-xs text-brand-grayText mt-1">This partner has <b>0 kg</b> pending scrap. All completed doorstep pickups have already been deposited into the silos.</p>
+                        </div>
+                        <button onclick="dropStep=0; selectedCollector=null; render();" 
+                            class="bg-brand-bg hover:bg-gray-100 border border-brand-border text-brand-dark font-bold text-xs py-2.5 px-4 rounded-full transition-colors">
+                            Look Up Another Collector
+                        </button>
+                    </div>
+
+                    <button disabled 
+                        class="w-full bg-gray-200 text-gray-400 font-bold py-3.5 rounded-full text-xs cursor-not-allowed flex items-center justify-center gap-2">
+                        <span>No Pending Scrap to Weigh</span>
+                    </button>
+                `;
+
+                content.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h2 class="text-lg font-black text-brand-dark tracking-tight">${escHtml(c.name || 'Partner')}</h2>
+                            <p class="text-[11px] text-brand-grayText font-mono">${c.employee_id || ('KW-' + c.id)} &middot; ${c.phone_number}</p>
+                        </div>
+                        <button onclick="dropStep=0; selectedCollector=null; render();" class="text-xs font-bold text-brand-grayText hover:text-brand-dark">
+                            Change
+                        </button>
+                    </div>
+
+                    ${pendingContent}
                 `;
                 return;
             }
@@ -865,8 +895,10 @@
         const btn = document.getElementById('btn-store');
         if (btn) {
             btn.disabled = true;
-            btn.textContent = 'Recording…';
+            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i><span>Depositing to Silos…</span>`;
         }
+
+        const pickupIds = (selectedCollector.pickups || []).map(p => p.id);
 
         try {
             const res = await fetch(`${API_BASE}/hub/dropoff`, {
@@ -880,7 +912,8 @@
                     hub_weight: hubTotal,
                     is_segregated: isSegregated,
                     materials: hubWeights,
-                    address_count: selectedCollector.pickups?.length || 1
+                    address_count: selectedCollector.pickups?.length || 1,
+                    pickup_ids: pickupIds
                 })
             });
             const data = await res.json();
@@ -892,15 +925,25 @@
                     hub_weight: data.hub_weight,
                     is_flagged: data.is_flagged
                 };
+                // Clear the settled pickups from the current session
+                selectedCollector.pickups = [];
+                selectedCollector.declared_total = 0;
+                hubWeights = {};
                 dropStep = 3;
                 loadData();
             } else {
                 alert(data.error || 'Failed to record dropoff.');
-                if (btn) btn.disabled = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="ph-bold ph-check-circle text-base text-emerald-400"></i><span>Confirm &amp; Deposit to Silos</span>`;
+                }
             }
         } catch (e) {
             alert('Network error recording dropoff.');
-            if (btn) btn.disabled = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="ph-bold ph-check-circle text-base text-emerald-400"></i><span>Confirm &amp; Deposit to Silos</span>`;
+            }
         }
     }
 

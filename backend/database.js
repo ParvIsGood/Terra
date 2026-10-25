@@ -194,6 +194,12 @@ async function getDb() {
     try {
         db.run(`ALTER TABLE addresses ADD COLUMN state TEXT`);
     } catch (e) {}
+    try {
+        db.run(`ALTER TABLE pickups ADD COLUMN hub_trip_id TEXT`);
+    } catch (e) {}
+    try {
+        db.run(`ALTER TABLE pickups ADD COLUMN hub_deposited_at TEXT`);
+    } catch (e) {}
 
     // ── Segregation Hub Tables & Initial State ───────────────────────────────
     try {

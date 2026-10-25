@@ -103,14 +103,16 @@ router.get('/collector/:query', async (req, res) => {
         const collector = cStmt.getAsObject();
         cStmt.free();
 
-        // Fetch completed pickups for this collector that have measured weights (Weight 1 - Doorstep declared)
+        // Fetch completed pickups for this collector that have measured weights and have NOT been deposited at the hub yet
         const pStmt = db.prepare(`
             SELECT p.*, u.name as customer_name, u.address as customer_address, u.city as customer_city, u.pincode as customer_pincode
             FROM pickups p
             JOIN users u ON p.user_id = u.id
             WHERE p.collector_id = ?
+              AND p.status = 'Completed'
+              AND (p.hub_trip_id IS NULL OR p.hub_trip_id = '')
             ORDER BY p.id DESC
-            LIMIT 10
+            LIMIT 50
         `);
         pStmt.bind([collector.id]);
         const pickups = [];
@@ -164,7 +166,8 @@ router.post('/dropoff', async (req, res) => {
             hub_weight,
             is_segregated,
             materials, // e.g. { "Paper": 12, "Cardboard": 25, "Plastic": 8 }
-            address_count
+            address_count,
+            pickup_ids
         } = req.body;
 
         const declW = parseFloat(declared_weight) || 0;
@@ -218,6 +221,24 @@ router.post('/dropoff', async (req, res) => {
                     `, [addKg, mat, `%${mat}%`]);
                 }
             }
+        }
+
+        // Mark deposited pickups so they can never be submitted again
+        try {
+            if (pickup_ids && Array.isArray(pickup_ids) && pickup_ids.length > 0) {
+                const placeholders = pickup_ids.map(() => '?').join(',');
+                db.run(
+                    `UPDATE pickups SET hub_trip_id = ?, hub_deposited_at = datetime('now', 'localtime') WHERE id IN (${placeholders})`,
+                    [tripId, ...pickup_ids]
+                );
+            } else if (collector_id) {
+                db.run(
+                    `UPDATE pickups SET hub_trip_id = ?, hub_deposited_at = datetime('now', 'localtime') WHERE collector_id = ? AND status = 'Completed' AND (hub_trip_id IS NULL OR hub_trip_id = '')`,
+                    [tripId, collector_id]
+                );
+            }
+        } catch (e) {
+            console.error('Error marking pickups as deposited:', e);
         }
 
         persist();
