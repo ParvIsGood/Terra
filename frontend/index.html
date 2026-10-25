@@ -257,7 +257,7 @@
                         </div>
                         <div>
                             <h3 class="font-bold text-lg text-brand-dark">Recycling partner</h3>
-                            <p class="text-[11px] text-brand-grayText font-medium mt-1 leading-tight">recycling units and volunteers</p>
+                            <p class="text-[11px] text-brand-grayText font-medium mt-1 leading-tight">volunteer drop-off points</p>
                         </div>
                     </div>
                 </label>
@@ -290,19 +290,6 @@
                         <div>
                             <h3 class="font-bold text-lg text-brand-dark">Volunteer Drop-off Point</h3>
                             <p class="text-[11px] text-brand-grayText font-medium mt-1 leading-tight">Receive organic biodegradable drop-offs in your local area</p>
-                        </div>
-                    </div>
-                </label>
-
-                <label class="cursor-pointer block relative">
-                    <input type="radio" name="subrole" value="Industrial" class="custom-radio sr-only">
-                    <div class="border-2 border-transparent bg-white rounded-3xl p-5 transition-all shadow-sm flex items-center gap-4">
-                        <div class="w-14 h-14 bg-brand-bg rounded-2xl flex items-center justify-center text-brand-dark shrink-0">
-                            <i class="ph-fill ph-factory text-2xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-lg text-brand-dark">Commercial Recycling Plant</h3>
-                            <p class="text-[11px] text-brand-grayText font-medium mt-1 leading-tight">Industrial processing unit partnerships and factory operations</p>
                         </div>
                     </div>
                 </label>
@@ -2469,24 +2456,15 @@
         // Apply theme for selected role
         applyTheme(selectedRegistrationRole);
 
-        if (selectedRegistrationRole === 'Recycler') {
-            nav('rec-sub');
-            return;
-        }
-
         const badge = document.getElementById('reg-role-badge');
-        if (badge) badge.textContent = selectedRegistrationRole;
+        if (badge) {
+            badge.textContent = selectedRegistrationRole === 'Recycler' ? 'Volunteer (Drop-off)' : selectedRegistrationRole;
+        }
 
         nav('reg-common');
     }
 
     function handleRecSubRoleContinue() {
-        const radio = document.querySelector('input[name="subrole"]:checked');
-        const subrole = radio ? radio.value : 'Volunteer';
-        if (subrole === 'Industrial') {
-            nav('rec-email');
-            return;
-        }
         selectedRegistrationRole = 'Recycler';
         const badge = document.getElementById('reg-role-badge');
         if (badge) badge.textContent = 'Volunteer (Drop-off)';
