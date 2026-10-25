@@ -348,6 +348,135 @@ router.patch('/trips/:id/approve', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// PUT /api/hub/trips/:id — Edit an audit record
+// ─────────────────────────────────────────────────────────────
+router.put('/trips/:id', async (req, res) => {
+    try {
+        const { collector_name, declared_weight, hub_weight, payout_amount, is_segregated, is_approved } = req.body;
+        const db = await getDb();
+
+        const declared = parseFloat(declared_weight) || 0;
+        const hubW = parseFloat(hub_weight) || 0;
+        const diff = Math.abs(hubW - declared);
+        const gapPct = declared > 0 ? Math.round((diff / declared) * 1000) / 10 : 0;
+        const isFlagged = gapPct > 10 ? 1 : 0;
+        const seg = is_segregated ? 1 : 0;
+        const approved = is_approved ? 1 : 0;
+
+        db.run(`
+            UPDATE hub_trips 
+            SET collector_name = COALESCE(?, collector_name),
+                declared_weight = ?,
+                hub_weight = ?,
+                gap_pct = ?,
+                is_flagged = ?,
+                payout_amount = ?,
+                is_segregated = ?,
+                is_approved = ?
+            WHERE id = ?
+        `, [collector_name ? collector_name.trim() : null, declared, hubW, gapPct, isFlagged, parseFloat(payout_amount) || 0, seg, approved, req.params.id]);
+        persist();
+
+        return res.json({ success: true, message: `Trip ${req.params.id} updated successfully.` });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// DELETE /api/hub/trips/:id — Delete an audit record
+// ─────────────────────────────────────────────────────────────
+router.delete('/trips/:id', async (req, res) => {
+    try {
+        const db = await getDb();
+        db.run(`DELETE FROM hub_trips WHERE id = ?`, [req.params.id]);
+        persist();
+        return res.json({ success: true, message: `Trip ${req.params.id} deleted successfully.` });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/hub/trips/reset — Reset audits to clean presentation data
+// ─────────────────────────────────────────────────────────────
+router.post('/trips/reset', async (req, res) => {
+    try {
+        const { mode } = req.body || {};
+        const db = await getDb();
+
+        // Clear existing trips
+        db.run(`DELETE FROM hub_trips`);
+
+        if (mode !== 'clear_all') {
+            const todayStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+            const trips = [
+                {
+                    id: 'T-4903',
+                    collector_id: 11,
+                    collector_name: 'Parv Dua',
+                    collector_phone: '+917814776666',
+                    declared_weight: 48.0,
+                    hub_weight: 46.5,
+                    gap_pct: 3.1,
+                    is_flagged: 0,
+                    is_segregated: 1,
+                    payout_amount: 340,
+                    is_approved: 1,
+                    details_json: JSON.stringify({ "Cardboard": 24, "Paper": 12.5, "Plastic": 10 }),
+                    created_at: todayStr
+                },
+                {
+                    id: 'T-7388',
+                    collector_id: 12,
+                    collector_name: 'Gurdeep Singh',
+                    collector_phone: '+919876522222',
+                    declared_weight: 32.0,
+                    hub_weight: 31.0,
+                    gap_pct: 3.1,
+                    is_flagged: 0,
+                    is_segregated: 1,
+                    payout_amount: 220,
+                    is_approved: 1,
+                    details_json: JSON.stringify({ "Cardboard": 15, "Steel": 10, "Paper": 6 }),
+                    created_at: todayStr
+                },
+                {
+                    id: 'T-3267',
+                    collector_id: 10,
+                    collector_name: 'Amogh Anand',
+                    collector_phone: '+919988245444',
+                    declared_weight: 18.0,
+                    hub_weight: 15.0,
+                    gap_pct: 16.7,
+                    is_flagged: 1,
+                    is_segregated: 1,
+                    payout_amount: 140,
+                    is_approved: 0,
+                    details_json: JSON.stringify({ "Plastic": 8, "Paper": 7 }),
+                    created_at: todayStr
+                }
+            ];
+
+            for (const t of trips) {
+                db.run(`
+                    INSERT INTO hub_trips (id, collector_id, collector_name, collector_phone, declared_weight, hub_weight, gap_pct, is_flagged, is_segregated, payout_amount, is_approved, details_json, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [t.id, t.collector_id, t.collector_name, t.collector_phone, t.declared_weight, t.hub_weight, t.gap_pct, t.is_flagged, t.is_segregated, t.payout_amount, t.is_approved, t.details_json, t.created_at]);
+            }
+        }
+
+        persist();
+        return res.json({ 
+            success: true, 
+            message: mode === 'clear_all' ? 'All hub audits cleared.' : 'Hub audits reset to realistic presentation demo data.' 
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
 // GET /api/hub/dispatches — Batched lots to recycling plants
 // ─────────────────────────────────────────────────────────────
 router.get('/dispatches', async (req, res) => {
