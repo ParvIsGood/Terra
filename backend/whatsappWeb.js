@@ -526,31 +526,49 @@ function resolvePhoneAndLid(rawId) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// SEQUENTIAL 60-SECOND KABADIWALA DISPATCH SYSTEM
+// SEQUENTIAL HYPER-LOCAL KABADIWALA DISPATCH SYSTEM
 // ─────────────────────────────────────────────────────────────
 async function dispatchPickup(pickup, customer) {
     const reqId = pickup.request_id;
-    console.log(`[Dispatch] Starting 60s sequential dispatch for #${reqId}...`);
+    const custPincode = String(customer?.pincode || '').trim();
+    console.log(`[Dispatch] Starting sequential dispatch for #${reqId} (Target PIN: ${custPincode || 'General'})...`);
 
     try {
         const db = await getDb();
-        const stmt = db.prepare(`
-            SELECT id, name, phone_number, language 
-            FROM collectors 
-            WHERE is_available = 1 AND onboarding_step = 'COMPLETED'
-            ORDER BY id ASC
-        `);
+        let stmt;
+        if (custPincode) {
+            stmt = db.prepare(`
+                SELECT id, name, phone_number, language, pincode, operating_area 
+                FROM collectors 
+                WHERE is_available = 1 
+                  AND onboarding_step = 'COMPLETED'
+                  AND (
+                      TRIM(pincode) = ? 
+                      OR REPLACE(pincode, ' ', '') = ?
+                  )
+                ORDER BY id ASC
+            `);
+            stmt.bind([custPincode, custPincode]);
+        } else {
+            stmt = db.prepare(`
+                SELECT id, name, phone_number, language, pincode, operating_area 
+                FROM collectors 
+                WHERE is_available = 1 AND onboarding_step = 'COMPLETED'
+                ORDER BY id ASC
+            `);
+        }
+
         const candidates = [];
         while (stmt.step()) candidates.push(stmt.getAsObject());
         stmt.free();
 
         if (candidates.length === 0) {
-            console.log(`[Dispatch] No available active collectors found for #${reqId}`);
+            console.log(`[Dispatch] No available active collectors found in PIN ${custPincode} for #${reqId}`);
             if (customer?.phone) {
                 sendWhatsAppAlert(customer.phone,
                     `⏳ *circular. Order Scheduled (#${reqId})*\n\n` +
                     `Hi *${customer.name || 'there'}*,\n` +
-                    `Aapka pickup request receive ho gaya hai! Hamare partners abhi busy hain, jaise hi partner free hoga, hum assign kar denge.`
+                    `Aapka pickup request receive ho gaya hai! Aapke area (PIN: ${custPincode || 'local'}) me filhaal hamare partners busy hain. Jaise hi partner free hoga, hum assign kar denge.`
                 ).catch(e => console.error(e));
             }
             return;
@@ -601,7 +619,7 @@ async function offerPickupToCurrentCandidate(reqId) {
     const collectorPhone = currentCollector.phone_number;
     const lang = currentCollector.language || 'hinglish';
 
-    console.log(`[Dispatch] Offering #${reqId} to collector #${currentCollector.id} (${currentCollector.name}) [Lang: ${lang}] with 60s timeout...`);
+    console.log(`[Dispatch] Offering #${reqId} to collector #${currentCollector.id} (${currentCollector.name}) [PIN: ${currentCollector.pincode}] [Lang: ${lang}] (15-min buffer)...`);
 
     let offerMsg = '';
     if (lang === 'hindi') {
@@ -614,7 +632,6 @@ async function offerPickupToCurrentCandidate(reqId) {
             `• पता: *${dispatch.customer?.address || 'लोकल'}* (पिन: ${dispatch.customer?.pincode || '—'})\n` +
             `• सामग्री: *${dispatch.items}* (${dispatch.quantity || 'Standard'})\n` +
             `• समय: *${dispatch.time_slot}*\n\n` +
-            `⏱️ *स्वीकार करने के लिए आपके पास 60 सेकंड हैं!*\n\n` +
             `स्वीकार करने के लिए लिखें:\n` +
             `👉 *ACCEPT*\n\n` +
             `अस्वीकार करने के लिए लिखें:\n` +
@@ -629,7 +646,6 @@ async function offerPickupToCurrentCandidate(reqId) {
             `• Address: *${dispatch.customer?.address || 'Local'}* (PIN: ${dispatch.customer?.pincode || '—'})\n` +
             `• Items: *${dispatch.items}* (${dispatch.quantity || 'Standard'})\n` +
             `• Time Slot: *${dispatch.time_slot}*\n\n` +
-            `⏱️ *You have 60 SECONDS to accept this pickup!*\n\n` +
             `To accept, reply:\n` +
             `👉 *ACCEPT*\n\n` +
             `To reject, reply:\n` +
@@ -644,7 +660,6 @@ async function offerPickupToCurrentCandidate(reqId) {
             `• Address: *${dispatch.customer?.address || 'Local'}* (PIN: ${dispatch.customer?.pincode || '—'})\n` +
             `• Items: *${dispatch.items}* (${dispatch.quantity || 'Standard'})\n` +
             `• Time Slot: *${dispatch.time_slot}*\n\n` +
-            `⏱️ *Aapke paas accept karne ke liye 60 SECONDS hain!*\n\n` +
             `Accept karne ke liye reply karein:\n` +
             `👉 *ACCEPT*\n\n` +
             `Reject karne ke liye reply karein:\n` +
@@ -659,21 +674,21 @@ async function offerPickupToCurrentCandidate(reqId) {
         : `Namaste ${currentCollector.name || 'Partner'} bhai! Naya pickup order aaya hai. Agar aap lena chahte hain, toh mic daba kar 'Haan' ya 'Accept' boliye.`;
     await sendWhatsAppVoiceNote(collectorPhone, spokenOffer, 'hi').catch(e => {});
 
-    // 60-second countdown timer
+    // 15-minute presentation buffer timer (instead of 60 seconds)
     dispatch.timer = setTimeout(async () => {
-        console.log(`[Dispatch] 60s timeout elapsed for collector ${currentCollector.name} on #${reqId}`);
+        console.log(`[Dispatch] 15-minute presentation buffer elapsed for collector ${currentCollector.name} on #${reqId}`);
         
         const timeoutMsg = (lang === 'hindi')
-            ? `⏱️ *समय समाप्त!* #${dispatch.requestId} का 60-सेकंड समय पूरा हो गया। यह ऑफर अगले पार्टनर को भेज दिया गया है।`
+            ? `⏱️ #${dispatch.requestId} का ऑफर समय पूरा हो गया। यह ऑफर अगले पार्टनर को भेज दिया गया है।`
             : (lang === 'english')
-            ? `⏱️ *Time Expired!* The 60-second window for #${dispatch.requestId} has expired. Offer forwarded to next partner.`
-            : `⏱️ *Time Expired!* #${dispatch.requestId} ka 60-second samay pura ho gaya. Yeh offer agle partner ko forward kar di gayi hai.`;
+            ? `⏱️ The offer window for #${dispatch.requestId} has expired. Offer forwarded to next partner.`
+            : `⏱️ #${dispatch.requestId} ka offer samay pura ho gaya. Yeh offer agle partner ko forward kar di gayi hai.`;
 
         sendWhatsAppAlert(collectorPhone, timeoutMsg).catch(e => console.error(e));
 
         dispatch.currentIndex++;
         offerPickupToCurrentCandidate(reqId);
-    }, 60000);
+    }, 15 * 60 * 1000);
 }
 
 const AUTH_FOLDER = path.join(__dirname, '.baileys_auth');
