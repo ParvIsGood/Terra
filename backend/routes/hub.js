@@ -243,16 +243,37 @@ router.post('/dropoff', async (req, res) => {
         ]);
         stmt.free();
 
-        // Increment hub_bins storage for each material
+        // Increment hub_bins storage with hard capacity capping & auto-dispatch for overflow
         if (materials && typeof materials === 'object') {
             for (const [mat, kg] of Object.entries(materials)) {
                 const addKg = parseFloat(kg) || 0;
                 if (addKg > 0) {
-                    db.run(`
-                        UPDATE hub_bins 
-                        SET current_kg = current_kg + ? 
-                        WHERE material = ? OR material LIKE ?
-                    `, [addKg, mat, `%${mat}%`]);
+                    const bStmt = db.prepare(`SELECT id, capacity, current_kg, recycling_unit FROM hub_bins WHERE material = ? OR material LIKE ?`);
+                    bStmt.bind([mat, `%${mat}%`]);
+                    if (bStmt.step()) {
+                        const bin = bStmt.getAsObject();
+                        bStmt.free();
+                        const cur = parseFloat(bin.current_kg) || 0;
+                        const cap = parseFloat(bin.capacity) || 1000;
+                        const newTotal = cur + addKg;
+
+                        if (newTotal > cap) {
+                            // Cap silo at 100% capacity
+                            db.run(`UPDATE hub_bins SET current_kg = capacity WHERE id = ?`, [bin.id]);
+                            
+                            // Automatically bundle the overflow into a planned dispatch lot for the mill
+                            const overflowKg = Math.round((newTotal - cap) * 10) / 10;
+                            const dispId = `DSP-${1000 + Math.floor(Math.random() * 9000)}`;
+                            db.run(`
+                                INSERT INTO hub_dispatches (id, material, weight_kg, recycling_unit, status, created_at)
+                                VALUES (?, ?, ?, ?, 'Planned', datetime('now', 'localtime'))
+                            `, [dispId, mat, overflowKg, bin.recycling_unit || 'Recycling Unit']);
+                        } else {
+                            db.run(`UPDATE hub_bins SET current_kg = ? WHERE id = ?`, [Math.round(newTotal * 10) / 10, bin.id]);
+                        }
+                    } else {
+                        bStmt.free();
+                    }
                 }
             }
         }
