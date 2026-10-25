@@ -1,4 +1,4 @@
-/api/* https://princess-representations-bee-curriculum.trycloudflare.com/api/:splat 200
+/api/* https://chess-richards-hugh-engineer.trycloudflare.com/api/:splat 200
 /admin /frontend/admin.html 200
 /admin.html /frontend/admin.html 200
 /hub /frontend/hub.html 200

@@ -204,6 +204,12 @@ async function getDb() {
         db.run(`ALTER TABLE users ADD COLUMN active_hh_type TEXT DEFAULT 'personal'`);
     } catch (e) {}
     try {
+        db.run(`ALTER TABLE users ADD COLUMN volunteer_status TEXT DEFAULT 'Active'`);
+    } catch (e) {}
+    try {
+        db.run(`ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 1`);
+    } catch (e) {}
+    try {
         db.run(`UPDATE users SET original_hh_code = hh_code WHERE (original_hh_code IS NULL OR original_hh_code = '') AND hh_code IS NOT NULL`);
     } catch (e) {}
     try {

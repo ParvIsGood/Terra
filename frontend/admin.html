@@ -62,6 +62,10 @@
                     class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
                     <i class="ph ph-users text-lg"></i> Users
                 </button>
+                <button onclick="showTab('volunteers')" id="tab-volunteers-btn"
+                    class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
+                    <i class="ph ph-hand-heart text-lg text-emerald-300"></i> Biodegradable Volunteers
+                </button>
                 <button onclick="showTab('collectors')" id="tab-collectors-btn"
                     class="admin-nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-green-100 hover:bg-white/10 transition-colors text-left">
                     <i class="ph ph-whatsapp-logo text-lg text-green-400"></i> WhatsApp Collectors
@@ -166,6 +170,84 @@
                             <tr><td colspan="8" class="text-center py-10 text-gray-400">Loading…</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- BIODEGRADABLE VOLUNTEER DROP-OFF POINTS TABLE -->
+            <div id="tab-volunteers" class="hidden space-y-5">
+                <!-- Top Summary Banner -->
+                <div class="bg-gradient-to-r from-emerald-900 to-[#0A3B2C] text-white p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 text-[11px] font-extrabold uppercase px-3 py-1 rounded-full mb-2">
+                            <i class="ph-fill ph-hand-heart"></i> Stage 1 Community Drop-offs
+                        </div>
+                        <h3 class="text-xl font-extrabold text-white">Biodegradable Volunteer Drop-off Network</h3>
+                        <p class="text-xs text-emerald-100/80 mt-1 max-w-xl leading-relaxed">
+                            Community members &amp; local champions hosting organic wet waste drop-offs. Collected biodegradable matter feeds directly into Hub Silo #8 for the BioCompost Plant.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="openRegisterVolunteerModal()" class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-gray-950 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm cursor-pointer">
+                            <i class="ph-bold ph-plus-circle text-base"></i> Register Drop-off Station
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Mini Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Active Drop-off Hubs</span>
+                        <span class="text-2xl font-black text-emerald-800" id="vol-stat-active">0</span>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Hub Organic Silo Stock (Silo #8)</span>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-black text-emerald-700" id="vol-stat-organic-kg">427</span>
+                            <span class="text-xs font-bold text-gray-400">kg compostable</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Pincodes Covered</span>
+                        <span class="text-2xl font-black text-brand-dark" id="vol-stat-pincodes">0</span>
+                    </div>
+                </div>
+
+                <!-- Table Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm">Registered Drop-off Stations</h3>
+                            <p class="text-[11px] text-gray-400 font-medium">Local collection points receiving kitchen scraps &amp; organic waste</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="volunteer-search" placeholder="Search by name, PIN or address…"
+                                oninput="filterVolunteers()"
+                                class="border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0A3B2C] w-64">
+                            <select id="volunteer-status-filter" onchange="filterVolunteers()" class="border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0A3B2C] text-gray-700 font-semibold">
+                                <option value="all">All Statuses</option>
+                                <option value="Active">Active Only</option>
+                                <option value="Paused">Paused</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                    <th class="text-left px-6 py-3.5">Station ID</th>
+                                    <th class="text-left px-6 py-3.5">Volunteer In-Charge</th>
+                                    <th class="text-left px-6 py-3.5">Drop-off Address &amp; PIN</th>
+                                    <th class="text-left px-6 py-3.5">Drop-off Stream</th>
+                                    <th class="text-left px-6 py-3.5">Status</th>
+                                    <th class="text-left px-6 py-3.5">Verification</th>
+                                    <th class="text-left px-6 py-3.5">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="volunteers-tbody" class="divide-y divide-gray-50">
+                                <tr><td colspan="7" class="text-center py-10 text-gray-400">Loading volunteer stations…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -757,8 +839,128 @@
     </div>
 </div>
 
+<!-- REGISTER NEW VOLUNTEER STATION MODAL -->
+<div id="modal-register-volunteer" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative border border-gray-100">
+        <button onclick="closeRegisterVolunteerModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 cursor-pointer">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl font-bold">
+                <i class="ph-fill ph-hand-heart"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-gray-900 text-lg">Register Drop-off Station</h3>
+                <p class="text-xs text-gray-500">Add a community biodegradable &amp; compost hub</p>
+            </div>
+        </div>
+
+        <form onsubmit="handleRegisterVolunteerSubmit(event)" class="space-y-3.5">
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Volunteer Name / Organization</label>
+                <input type="text" id="reg-vol-name" required placeholder="e.g. Model Town Eco Club / Parv Dua" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">WhatsApp Phone</label>
+                    <input type="tel" id="reg-vol-phone" required placeholder="e.g. 917814776666" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Pincode (6-digit)</label>
+                    <input type="text" id="reg-vol-pincode" required maxlength="6" placeholder="e.g. 143001" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Station Street Address</label>
+                <input type="text" id="reg-vol-address" required placeholder="e.g. House 42, Circular Road" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">City / District</label>
+                    <input type="text" id="reg-vol-city" required placeholder="e.g. Patiala / Amritsar" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Initial Status</label>
+                    <select id="reg-vol-status" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="Active">🟢 Active (Accepting)</option>
+                        <option value="Paused">⏸️ Paused</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="closeRegisterVolunteerModal()" class="w-1/3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer">Cancel</button>
+                <button type="submit" class="w-2/3 bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-xs cursor-pointer">Register Station</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT VOLUNTEER STATION MODAL -->
+<div id="modal-edit-volunteer" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative border border-gray-100">
+        <button onclick="closeEditVolunteerModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 cursor-pointer">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold">
+                <i class="ph-bold ph-pencil-simple"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-gray-900 text-lg" id="edit-vol-title">Edit Volunteer Station</h3>
+                <p class="text-xs text-gray-500">Update drop-off point location &amp; operations</p>
+            </div>
+        </div>
+
+        <form onsubmit="handleSaveVolunteerSubmit(event)" class="space-y-3.5">
+            <input type="hidden" id="edit-vol-id">
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Station In-Charge Name</label>
+                <input type="text" id="edit-vol-name" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">WhatsApp Phone</label>
+                    <input type="tel" id="edit-vol-phone" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Pincode</label>
+                    <input type="text" id="edit-vol-pincode" required maxlength="6" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Street Address</label>
+                <input type="text" id="edit-vol-address" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">City / District</label>
+                    <input type="text" id="edit-vol-city" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Operational Status</label>
+                    <select id="edit-vol-status" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="Active">🟢 Active</option>
+                        <option value="Paused">⏸️ Paused</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1">
+                <input type="checkbox" id="edit-vol-verified" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 accent-emerald-700">
+                <label for="edit-vol-verified" class="text-xs font-bold text-gray-700 cursor-pointer">Verified Community Drop-off Hub</label>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="closeEditVolunteerModal()" class="w-1/3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer">Cancel</button>
+                <button type="submit" class="w-2/3 bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-xs cursor-pointer">Save Station</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-    const CLOUDFLARE_BACKEND = 'https://princess-representations-bee-curriculum.trycloudflare.com/api';
+    const CLOUDFLARE_BACKEND = 'https://chess-richards-hugh-engineer.trycloudflare.com/api';
     let   API_BASE  = window.location.protocol.startsWith('http') 
         ? `${window.location.origin}/api` 
         : 'http://localhost:3001/api';
@@ -837,6 +1039,7 @@
     function showTab(tab) {
         currentTab = tab;
         document.getElementById('tab-users').classList.toggle('hidden',          tab !== 'users');
+        document.getElementById('tab-volunteers').classList.toggle('hidden',     tab !== 'volunteers');
         document.getElementById('tab-collectors').classList.toggle('hidden',     tab !== 'collectors');
         document.getElementById('tab-pickups').classList.toggle('hidden',        tab !== 'pickups');
         document.getElementById('tab-hub-silos').classList.toggle('hidden',      tab !== 'hub-silos');
@@ -853,6 +1056,10 @@
         if (tab === 'users') {
             document.getElementById('page-title').textContent    = 'Users';
             document.getElementById('page-subtitle').textContent = 'All registered web accounts';
+        } else if (tab === 'volunteers') {
+            document.getElementById('page-title').textContent    = 'Biodegradable Volunteer Drop-offs';
+            document.getElementById('page-subtitle').textContent = 'Community stations receiving organic wet waste & compostables';
+            loadVolunteers();
         } else if (tab === 'collectors') {
             document.getElementById('page-title').textContent    = 'WhatsApp Collectors (Kabadiwalas)';
             document.getElementById('page-subtitle').textContent = 'Field workers registered directly via WhatsApp';
@@ -878,9 +1085,11 @@
     async function loadAll() {
         await Promise.all([
             loadUsers(),
+            loadVolunteers(),
             loadCollectors(),
             loadPickups(),
             loadHubSummary(),
+            currentTab === 'volunteers' ? loadVolunteers() : null,
             currentTab === 'hub-silos' ? loadHubSilos() : null,
             currentTab === 'hub-audits' ? loadHubAudits() : null,
             currentTab === 'hub-dispatches' ? loadHubDispatches() : null
@@ -959,6 +1168,264 @@
                     </div>
                 </td>
             </tr>`).join('');
+    }
+
+    // ── Biodegradable Volunteers Management ──────────────────────────────────
+    let allVolunteers = [];
+    async function loadVolunteers() {
+        const tbody = document.getElementById('volunteers-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-400">Loading volunteer stations…</td></tr>`;
+        try {
+            const res = await fetch(`${API_BASE}/admin/volunteers`, {
+                headers: { 'x-admin-key': adminKey }
+            });
+            const data = await res.json();
+            allVolunteers = data.volunteers || [];
+            if (data.organic_silo_kg !== undefined) {
+                const el = document.getElementById('vol-stat-organic-kg');
+                if (el) el.textContent = data.organic_silo_kg;
+            }
+            filterVolunteers();
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-500">Failed to load volunteer stations.</td></tr>`;
+        }
+    }
+
+    function filterVolunteers() {
+        const query = (document.getElementById('volunteer-search')?.value || '').toLowerCase().trim();
+        const statusFilter = document.getElementById('volunteer-status-filter')?.value || 'all';
+
+        let list = allVolunteers;
+        if (statusFilter !== 'all') {
+            list = list.filter(v => (v.status || 'Active') === statusFilter);
+        }
+        if (query) {
+            list = list.filter(v =>
+                (v.name || '').toLowerCase().includes(query) ||
+                (v.pincode || '').includes(query) ||
+                (v.address || '').toLowerCase().includes(query) ||
+                (v.hh_code || '').toLowerCase().includes(query) ||
+                (v.phone || '').includes(query)
+            );
+        }
+
+        // Update stats
+        const activeCount = allVolunteers.filter(v => (v.status || 'Active') === 'Active').length;
+        const pincodes = new Set(allVolunteers.map(v => v.pincode).filter(Boolean)).size;
+        const activeEl = document.getElementById('vol-stat-active');
+        const pinEl = document.getElementById('vol-stat-pincodes');
+        if (activeEl) activeEl.textContent = activeCount;
+        if (pinEl) pinEl.textContent = pincodes;
+
+        renderVolunteers(list);
+    }
+
+    function renderVolunteers(list) {
+        const tbody = document.getElementById('volunteers-tbody');
+        if (!tbody) return;
+        if (!list.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-400">No volunteer stations found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = list.map(v => {
+            const isActive = (v.status || 'Active') === 'Active';
+            const statusBadge = isActive
+                ? `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-full"><i class="ph-fill ph-circle text-[8px] text-emerald-600"></i> Active</span>`
+                : `<span class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 border border-gray-200 text-xs font-bold px-2.5 py-1 rounded-full"><i class="ph-fill ph-pause text-[8px]"></i> Paused</span>`;
+
+            const verifiedBadge = v.is_verified === 1
+                ? `<span class="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded-md"><i class="ph-bold ph-seal-check"></i> Verified Hub</span>`
+                : `<span class="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 text-[11px] font-bold px-2 py-0.5 rounded-md"><i class="ph-bold ph-hourglass"></i> Pending</span>`;
+
+            const phone = v.phone || '';
+            const waPhone = phone.replace(/\D/g, '');
+
+            return `
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                    <td class="px-6 py-4">
+                        <span class="font-mono font-bold text-xs text-gray-900 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200">${escHtml(v.hh_code || ('VOL-' + v.id))}</span>
+                        <div class="text-[10px] text-gray-400 font-mono mt-1">#UID-${v.id}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-gray-900 text-sm">${escHtml(v.name || 'Volunteer')}</div>
+                        <div class="text-xs text-gray-500 flex items-center gap-1 font-mono mt-0.5">
+                            <i class="ph-bold ph-phone text-gray-400"></i> ${escHtml(phone || '—')}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 max-w-xs">
+                        <div class="text-xs font-medium text-gray-700 truncate" title="${escHtml(v.address || '')}">${escHtml(v.address || '—')}</div>
+                        <div class="text-[11px] font-bold text-emerald-800 flex items-center gap-1 mt-0.5">
+                            <i class="ph-fill ph-map-pin text-[10px]"></i> PIN ${escHtml(v.pincode || '—')}, ${escHtml(v.city || '')}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-900 bg-emerald-100/70 border border-emerald-300 px-2.5 py-1 rounded-lg">
+                            <i class="ph-fill ph-leaf text-emerald-700"></i> Organic Wet Waste
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="toggleVolunteerStatus(${v.id}, '${isActive ? 'Paused' : 'Active'}')" class="cursor-pointer" title="Click to toggle status">
+                            ${statusBadge}
+                        </button>
+                    </td>
+                    <td class="px-6 py-4">${verifiedBadge}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5">
+                            ${waPhone ? `
+                                <a href="https://wa.me/${waPhone}" target="_blank" class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors" title="Chat on WhatsApp">
+                                    <i class="ph-bold ph-whatsapp-logo text-base"></i>
+                                </a>
+                            ` : ''}
+                            <button onclick="openEditVolunteerModal(${v.id})" title="Edit Volunteer Station" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer">
+                                <i class="ph-bold ph-pencil-simple text-base"></i>
+                            </button>
+                            <button onclick="deleteVolunteerStation(${v.id})" title="Delete Station" class="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer">
+                                <i class="ph-bold ph-trash text-base"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function openRegisterVolunteerModal() {
+        document.getElementById('reg-vol-name').value = '';
+        document.getElementById('reg-vol-phone').value = '';
+        document.getElementById('reg-vol-address').value = '';
+        document.getElementById('reg-vol-pincode').value = '';
+        document.getElementById('reg-vol-city').value = 'Patiala';
+        document.getElementById('reg-vol-status').value = 'Active';
+        document.getElementById('modal-register-volunteer').classList.remove('hidden');
+    }
+
+    function closeRegisterVolunteerModal() {
+        document.getElementById('modal-register-volunteer').classList.add('hidden');
+    }
+
+    async function handleRegisterVolunteerSubmit(e) {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('reg-vol-name').value.trim(),
+            phone: document.getElementById('reg-vol-phone').value.trim(),
+            address: document.getElementById('reg-vol-address').value.trim(),
+            pincode: document.getElementById('reg-vol-pincode').value.trim(),
+            city: document.getElementById('reg-vol-city').value.trim(),
+            volunteer_status: document.getElementById('reg-vol-status').value
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/volunteers`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(`Registration failed: ${data.error || 'Server error'}`);
+                return;
+            }
+            closeRegisterVolunteerModal();
+            await loadVolunteers();
+            alert(`🎉 ${data.message || 'Drop-off station registered successfully!'}`);
+        } catch (err) {
+            alert('Network error registering volunteer drop-off station.');
+        }
+    }
+
+    function openEditVolunteerModal(id) {
+        const v = allVolunteers.find(x => x.id === id);
+        if (!v) return;
+        document.getElementById('edit-vol-id').value = v.id;
+        document.getElementById('edit-vol-title').textContent = `Edit Station #${v.hh_code || v.id}`;
+        document.getElementById('edit-vol-name').value = v.name || '';
+        document.getElementById('edit-vol-phone').value = v.phone || '';
+        document.getElementById('edit-vol-pincode').value = v.pincode || '';
+        document.getElementById('edit-vol-address').value = v.address || '';
+        document.getElementById('edit-vol-city').value = v.city || '';
+        document.getElementById('edit-vol-status').value = v.status || 'Active';
+        document.getElementById('edit-vol-verified').checked = (v.is_verified === 1);
+        document.getElementById('modal-edit-volunteer').classList.remove('hidden');
+    }
+
+    function closeEditVolunteerModal() {
+        document.getElementById('modal-edit-volunteer').classList.add('hidden');
+    }
+
+    async function handleSaveVolunteerSubmit(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-vol-id').value;
+        const payload = {
+            name: document.getElementById('edit-vol-name').value.trim(),
+            phone: document.getElementById('edit-vol-phone').value.trim(),
+            address: document.getElementById('edit-vol-address').value.trim(),
+            pincode: document.getElementById('edit-vol-pincode').value.trim(),
+            city: document.getElementById('edit-vol-city').value.trim(),
+            volunteer_status: document.getElementById('edit-vol-status').value,
+            is_verified: document.getElementById('edit-vol-verified').checked ? 1 : 0
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/volunteers/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(`Update failed: ${data.error || 'Server error'}`);
+                return;
+            }
+            closeEditVolunteerModal();
+            await loadVolunteers();
+        } catch (err) {
+            alert('Network error updating volunteer station.');
+        }
+    }
+
+    async function toggleVolunteerStatus(id, newStatus) {
+        try {
+            const res = await fetch(`${API_BASE}/admin/volunteers/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify({ volunteer_status: newStatus })
+            });
+            if (res.ok) {
+                const v = allVolunteers.find(x => x.id === id);
+                if (v) v.status = newStatus;
+                filterVolunteers();
+            }
+        } catch (e) {}
+    }
+
+    async function deleteVolunteerStation(id) {
+        if (!confirm('Are you sure you want to remove this volunteer drop-off station?')) return;
+        try {
+            const res = await fetch(`${API_BASE}/admin/volunteers/${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': adminKey }
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || 'Delete failed');
+                return;
+            }
+            allVolunteers = allVolunteers.filter(x => x.id !== id);
+            filterVolunteers();
+        } catch (e) {
+            alert('Network error deleting volunteer station.');
+        }
     }
 
     // ── User Details Modal ────────────────────────────────────────────────────

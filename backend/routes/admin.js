@@ -205,4 +205,124 @@ router.patch('/pickups/:id/status', requireAdmin, async (req, res) => {
     }
 });
 
+// ─────────────────────────────────────────────
+// GET /api/admin/volunteers — all biodegradable volunteer drop-off hubs
+// ─────────────────────────────────────────────
+router.get('/volunteers', requireAdmin, async (req, res) => {
+    try {
+        const db = await getDb();
+        const stmt = db.prepare(`
+            SELECT id, name, email, phone, address, pincode, city, state, role, hh_code, 
+                   COALESCE(volunteer_status, 'Active') as status,
+                   COALESCE(is_verified, 1) as is_verified,
+                   points, created_at
+            FROM users 
+            WHERE role = 'Recycler'
+            ORDER BY id DESC
+        `);
+        const volunteers = [];
+        while (stmt.step()) {
+            volunteers.push(stmt.getAsObject());
+        }
+        stmt.free();
+
+        // Get organic wet waste silo stats from hub_bins
+        const binStmt = db.prepare(`SELECT current_kg, capacity FROM hub_bins WHERE material LIKE '%Organic%' LIMIT 1`);
+        let organicStock = 427;
+        if (binStmt.step()) {
+            organicStock = binStmt.getAsObject().current_kg || 427;
+        }
+        binStmt.free();
+
+        return res.json({ 
+            count: volunteers.length, 
+            volunteers,
+            organic_silo_kg: organicStock
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/admin/volunteers — register new drop-off station
+// ─────────────────────────────────────────────
+router.post('/volunteers', requireAdmin, async (req, res) => {
+    try {
+        const { name, phone, address, pincode, city, state, volunteer_status } = req.body;
+        if (!name || !phone || !address || !pincode) {
+            return res.status(400).json({ error: 'Name, phone, address and pincode are required.' });
+        }
+        const db = await getDb();
+        const { persist } = require('../database');
+        const cleanPhone = String(phone).replace(/\D/g, '');
+        const generatedEmail = `${cleanPhone}@volunteer.terra`;
+        const genCode = `HH-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        db.run(`
+            INSERT INTO users (name, email, password_hash, dob, address, pincode, city, state, role, hh_code, original_hh_code, active_hh_type, phone, volunteer_status, is_verified)
+            VALUES (?, ?, 'VOLUNTEER_STATION', '2000-01-01', ?, ?, ?, ?, 'Recycler', ?, ?, 'personal', ?, ?, 1)
+        `, [name.trim(), generatedEmail, address.trim(), String(pincode).trim(), (city || 'Local Area').trim(), (state || 'Punjab').trim(), genCode, genCode, cleanPhone, volunteer_status || 'Active']);
+        persist();
+
+        return res.status(201).json({ success: true, message: `Volunteer drop-off point "${name}" registered successfully.` });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────
+// PATCH /api/admin/volunteers/:id — update status or details
+// ─────────────────────────────────────────────
+router.patch('/volunteers/:id', requireAdmin, async (req, res) => {
+    try {
+        const { name, address, pincode, city, state, volunteer_status, is_verified, phone } = req.body;
+        const db = await getDb();
+        const { persist } = require('../database');
+
+        db.run(`
+            UPDATE users 
+            SET name = COALESCE(?, name),
+                phone = COALESCE(?, phone),
+                address = COALESCE(?, address),
+                pincode = COALESCE(?, pincode),
+                city = COALESCE(?, city),
+                state = COALESCE(?, state),
+                volunteer_status = COALESCE(?, volunteer_status),
+                is_verified = COALESCE(?, is_verified)
+            WHERE id = ? AND role = 'Recycler'
+        `, [
+            name ? name.trim() : null,
+            phone ? String(phone).trim() : null,
+            address ? address.trim() : null,
+            pincode ? String(pincode).trim() : null,
+            city ? city.trim() : null,
+            state ? state.trim() : null,
+            volunteer_status ? volunteer_status.trim() : null,
+            is_verified !== undefined ? (is_verified ? 1 : 0) : null,
+            req.params.id
+        ]);
+        persist();
+
+        return res.json({ success: true, message: `Volunteer station #${req.params.id} updated.` });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────
+// DELETE /api/admin/volunteers/:id — delete volunteer station
+// ─────────────────────────────────────────────
+router.delete('/volunteers/:id', requireAdmin, async (req, res) => {
+    try {
+        const db = await getDb();
+        const { persist } = require('../database');
+        db.run(`DELETE FROM users WHERE id = ? AND role = 'Recycler'`, [req.params.id]);
+        persist();
+        return res.json({ success: true, message: `Volunteer station #${req.params.id} removed.` });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
