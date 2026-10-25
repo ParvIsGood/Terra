@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>circular. • Sort &amp; Toss Arcade</title>
+
+<!-- Google Font: Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Phosphor Icons -->
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+<style>
+:root {
+  --brand-dark: #0A3B2C;
+  --brand-primary: #145743;
+  --brand-light: #D4EBDC;
+  --brand-bg: #F4F7F4;
+  --brand-border: #E5E7EB;
+  --brand-grayText: #4B5563;
+  --floor: #E1EBE3;
+  --ink: #0A3B2C;
+  --card: #ffffffF2;
+  box-sizing: border-box;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; background-color: #EBF1EC; }
+body {
+  color: var(--ink);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* App Container matching Circular Mobile Frame */
+#app {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  max-width: 440px;
+  max-height: 880px;
+  background: var(--brand-bg);
+  box-shadow: 0 20px 50px -10px rgba(10, 59, 44, 0.15), 0 0 0 1px rgba(10, 59, 44, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 480px) {
+  #app {
+    border-radius: 36px;
+    height: 92vh;
+  }
+}
+
+/* Top App Bar */
+#top-bar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--brand-border);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--brand-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.token-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--brand-dark);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(10, 59, 44, 0.2);
+}
+
+/* In-game HUD */
+#hud {
+  position: absolute;
+  top: 62px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hud-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 17px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+}
+
+.hud-card small {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--brand-grayText);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#wind { text-align: center; font-size: 13px; font-weight: 700; }
+#hearts { text-align: right; letter-spacing: 3px; font-size: 15px; }
+.h { position: relative; display: inline-block; }
+.h b { position: absolute; left: 0; top: 0; overflow: hidden; white-space: nowrap; font-weight: 400; }
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* Toast Message */
+#toast {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 42%;
+  transform: translateY(-50%) scale(0.95);
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 20;
+}
+#toast.on {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+#toast span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  padding: 12px 18px;
+  border-radius: 18px;
+  max-width: 90%;
+  box-shadow: 0 16px 36px rgba(10, 59, 44, 0.16), 0 0 0 1px rgba(10, 59, 44, 0.06);
+  line-height: 1.4;
+  color: var(--brand-dark);
+}
+
+/* Modal Overlay & Card */
+.ov {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 59, 44, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 30;
+  transition: opacity 0.3s ease;
+}
+.ov.off { display: none; }
+
+.panel {
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 28px 24px;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.panel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: var(--brand-dark);
+  line-height: 1.15;
+}
+
+p.desc {
+  margin: 8px 0 18px;
+  font-size: 13px;
+  color: var(--brand-grayText);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Segregation Category Pills */
+.rules {
+  text-align: left;
+  font-size: 12px;
+  margin: 16px 0 22px;
+  background: #F9FAFB;
+  border: 1px solid var(--brand-border);
+  border-radius: 18px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sw {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.rule-text b {
+  display: block;
+  font-size: 12px;
+  color: var(--brand-dark);
+  font-weight: 700;
+}
+
+.rule-text span {
+  font-size: 11px;
+  color: var(--brand-grayText);
+}
+
+.cost-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-dark);
+  margin-bottom: 12px;
+  background: #EFF7F2;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px dashed #A7D3B8;
+}
+
+button.primary-btn {
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 15px;
+  border: 0;
+  border-radius: 9999px;
+  padding: 15px 24px;
+  background: var(--brand-dark);
+  color: #fff;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 10px 24px -4px rgba(10, 59, 44, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button.primary-btn:hover {
+  background: var(--brand-primary);
+  transform: translateY(-1px);
+}
+
+button.primary-btn:active {
+  transform: scale(0.97);
+}
+
+/* Bottom Hint */
+#bottom-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+}
+#bottom-hint .hint-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-dark);
+  border: 1px solid var(--brand-border);
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Top App Bar -->
+  <div id="top-bar">
+    <div class="brand-badge">
+      <span style="display:inline-block; width:8px; height:8px; background:#145743; border-radius:50%"></span>
+      circular. <span style="font-weight:500; opacity:0.6; font-size:11px">arcade</span>
+    </div>
+    <div class="token-pill">
+      <i class="ph-fill ph-coins" style="color:#FBBF24"></i>
+      <span>50 pts / play</span>
+    </div>
+  </div>
+
+  <!-- In-Game HUD -->
+  <div id="hud">
+    <div class="hud-card" id="score">0<small>Best 0 • Streak 0/3</small></div>
+    <div class="hud-card" id="wind">Wind<small>calm</small></div>
+    <div class="hud-card" id="hearts">❤️❤️❤️</div>
+  </div>
+
+  <!-- 3D Canvas -->
+  <canvas id="c"></canvas>
+
+  <!-- Interactive Toast Notification -->
+  <div id="toast"><span></span></div>
+
+  <!-- Bottom Gesture Hint -->
+  <div id="bottom-hint">
+    <div class="hint-pill" id="hint-text">
+      <i class="ph-bold ph-arrow-up"></i> Flick waste into the matching bin
+    </div>
+  </div>
+
+  <!-- Start / Game Over Modal -->
+  <div class="ov" id="ov">
+    <div class="panel">
+      <div class="panel-tag">
+        <i class="ph-bold ph-sparkle"></i> Waste Segregation Challenge
+      </div>
+      <h1 id="ovT">Sort &amp; Toss</h1>
+      <p class="desc" id="ovP">Flick each piece of waste into the right bin. Proper segregation keeps materials out of landfills!</p>
+      
+      <div class="rules" id="rules">
+        <div class="rule-item">
+          <div class="sw" style="background:#1E6091"><i class="ph-bold ph-recycle"></i></div>
+          <div class="rule-text">
+            <b>Recycling (Dry)</b>
+            <span>Paper, plastic bottles, glass, cans</span>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="sw" style="background:#C93B2B"><i class="ph-bold ph-warning-octagon"></i></div>
+          <div class="rule-text">
+            <b>Hazardous &amp; E-Waste</b>
+            <span>Batteries, bulbs, wires, medicines</span>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="sw" style="background:#145743"><i class="ph-bold ph-leaf"></i></div>
+          <div class="rule-text">
+            <b>Organic (Wet)</b>
+            <span>Peels, food scraps, egg shells</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cost-note" id="costNote">
+        <i class="ph-fill ph-ticket" style="color:#145743"></i>
+        <span>Entry: <b>50 Points</b> (Earned from pickups)</span>
+      </div>
+
+      <button class="primary-btn" id="go">
+        <i class="ph-bold ph-play"></i>
+        <span>Play (50 Pts)</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Circular Theme Colors: Recyclable Blue, Hazardous Red, Terra Emerald Green
+const BINS = [
+  { n: 'Recycling', c: '#1E6091', i: '♻️', sub: 'Dry Waste' },
+  { n: 'Hazardous', c: '#C93B2B', i: '☣️', sub: 'E-Waste' },
+  { n: 'Organic',   c: '#145743', i: '🌱', sub: 'Wet Waste' }
+];
+
+const ITEMS = [
+  ['🍌', 'Banana peel', 2, 'Food scraps break down into organic compost.'],
+  ['🍎', 'Eaten apple', 2, 'Fruit leftovers are clean wet organic waste.'],
+  ['🥚', 'Egg shells', 2, 'Shells enrich soil with natural calcium.'],
+  ['🐟', 'Fish bones', 2, 'Kitchen scraps turn into nutrient compost.'],
+  ['📃', 'Crumpled paper', 0, 'Clean paper saves trees through recycling.'],
+  ['📰', 'Newspaper', 0, 'Old newsprint is pulp for fresh recycled paper.'],
+  ['🧴', 'Plastic bottle', 0, 'PET bottles are shredded into reusable flakes.'],
+  ['🥫', 'Empty can', 0, 'Aluminum and tin cans are infinitely recyclable.'],
+  ['🍾', 'Glass bottle', 0, 'Glass melts down without any loss of quality.'],
+  ['🔌', 'Broken wires', 1, 'Copper wires must be recovered safely.'],
+  ['🔋', 'Used battery', 1, 'Batteries leak heavy toxic metals into soil.'],
+  ['💡', 'Old CFL bulb', 1, 'Bulbs contain mercury and require special handling.'],
+  ['💊', 'Expired medicine', 1, 'Never flush pills into ground water or drains.']
+];
+
+const cv = document.getElementById('c'),
+      ctx = cv.getContext('2d'),
+      $ = id => document.getElementById(id);
+
+// World units: meters (x sideways, d distance from thrower, z height)
+const R=.15, BW=.85, GAP=.12, TOT=3*BW+2*GAP, D=4.4, BD=1.6, RIM=.45, WT=.07, GR=9.8, TH=.6, DC=2.5, HC=3.5, SN=Math.sin(TH), CS=Math.cos(TH);
+let W, H, dpr, F=1, cx=0, cy=0, S0;
+const BX = i => -TOT/2 + i*(BW + GAP);
+
+function P(x, d, z) {
+  const ry = d + DC, rz = z - HC;
+  const dep = ry*CS - rz*SN, up = ry*SN + rz*CS;
+  return { x: cx + F*x/dep, y: cy - F*up/dep, s: F/dep };
+}
+
+let G = { score:0, lives:3, order:[0,1,2], state:'idle', it:null, x:0, y:0, wind:0, flash:[null,null,null], pts:[], best:0, judged:true, ft:0, streak:0 };
+let B = { x:0, d:0, z:.5, vx:0, vd:0, vz:0, rot:0, vr:0, inBin:-1 };
+
+try { G.best = +localStorage.getItem('sortTossTerra') || 0; } catch(e){}
+
+function layout() {
+  dpr = window.devicePixelRatio || 1;
+  const rect = cv.getBoundingClientRect();
+  W = rect.width;
+  H = rect.height;
+  cv.width = W * dpr;
+  cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  F = 1; cx = 0; cy = 0;
+  F = W * 0.9 / (2 * P(TOT/2, D, RIM).x);
+  cx = W / 2;
+  cy = H * 0.22 - P(0, D + BD/2, RIM).y;
+  S0 = P(0, 0, 0.5);
+
+  if (G.state === 'ready') {
+    G.x = S0.x;
+    G.y = S0.y;
+  }
+}
+
+window.addEventListener('resize', layout);
+
+function hud() {
+  $('score').innerHTML = G.score + '<small>Best ' + G.best + ' • Streak ' + G.streak + '/3</small>';
+  let h = '';
+  for (let i = 0; i < 3; i++) {
+    const v = Math.max(0, Math.min(1, G.lives - i));
+    h += '<span class="h">🖤' + (v > 0 ? '<b style="width:' + (v * 100) + '%">💚</b>' : '') + '</span>';
+  }
+  $('hearts').innerHTML = h;
+
+  const w = G.wind;
+  $('wind').innerHTML = 'Wind<small>' + (Math.abs(w) < 0.15 ? 'calm' : (w < 0 ? '← ' : '') + Math.abs(w).toFixed(1) + (w > 0 ? ' →' : '')) + '</small>';
+}
+
+let tt;
+function toast(t, ok) {
+  const e = $('toast');
+  const icon = ok ? '<i class="ph-fill ph-check-circle" style="color:#145743;font-size:18px"></i>' : '<i class="ph-fill ph-x-circle" style="color:#C93B2B;font-size:18px"></i>';
+  e.firstElementChild.innerHTML = icon + '<span>' + t + '</span>';
+  e.firstElementChild.style.borderLeft = '5px solid ' + (ok ? '#145743' : '#C93B2B');
+  e.classList.add('on');
+  clearTimeout(tt);
+  tt = setTimeout(() => e.classList.remove('on'), 1800);
+}
+
+function retry() {
+  G.state = 'ready';
+  G.judged = true;
+  B.inBin = -1;
+  G.x = S0.x;
+  G.y = S0.y;
+}
+
+function next() {
+  G.it = ITEMS[Math.random() * ITEMS.length | 0];
+  const m = Math.min(1.0, 0.2 + G.score * 0.04);
+  G.wind = G.score < 5 ? 0 : (Math.random() * 2 - 1) * m;
+  retry();
+  hud();
+}
+
+function start() {
+  G.score = 0;
+  G.lives = 3;
+  G.streak = 0;
+  G.order = [0, 1, 2];
+  $('ov').classList.add('off');
+  next();
+}
+
+$('go').onclick = start;
+
+function pos(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now() };
+}
+
+cv.addEventListener('pointerdown', e => {
+  if (G.state !== 'ready') return;
+  const p = pos(e);
+  if (Math.hypot(p.x - G.x, p.y - G.y) > 100) return;
+  cv.setPointerCapture(e.pointerId);
+  G.state = 'drag';
+  G.pts = [p];
+  G.x = p.x;
+  G.y = p.y;
+});
+
+cv.addEventListener('pointermove', e => {
+  if (G.state !== 'drag') return;
+  const p = pos(e);
+  G.pts.push(p);
+  if (G.pts.length > 8) G.pts.shift();
+  G.x = p.x;
+  G.y = Math.max(H * 0.4, p.y);
+});
+
+function release() {
+  if (G.state !== 'drag') return;
+  const l = G.pts[G.pts.length - 1],
+        a = G.pts.filter(p => l.t - p.t < 110),
+        f = a[0],
+        dt = Math.max(l.t - f.t, 8);
+  const vx = (l.x - f.x) / dt * 16.7,
+        up = -(l.y - f.y) / dt * 16.7;
+
+  if (up < 5) {
+    toast('Flick upward faster! Faster swipe = longer toss.', true);
+    retry();
+    return;
+  }
+
+  const pw = Math.min(1, (up - 5) / 22),
+        v = 6.3 + 2.4 * pw,
+        yaw = Math.max(-0.6, Math.min(0.6, Math.atan2(vx, up) * 0.6)),
+        el = 0.87,
+        vh = v * Math.cos(el);
+
+  B = {
+    x: Math.max(-0.9, Math.min(0.9, (G.x - S0.x) / S0.s)),
+    d: 0,
+    z: 0.5,
+    vx: vh * Math.sin(yaw),
+    vd: vh * Math.cos(yaw),
+    vz: v * Math.sin(el),
+    rot: 0,
+    vr: (Math.random() - 0.5) * 9,
+    inBin: -1
+  };
+  G.state = 'fly';
+  G.judged = false;
+  G.ft = 0;
+}
+
+cv.addEventListener('pointerup', release);
+cv.addEventListener('pointercancel', release);
+
+function judgeBin(i) {
+  G.judged = true;
+  const b = G.order[i], ok = (b === G.it[2]);
+  G.flash[i] = { t: performance.now(), ok };
+
+  if (ok) {
+    G.score++;
+    G.streak++;
+    let bonus = '';
+    if (G.streak >= 3) {
+      G.streak = 0;
+      if (G.lives < 3) {
+        G.lives = Math.min(3, G.lives + 1);
+        bonus = ' • +1 💚 for 3 in a row!';
+      } else {
+        bonus = ' • 3 streak combo! 🔥';
+      }
+    }
+    if (G.score > G.best) {
+      G.best = G.score;
+      try { localStorage.setItem('sortTossTerra', G.best); } catch(e){}
+    }
+    toast('<b>' + G.it[1] + '</b> → ' + BINS[b].n + '. ' + G.it[3] + bonus, true);
+    if (G.score % 5 === 0) {
+      G.order = [...G.order].sort(() => Math.random() - 0.5);
+      setTimeout(() => toast('Bins swapped positions! Keep focus.', true), 1400);
+    }
+  } else {
+    G.streak = 0;
+    G.lives -= 1;
+    toast('Wrong bin! ' + G.it[1] + ' belongs in <b>' + BINS[G.it[2]].n + '</b>.', false);
+  }
+
+  hud();
+  setTimeout(() => { G.lives > 0 ? next() : over(); }, 1600);
+}
+
+function judgeFloor() {
+  G.judged = true;
+  G.streak = 0;
+  G.lives -= 0.5;
+  hud();
+  const msg = (B.d < D - 0.3) ? 'Fell short of the bins' : (B.d > D + BD ? 'Overshot the bins' : 'Bounced off the rim');
+  toast(msg + ' (−½ 💚)', false);
+  setTimeout(() => { G.lives > 0 ? retry() : over(); }, 1300);
+}
+
+function over() {
+  G.state = 'idle';
+  $('ovT').textContent = 'Game Over';
+  $('ovP').innerHTML = 'You correctly segregated <b>' + G.score + ' item' + (G.score === 1 ? '' : 's') + '</b>.<br>All-time High Score: <b>' + G.best + '</b>';
+  $('rules').style.display = 'none';
+  $('costNote').innerHTML = '<i class="ph-fill ph-ticket" style="color:#145743"></i><span>Play again: <b>50 Points</b></span>';
+  $('go').innerHTML = '<i class="ph-bold ph-arrows-clockwise"></i><span>Play Again (50 Pts)</span>';
+  $('ov').classList.remove('off');
+  G.it = null;
+}
+
+function step(dt) {
+  const b = B;
+  b.vx += (G.wind - 0.15 * b.vx) * dt;
+  b.vd -= 0.15 * b.vd * dt;
+  b.vz += (-GR - 0.15 * b.vz) * dt;
+  b.x += b.vx * dt;
+  b.d += b.vd * dt;
+  b.z += b.vz * dt;
+  b.rot += b.vr * dt;
+
+  if (b.inBin >= 0) {
+    const x0 = BX(b.inBin) + WT + R,
+          x1 = BX(b.inBin) + BW - WT - R,
+          d0 = D + WT + R,
+          d1 = D + BD - WT - R;
+    if (b.x < x0) { b.x = x0; b.vx = Math.abs(b.vx) * 0.3; }
+    if (b.x > x1) { b.x = x1; b.vx = -Math.abs(b.vx) * 0.3; }
+    if (b.d < d0) { b.d = d0; b.vd = Math.abs(b.vd) * 0.3; }
+    if (b.d > d1) { b.d = d1; b.vd = -Math.abs(b.vd) * 0.3; }
+    if (b.z < R) {
+      b.z = R;
+      b.vz = Math.abs(b.vz) * 0.25;
+      b.vx *= 0.8; b.vd *= 0.8; b.vr *= 0.7;
+    }
+    return;
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const x0 = BX(i), x1 = x0 + BW, d0 = D, d1 = D + BD;
+    const cin = (b.x > x0 + WT && b.x < x1 - WT && b.d > d0 + WT && b.d < d1 - WT);
+
+    if (cin && b.z <= RIM) {
+      b.inBin = i;
+      if (!G.judged) judgeBin(i);
+      return;
+    }
+    if (cin) continue;
+
+    if (b.z > RIM) {
+      if (b.z - RIM < R && b.vz < 0 && b.x > x0 - R*0.7 && b.x < x1 + R*0.7 && b.d > d0 - R*0.7 && b.d < d1 + R*0.7) {
+        b.z = RIM + R;
+        b.vz = -b.vz * 0.35;
+        b.vx *= 0.85; b.vd *= 0.85;
+        const m = [
+          [Math.abs(b.x - (x0 + WT/2)), 0, b.x - (x0 + WT/2)],
+          [Math.abs(b.x - (x1 - WT/2)), 0, b.x - (x1 - WT/2)],
+          [Math.abs(b.d - (d0 + WT/2)), 1, b.d - (d0 + WT/2)],
+          [Math.abs(b.d - (d1 - WT/2)), 1, b.d - (d1 - WT/2)]
+        ].sort((p, q) => p[0] - q[0])[0];
+        const k = m[2] < 0 ? -1 : 1;
+        if (m[1]) b.vd += k * 0.9; else b.vx += k * 0.9;
+        b.vr += (Math.random() - 0.5) * 4;
+      }
+    } else if (b.x > x0 - R && b.x < x1 + R && b.d > d0 - R && b.d < d1 + R) {
+      const e = [b.x - (x0 - R), (x1 + R) - b.x, b.d - (d0 - R), (d1 + R) - b.d],
+            m = Math.min(...e),
+            j = e.indexOf(m);
+      if (j === 0) { b.x = x0 - R; b.vx = -Math.abs(b.vx) * 0.35; }
+      else if (j === 1) { b.x = x1 + R; b.vx = Math.abs(b.vx) * 0.35; }
+      else if (j === 2) { b.d = d0 - R; b.vd = -Math.abs(b.vd) * 0.35; }
+      else { b.d = d1 + R; b.vd = Math.abs(b.vd) * 0.35; }
+      b.vz *= 0.9;
+      b.vr += (Math.random() - 0.5) * 3;
+    }
+  }
+
+  if (b.z <= R) {
+    b.z = R;
+    b.vz = Math.abs(b.vz) * 0.38;
+    b.vx *= 0.82; b.vd *= 0.82; b.vr *= 0.8;
+    if (!G.judged) judgeFloor();
+  }
+}
+
+function poly(pts, c) {
+  ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.closePath();
+  ctx.fillStyle = c;
+  ctx.fill();
+}
+
+function binBack(i) {
+  const x0 = BX(i), x1 = x0 + BW, b = BINS[G.order[i]];
+  const q = [P(x0, D, RIM), P(x1, D, RIM), P(x1, D + BD, RIM), P(x0, D + BD, RIM)];
+  poly(q, b.c);
+  poly(q, 'rgba(0, 0, 0, 0.45)');
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+  ctx.lineWidth = Math.max(2, q[0].s * 0.04);
+  ctx.beginPath();
+  q.forEach((p, k) => k ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function binFront(i, now) {
+  const x0 = BX(i), x1 = x0 + BW, b = BINS[G.order[i]], f = G.flash[i];
+  let k = 0;
+  if (f) {
+    const d = now - f.t;
+    if (d > 700) G.flash[i] = null;
+    else k = Math.sin(d / 700 * Math.PI);
+  }
+  const q = [P(x0, D, RIM), P(x1, D, RIM), P(x1 - 0.05, D, 0), P(x0 + 0.05, D, 0)];
+  poly(q, b.c);
+
+  // Bottom Shadow
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+  ctx.fillRect(q[3].x, q[3].y - q[3].s * 0.06, q[2].x - q[3].x, q[3].s * 0.06);
+
+  if (f) {
+    ctx.globalAlpha = k * 0.5;
+    poly(q, f.ok ? '#FFFFFF' : '#000000');
+    ctx.globalAlpha = 1;
+  }
+
+  // Label & Emoji on bin
+  const m = P((x0 + x1) / 2, D, RIM * 0.5), s = m.s;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = (s * 0.28) + 'px serif';
+  ctx.fillText(b.i, m.x, m.y - s * 0.1);
+
+  ctx.font = '800 ' + (s * 0.12) + 'px "Inter", system-ui, sans-serif';
+  ctx.fillText(b.n, m.x, m.y + s * 0.15);
+
+  ctx.font = '600 ' + (s * 0.075) + 'px "Inter", system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.fillText(b.sub, m.x, m.y + s * 0.28);
+  ctx.textBaseline = 'alphabetic';
+}
+
+function ball(x, y, s, rot, a) {
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.font = (2 * R * s * 1.25) + 'px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(G.it[0], 0, 0);
+  ctx.restore();
+  ctx.textBaseline = 'alphabetic';
+}
+
+function draw(now) {
+  ctx.clearRect(0, 0, W, H);
+
+  // Perspective Floor with Circular's subtle mint/grey-green tone
+  const top = P(0, D + BD, 0).y - 40;
+  ctx.fillStyle = '#E1EBE3';
+  ctx.fillRect(0, top, W, H);
+
+  // Modern subtle floor grid
+  ctx.strokeStyle = '#0A3B2C';
+  ctx.globalAlpha = 0.07;
+  ctx.lineWidth = 1;
+  for (let d = 0; d <= D + BD + 0.5; d++) {
+    const a = P(-3, d, 0), b = P(3, d, 0);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  for (let x = -3; x <= 3; x++) {
+    const a = P(x, 0, 0), b = P(x, D + BD + 0.5, 0);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  if (G.it && G.state !== 'idle') {
+    const fly = (G.state === 'fly');
+    const w = fly ? P(B.x, B.d, B.z) : { x: G.x, y: G.y, s: S0.s };
+
+    // Dynamic Ball Shadow on Floor
+    if (fly && B.inBin < 0) {
+      const sh = P(B.x, B.d, 0);
+      ctx.fillStyle = 'rgba(10, 59, 44, ' + Math.max(0.08, 0.32 - B.z * 0.07) + ')';
+      ctx.beginPath();
+      ctx.ellipse(sh.x, sh.y, R * sh.s * 1.1, R * sh.s * 0.45, 0, 0, 7);
+      ctx.fill();
+    } else if (!fly) {
+      ctx.fillStyle = 'rgba(10, 59, 44, 0.18)';
+      ctx.beginPath();
+      ctx.ellipse(S0.x, P(0, 0, 0).y, R * S0.s * 1.1, R * S0.s * 0.45, 0, 0, 7);
+      ctx.fill();
+    }
+
+    // Render Bins Background
+    for (let i = 0; i < 3; i++) binBack(i);
+
+    // Ball Behind Rim
+    const behind = fly && B.d > D;
+    if (behind) ball(w.x, w.y, w.s, B.rot, 1);
+
+    // Render Bins Foreground
+    for (let i = 0; i < 3; i++) binFront(i, now);
+
+    // Ball in Front of Rim
+    if (!behind) ball(w.x, w.y, w.s, fly ? B.rot : 0, 1);
+
+    // Item Name Banner under the held item
+    if (!fly) {
+      ctx.font = '800 16px "Inter", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#0A3B2C';
+      ctx.fillText(G.it[1], G.x, G.y + R * S0.s + 32);
+
+      if (G.state === 'ready') {
+        ctx.globalAlpha = 0.65;
+        ctx.font = '600 12px "Inter", system-ui, sans-serif';
+        ctx.fillText('Swipe upward to throw', W / 2, G.y + R * S0.s + 54);
+        ctx.globalAlpha = 1;
+      }
+    }
+  } else {
+    for (let i = 0; i < 3; i++) {
+      binBack(i);
+      binFront(i, now);
+    }
+  }
+}
+
+let last = performance.now(), acc = 0;
+function loop(now) {
+  acc += Math.min((now - last) / 1000, 0.05);
+  last = now;
+  while (acc >= 1/120) {
+    if (G.state === 'fly') {
+      step(1/120);
+      G.ft += 1/120;
+      if (G.ft > 5 && !G.judged) judgeFloor();
+    }
+    acc -= 1/120;
+  }
+  draw(now);
+  requestAnimationFrame(loop);
+}
+
+layout();
+hud();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

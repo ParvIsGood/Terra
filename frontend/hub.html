@@ -415,7 +415,7 @@
                         </div>
                     </div>
 
-                    <button onclick="dropStep=2; render();" 
+                    <button onclick="goToWeighbridgeStep()" 
                         class="w-full bg-brand-dark text-white font-bold py-3.5 rounded-full text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
                         <span>Continue to Hub Weighbridge</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -429,21 +429,81 @@
                 const c = selectedCollector.collector;
                 const declTotal = selectedCollector.declared_total || 0;
                 const hubTotal = getHubTotal();
+                const totalDiff = Math.round((hubTotal - declTotal) * 10) / 10;
                 const gap = declTotal > 0 ? (Math.abs(declTotal - hubTotal) / declTotal) : 0;
                 const isFlagged = gap > 0.1;
 
-                const matInputs = MATERIALS.map(m => `
-                    <div class="flex items-center justify-between py-1.5 border-b border-brand-border last:border-0">
-                        <span class="font-bold text-brand-dark text-xs">${m}</span>
-                        <div class="flex items-center gap-1">
-                            <input type="number" step="0.1" min="0" placeholder="0"
-                                value="${hubWeights[m] || ''}"
-                                oninput="setMatWeight('${m}', this.value)"
-                                class="w-20 bg-brand-bg border border-brand-border rounded-xl px-2 py-1 text-right font-extrabold text-brand-dark text-xs font-mono focus:outline-none focus:border-brand-dark">
-                            <span class="text-[10px] text-brand-grayText font-bold">kg</span>
+                const declaredMap = calculateDeclaredMaterialWeights(selectedCollector);
+
+                // Sort materials: items with declared weights come first
+                const sortedMaterials = [...MATERIALS].sort((a, b) => {
+                    const wtA = declaredMap[a] || 0;
+                    const wtB = declaredMap[b] || 0;
+                    return wtB - wtA;
+                });
+
+                const matInputs = sortedMaterials.map(m => {
+                    const dec = declaredMap[m] || 0;
+                    const cur = hubWeights[m] !== undefined ? hubWeights[m] : dec;
+                    const diff = Math.round((cur - dec) * 10) / 10;
+                    const hasDeclared = dec > 0;
+
+                    let deltaBadge = '';
+                    if (hasDeclared) {
+                        if (diff === 0) {
+                            deltaBadge = `<span class="inline-flex items-center gap-1 text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200"><i class="ph-bold ph-check"></i> Exact match</span>`;
+                        } else if (diff < 0) {
+                            deltaBadge = `<span class="inline-flex items-center gap-1 text-[10px] text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200"><i class="ph-bold ph-trend-down"></i> ${diff} kg (Tare/Moisture)</span>`;
+                        } else {
+                            deltaBadge = `<span class="inline-flex items-center gap-1 text-[10px] text-blue-800 font-bold bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200"><i class="ph-bold ph-trend-up"></i> +${diff} kg</span>`;
+                        }
+                    } else if (cur > 0) {
+                        deltaBadge = `<span class="inline-flex items-center gap-1 text-[10px] text-purple-800 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">+${cur} kg added</span>`;
+                    }
+
+                    return `
+                    <div class="py-2.5 px-3 border-b border-brand-border last:border-0 ${hasDeclared ? 'bg-emerald-50/40 rounded-2xl mb-1.5 border border-emerald-100' : ''}">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div>
+                                <span class="font-extrabold text-brand-dark text-xs">${m}</span>
+                                ${hasDeclared ? `<span class="text-[10px] text-brand-grayText font-mono ml-1.5">(Doorstep: <b>${dec} kg</b>)</span>` : ''}
+                            </div>
+                            <div>
+                                ${deltaBadge}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between gap-1">
+                            <span class="text-[11px] font-bold text-brand-grayText">Hub Scale:</span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="adjustWeight('${m}', -1)" title="Minus 1 kg" 
+                                    class="w-7 h-7 bg-white hover:bg-emerald-100 border border-brand-border rounded-lg text-xs font-black text-brand-dark flex items-center justify-center active:scale-95 transition-transform shadow-xs">
+                                    -1
+                                </button>
+                                <button type="button" onclick="adjustWeight('${m}', -0.1)" title="Minus 0.1 kg" 
+                                    class="w-8 h-7 bg-white hover:bg-emerald-100 border border-brand-border rounded-lg text-[10px] font-black text-brand-dark flex items-center justify-center active:scale-95 transition-transform shadow-xs">
+                                    -0.1
+                                </button>
+                                <div class="relative flex items-center">
+                                    <input type="number" step="0.1" min="0" id="mat-inp-${m}"
+                                        value="${cur}"
+                                        oninput="setMatWeight('${m}', this.value)"
+                                        onblur="render()"
+                                        class="w-20 bg-white border border-brand-border rounded-xl px-2 py-1 text-right font-black text-brand-dark text-xs font-mono focus:outline-none focus:border-brand-dark shadow-inner">
+                                    <span class="text-[10px] text-brand-grayText font-bold ml-1">kg</span>
+                                </div>
+                                <button type="button" onclick="adjustWeight('${m}', 0.1)" title="Plus 0.1 kg" 
+                                    class="w-8 h-7 bg-white hover:bg-emerald-100 border border-brand-border rounded-lg text-[10px] font-black text-brand-dark flex items-center justify-center active:scale-95 transition-transform shadow-xs">
+                                    +0.1
+                                </button>
+                                <button type="button" onclick="adjustWeight('${m}', 1)" title="Plus 1 kg" 
+                                    class="w-7 h-7 bg-white hover:bg-emerald-100 border border-brand-border rounded-lg text-xs font-black text-brand-dark flex items-center justify-center active:scale-95 transition-transform shadow-xs">
+                                    +1
+                                </button>
+                            </div>
                         </div>
                     </div>
-                `).join('');
+                `;
+                }).join('');
 
                 let gapBadge = '';
                 if (hubTotal > 0) {
@@ -452,31 +512,45 @@
                             <i class="ph-bold ph-warning text-base text-red-600"></i>
                             <div>
                                 <span class="block">⚠️ Gap ${Math.round(gap * 100)}% (Audit Alert)</span>
-                                <span class="text-[10px] font-normal text-red-600">Discrepancy exceeds 10% threshold.</span>
+                                <span class="text-[10px] font-normal text-red-600">Discrepancy exceeds 10% threshold (${totalDiff > 0 ? '+' : ''}${totalDiff} kg).</span>
                             </div>
                         </div>`;
                     } else {
-                        gapBadge = `<div class="bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold p-2.5 rounded-xl flex items-center gap-1.5 mb-3">
-                            <i class="ph-bold ph-check-circle text-base text-emerald-600"></i>
-                            <span>✅ Matches Weight 1 (${Math.round(gap * 100)}% diff)</span>
+                        gapBadge = `<div class="bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold p-2.5 rounded-xl flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-1.5">
+                                <i class="ph-bold ph-check-circle text-base text-emerald-600"></i>
+                                <span>✅ Normal Scale Tolerance (${Math.round(gap * 100)}% diff)</span>
+                            </div>
+                            <span class="font-mono text-xs font-bold text-emerald-700">${totalDiff > 0 ? '+' : ''}${totalDiff} kg</span>
                         </div>`;
                     }
                 }
 
                 content.innerHTML = `
-                    <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center justify-between mb-2">
                         <div>
                             <h2 class="text-base font-black text-brand-dark">Hub Floor Weighbridge</h2>
-                            <p class="text-[11px] text-brand-grayText">Enter scale readings per material</p>
+                            <p class="text-[11px] text-brand-grayText">Auto-populated from doorstep receipts. Adjust ± for scale deviation.</p>
                         </div>
-                        <button onclick="dropStep=1; render();" class="text-xs font-bold text-brand-grayText">
+                        <button onclick="dropStep=1; render();" class="text-xs font-bold text-brand-grayText hover:text-brand-dark">
                             Back
                         </button>
                     </div>
 
-                    <!-- Material Inputs Card -->
-                    <div class="bg-white rounded-3xl p-4 border border-brand-border shadow-xs mb-3">
-                        <div class="max-h-52 overflow-y-auto pr-0.5">
+                    <!-- Auto-fill Action Strip -->
+                    <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-2xl px-3 py-2 mb-3">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                            <i class="ph-fill ph-lightning text-emerald-600"></i>
+                            <span>Doorstep receipts preloaded</span>
+                        </div>
+                        <button onclick="resetToDoorstepWeights()" class="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 underline flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset to Declared
+                        </button>
+                    </div>
+
+                    <!-- Material Inputs Card with Steppers -->
+                    <div class="bg-white rounded-3xl p-3 border border-brand-border shadow-xs mb-3">
+                        <div class="max-h-64 overflow-y-auto pr-0.5 space-y-1">
                             ${matInputs}
                         </div>
                     </div>
@@ -485,7 +559,7 @@
                     <div class="bg-brand-dark text-white rounded-3xl p-4 shadow-card mb-3 space-y-1.5 text-xs">
                         <div class="flex justify-between items-baseline">
                             <span class="text-white/80">Hub Scale Total (W2):</span>
-                            <span class="text-lg font-black text-white font-mono">${hubTotal} kg</span>
+                            <span class="text-lg font-black text-white font-mono" id="disp-hub-total">${hubTotal} kg</span>
                         </div>
                         <div class="flex justify-between items-baseline text-white/60 text-[11px]">
                             <span>Doorstep Declared (W1):</span>
@@ -506,6 +580,7 @@
                         <span>Confirm &amp; Deposit to Silos</span>
                     </button>
                 `;
+                checkCanStore();
                 return;
             }
 
@@ -683,6 +758,62 @@
         }
     }
 
+    // Calculate doorstep declared weights per material from the collector's pickups
+    function calculateDeclaredMaterialWeights(collectorData) {
+        const declared = {};
+        const pickups = collectorData?.pickups || [];
+        
+        pickups.forEach(p => {
+            const breakdown = p.materials_breakdown || {};
+            for (let [matName, wt] of Object.entries(breakdown)) {
+                const w = parseFloat(wt) || 0;
+                if (w <= 0) continue;
+                
+                const low = String(matName).toLowerCase().trim();
+                let target = 'Cardboard';
+                if (low.includes('cardboard') || low.includes('gatta') || low.includes('carton')) target = 'Cardboard';
+                else if (low.includes('paper') || low.includes('raddi') || low.includes('newspaper')) target = 'Paper';
+                else if (low.includes('plastic') || low.includes('bottle') || low.includes('pet')) target = 'Plastic';
+                else if (low.includes('copper') || low.includes('tamba')) target = 'Copper';
+                else if (low.includes('aluminium') || low.includes('aluminum')) target = 'Aluminium';
+                else if (low.includes('steel') || low.includes('metal') || low.includes('iron') || low.includes('loha') || low.includes('brass')) target = 'Steel';
+                else if (low.includes('glass')) target = 'Glass';
+                else if (low.includes('organic') || low.includes('wet') || low.includes('food')) target = 'Organic wet waste';
+                else if (low.includes('e-waste') || low.includes('ewaste') || low.includes('electronic')) target = 'E-waste';
+                else if (MATERIALS.includes(matName)) target = matName;
+
+                declared[target] = (declared[target] || 0) + w;
+            }
+        });
+
+        // Round to 1 decimal place
+        for (let k in declared) {
+            declared[k] = Math.round(declared[k] * 10) / 10;
+        }
+        return declared;
+    }
+
+    function goToWeighbridgeStep() {
+        if (!hubWeights || Object.keys(hubWeights).length === 0) {
+            hubWeights = calculateDeclaredMaterialWeights(selectedCollector);
+        }
+        dropStep = 2;
+        render();
+    }
+
+    function resetToDoorstepWeights() {
+        hubWeights = calculateDeclaredMaterialWeights(selectedCollector);
+        render();
+    }
+
+    function adjustWeight(mat, delta) {
+        const declaredMap = calculateDeclaredMaterialWeights(selectedCollector);
+        const dec = declaredMap[mat] || 0;
+        const cur = hubWeights[mat] !== undefined ? hubWeights[mat] : dec;
+        hubWeights[mat] = Math.max(0, Math.round((cur + delta) * 10) / 10);
+        render();
+    }
+
     async function searchCollector() {
         const inp = document.getElementById('inp-kid');
         const err = document.getElementById('kid-err');
@@ -698,7 +829,7 @@
                 return;
             }
             selectedCollector = await res.json();
-            hubWeights = {};
+            hubWeights = calculateDeclaredMaterialWeights(selectedCollector);
             dropStep = 1;
             render();
         } catch (e) {
@@ -707,9 +838,11 @@
     }
 
     function setMatWeight(mat, val) {
-        hubWeights[mat] = parseFloat(val) || 0;
+        hubWeights[mat] = Math.max(0, parseFloat(val) || 0);
         checkCanStore();
-        render();
+        const hubTotal = getHubTotal();
+        const totalEl = document.getElementById('disp-hub-total');
+        if (totalEl) totalEl.textContent = `${hubTotal} kg`;
     }
 
     function getHubTotal() {
