@@ -119,7 +119,7 @@ router.post('/verify-otp', async (req, res) => {
         const db = await getDb();
         // Check if an existing registered user matches this phone
         const last10 = normalized.slice(-10);
-        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, role, hh_code, phone, created_at FROM users WHERE phone LIKE ?`);
+        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, role, hh_code, original_hh_code, family_hh_code, active_hh_type, phone, created_at FROM users WHERE phone LIKE ?`);
         stmt.bind([`%${last10}`]);
 
         let user = null;

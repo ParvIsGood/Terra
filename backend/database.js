@@ -195,6 +195,18 @@ async function getDb() {
         db.run(`ALTER TABLE addresses ADD COLUMN state TEXT`);
     } catch (e) {}
     try {
+        db.run(`ALTER TABLE users ADD COLUMN original_hh_code TEXT`);
+    } catch (e) {}
+    try {
+        db.run(`ALTER TABLE users ADD COLUMN family_hh_code TEXT`);
+    } catch (e) {}
+    try {
+        db.run(`ALTER TABLE users ADD COLUMN active_hh_type TEXT DEFAULT 'personal'`);
+    } catch (e) {}
+    try {
+        db.run(`UPDATE users SET original_hh_code = hh_code WHERE (original_hh_code IS NULL OR original_hh_code = '') AND hh_code IS NOT NULL`);
+    } catch (e) {}
+    try {
         db.run(`ALTER TABLE pickups ADD COLUMN hub_trip_id TEXT`);
     } catch (e) {}
     try {

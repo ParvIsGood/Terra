@@ -61,7 +61,7 @@ router.get('/pincode-lookup/:pin', (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const db = await getDb();
-        const stmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, phone, bio, saved_materials, points, wallet_balance FROM users WHERE id = ?');
+        const stmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, original_hh_code, family_hh_code, active_hh_type, phone, bio, saved_materials, points, wallet_balance FROM users WHERE id = ?');
         stmt.bind([req.params.id]);
         if (!stmt.step()) {
             stmt.free();
@@ -73,9 +73,14 @@ router.get('/:id', async (req, res) => {
         // Ensure user has a valid, shareable Household Code
         if (!user.hh_code || user.hh_code.trim() === '' || user.hh_code === '—') {
             const genCode = `HH-${Math.floor(1000 + Math.random() * 9000)}`;
-            db.run('UPDATE users SET hh_code = ? WHERE id = ?', [genCode, user.id]);
+            db.run('UPDATE users SET hh_code = ?, original_hh_code = ? WHERE id = ?', [genCode, genCode, user.id]);
             persist();
             user.hh_code = genCode;
+            user.original_hh_code = genCode;
+        } else if (!user.original_hh_code) {
+            db.run('UPDATE users SET original_hh_code = ? WHERE id = ?', [user.hh_code, user.id]);
+            persist();
+            user.original_hh_code = user.hh_code;
         }
 
         return res.json({ user });
@@ -156,14 +161,14 @@ router.post('/register', async (req, res) => {
         const finalHhCode = (hh_code && hh_code.trim()) ? hh_code.trim().toUpperCase() : `HH-${Math.floor(1000 + Math.random() * 9000)}`;
 
         db.run(
-            `INSERT INTO users (name, email, password_hash, dob, address, pincode, city, state, role, hh_code, phone)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name.trim(), generatedEmail, defaultPasswordHash, dob, address.trim(), pincode.trim(), resolvedCity, resolvedState, role, finalHhCode, cleanPhone]
+            `INSERT INTO users (name, email, password_hash, dob, address, pincode, city, state, role, hh_code, original_hh_code, active_hh_type, phone)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'personal', ?)`,
+            [name.trim(), generatedEmail, defaultPasswordHash, dob, address.trim(), pincode.trim(), resolvedCity, resolvedState, role, finalHhCode, finalHhCode, cleanPhone]
         );
         persist();
 
         // Fetch the newly created user (without password)
-        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, city, state, role, hh_code, phone, created_at FROM users ORDER BY id DESC LIMIT 1`);
+        const stmt = db.prepare(`SELECT id, name, email, dob, address, pincode, city, state, role, hh_code, original_hh_code, family_hh_code, active_hh_type, phone, created_at FROM users ORDER BY id DESC LIMIT 1`);
         stmt.step();
         const user = stmt.getAsObject();
         stmt.free();
@@ -307,21 +312,33 @@ router.post('/:id/join-household', async (req, res) => {
             });
         }
 
-        // Link this user to the household and sync address & pincode
+        // Fetch current user to preserve their original household code
+        const curStmt = db.prepare('SELECT hh_code, original_hh_code FROM users WHERE id = ?');
+        curStmt.bind([targetUserId]);
+        let curUser = null;
+        if (curStmt.step()) curUser = curStmt.getAsObject();
+        curStmt.free();
+
+        const origCode = (curUser && curUser.original_hh_code) ? curUser.original_hh_code : (curUser?.hh_code || `HH-${Math.floor(1000 + Math.random() * 9000)}`);
+
+        // Link this user to the family household and preserve original_hh_code!
         db.run(`
             UPDATE users 
             SET hh_code = ?,
+                family_hh_code = ?,
+                original_hh_code = ?,
+                active_hh_type = 'family',
                 address = COALESCE(NULLIF(address, ''), ?),
                 pincode = COALESCE(NULLIF(pincode, ''), ?),
                 city = COALESCE(NULLIF(city, ''), ?),
                 state = COALESCE(NULLIF(state, ''), ?)
             WHERE id = ?
-        `, [cleanCode, primaryUser.address, primaryUser.pincode, primaryUser.city, primaryUser.state, targetUserId]);
+        `, [cleanCode, cleanCode, origCode, primaryUser.address, primaryUser.pincode, primaryUser.city, primaryUser.state, targetUserId]);
 
         persist();
 
         // Fetch updated user
-        const stmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, phone, bio, saved_materials, points, wallet_balance FROM users WHERE id = ?');
+        const stmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, original_hh_code, family_hh_code, active_hh_type, phone, bio, saved_materials, points, wallet_balance FROM users WHERE id = ?');
         stmt.bind([targetUserId]);
         let updatedUser = null;
         if (stmt.step()) updatedUser = stmt.getAsObject();
@@ -329,13 +346,90 @@ router.post('/:id/join-household', async (req, res) => {
 
         return res.json({
             success: true,
-            message: `Successfully linked to ${primaryUser.name}'s household (${cleanCode})!`,
+            message: `Successfully linked to ${primaryUser.name}'s household (${cleanCode})! Your personal household (${origCode}) is safely preserved.`,
             user: updatedUser,
             householdOwner: primaryUser.name
         });
     } catch (err) {
         console.error('Join household error:', err);
         return res.status(500).json({ error: 'Failed to join household.', details: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/users/:id/switch-household
+// Switches active view between personal and family household
+// ─────────────────────────────────────────────
+router.post('/:id/switch-household', async (req, res) => {
+    try {
+        const mode = req.body.mode || req.body.type; // 'personal' or 'family'
+        const targetUserId = parseInt(req.params.id, 10);
+        const db = await getDb();
+        const stmt = db.prepare('SELECT id, hh_code, original_hh_code, family_hh_code FROM users WHERE id = ?');
+        stmt.bind([targetUserId]);
+        if (!stmt.step()) {
+            stmt.free();
+            return res.status(404).json({ error: 'User not found.' });
+        }
+        const user = stmt.getAsObject();
+        stmt.free();
+
+        const targetCode = (mode === 'family' && user.family_hh_code) ? user.family_hh_code : (user.original_hh_code || user.hh_code);
+        const activeType = (mode === 'family' && user.family_hh_code) ? 'family' : 'personal';
+
+        db.run('UPDATE users SET hh_code = ?, active_hh_type = ? WHERE id = ?', [targetCode, activeType, targetUserId]);
+        persist();
+
+        const uStmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, original_hh_code, family_hh_code, active_hh_type, phone, bio, saved_materials, points, wallet_balance FROM users WHERE id = ?');
+        uStmt.bind([targetUserId]);
+        let updatedUser = null;
+        if (uStmt.step()) updatedUser = uStmt.getAsObject();
+        uStmt.free();
+
+        return res.json({
+            success: true,
+            user: updatedUser,
+            message: `Switched active household to ${activeType === 'family' ? 'Family Household' : 'Personal Home'} (${targetCode})`
+        });
+    } catch (err) {
+        return res.status(500).json({ error: 'Switch error.', details: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────
+// POST /api/users/:id/leave-household
+// Leaves linked family household and reverts to personal original household
+// ─────────────────────────────────────────────
+router.post('/:id/leave-household', async (req, res) => {
+    try {
+        const targetUserId = parseInt(req.params.id, 10);
+        const db = await getDb();
+        const stmt = db.prepare('SELECT id, hh_code, original_hh_code FROM users WHERE id = ?');
+        stmt.bind([targetUserId]);
+        if (!stmt.step()) {
+            stmt.free();
+            return res.status(404).json({ error: 'User not found.' });
+        }
+        const user = stmt.getAsObject();
+        stmt.free();
+
+        const origCode = user.original_hh_code || user.hh_code || `HH-${Math.floor(1000 + Math.random() * 9000)}`;
+        db.run('UPDATE users SET hh_code = ?, family_hh_code = NULL, active_hh_type = "personal" WHERE id = ?', [origCode, targetUserId]);
+        persist();
+
+        const uStmt = db.prepare('SELECT id, name, email, role, address, pincode, city, state, dob, hh_code, original_hh_code, family_hh_code, active_hh_type, phone, bio, saved_materials, points, wallet_balance FROM users WHERE id = ?');
+        uStmt.bind([targetUserId]);
+        let updatedUser = null;
+        if (uStmt.step()) updatedUser = uStmt.getAsObject();
+        uStmt.free();
+
+        return res.json({
+            success: true,
+            user: updatedUser,
+            message: `Unlinked from family household. Returned to Personal Home (${origCode}).`
+        });
+    } catch (err) {
+        return res.status(500).json({ error: 'Leave error.', details: err.message });
     }
 });
 
