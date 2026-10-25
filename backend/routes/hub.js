@@ -72,6 +72,40 @@ router.get('/bins', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// GET /api/hub/collectors-queue — Live queue of all collectors with pending scrap weight
+// ─────────────────────────────────────────────────────────────
+router.get('/collectors-queue', async (req, res) => {
+    try {
+        const db = await getDb();
+        const stmt = db.prepare(`
+            SELECT 
+                c.id, 
+                c.name, 
+                c.employee_id, 
+                c.phone_number, 
+                c.operating_area,
+                COALESCE(SUM(CASE WHEN p.status = 'Completed' AND (p.hub_trip_id IS NULL OR p.hub_trip_id = '') THEN p.actual_weight ELSE 0 END), 0) as pending_kg,
+                COUNT(CASE WHEN p.status = 'Completed' AND (p.hub_trip_id IS NULL OR p.hub_trip_id = '') THEN p.id ELSE NULL END) as pending_pickups_count
+            FROM collectors c
+            LEFT JOIN pickups p ON p.collector_id = c.id
+            GROUP BY c.id
+            ORDER BY pending_kg DESC, c.id ASC
+        `);
+        const collectors = [];
+        while (stmt.step()) {
+            const row = stmt.getAsObject();
+            row.pending_kg = Math.round((parseFloat(row.pending_kg) || 0) * 10) / 10;
+            collectors.push(row);
+        }
+        stmt.free();
+        return res.json({ collectors });
+    } catch (err) {
+        console.error('Collectors queue error:', err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
 // GET /api/hub/collector/:query — Look up collector & their trip collections
 // ─────────────────────────────────────────────────────────────
 router.get('/collector/:query', async (req, res) => {

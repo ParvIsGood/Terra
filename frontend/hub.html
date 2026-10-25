@@ -156,19 +156,22 @@
     let recentTrips = [];
     let dispatches = [];
     let silos = [];
+    let activeCollectors = [];
 
     async function loadData() {
         try {
-            const [sumRes, tripsRes, dispRes, binsRes] = await Promise.all([
+            const [sumRes, tripsRes, dispRes, binsRes, queueRes] = await Promise.all([
                 fetch(`${API_BASE}/hub/summary`).then(r => r.json()).catch(() => ({})),
                 fetch(`${API_BASE}/hub/trips`).then(r => r.json()).catch(() => ({ trips: [] })),
                 fetch(`${API_BASE}/hub/dispatches`).then(r => r.json()).catch(() => ({ dispatches: [] })),
-                fetch(`${API_BASE}/hub/bins`).then(r => r.json()).catch(() => ({ bins: [] }))
+                fetch(`${API_BASE}/hub/bins`).then(r => r.json()).catch(() => ({ bins: [] })),
+                fetch(`${API_BASE}/hub/collectors-queue`).then(r => r.json()).catch(() => ({ collectors: [] }))
             ]);
             summary = sumRes || summary;
             recentTrips = tripsRes.trips || [];
             dispatches = dispRes.dispatches || [];
             silos = binsRes.bins || [];
+            activeCollectors = queueRes.collectors || [];
             render();
         } catch (e) {
             console.error('Failed to load hub data:', e);
@@ -331,28 +334,32 @@
                         <p id="kid-err" class="text-red-600 text-xs font-semibold min-h-[16px]"></p>
 
                         <div class="mt-4 pt-3 border-t border-brand-border">
-                            <span class="text-[11px] font-bold text-brand-grayText block mb-2">⚡ Quick Select Active Collector:</span>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[11px] font-bold text-brand-grayText">⚡ Active Collectors at Station:</span>
+                                <span class="text-[10px] text-brand-grayText font-mono">${activeCollectors.length} registered</span>
+                            </div>
                             <div class="flex flex-col gap-2">
-                                <button onclick="document.getElementById('inp-kid').value='KW-1011'; searchCollector();" 
-                                    class="w-full text-left bg-brand-bg hover:bg-emerald-50 border border-brand-border p-2.5 rounded-xl flex items-center justify-between text-xs font-bold text-brand-dark transition-colors">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs">
-                                            <i class="ph-bold ph-user"></i>
+                                ${activeCollectors.map(c => {
+                                    const hasPending = (c.pending_kg || 0) > 0;
+                                    const badge = hasPending 
+                                        ? `<span class="text-[10px] text-emerald-800 font-mono font-extrabold bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md">${c.pending_kg} kg pending</span>`
+                                        : `<span class="text-[10px] text-gray-500 font-mono font-medium bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-md">All deposited ✓</span>`;
+                                    return `
+                                    <button onclick="document.getElementById('inp-kid').value='${escHtml(c.employee_id || ('KW-' + c.id))}'; searchCollector();" 
+                                        class="w-full text-left bg-brand-bg hover:bg-emerald-50 border border-brand-border p-2.5 rounded-xl flex items-center justify-between text-xs font-bold text-brand-dark transition-colors">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 rounded-full ${hasPending ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'} flex items-center justify-center text-xs">
+                                                <i class="ph-bold ph-user"></i>
+                                            </div>
+                                            <div>
+                                                <span>${escHtml(c.employee_id || ('KW-' + c.id))} (${escHtml(c.name)})</span>
+                                                ${c.operating_area ? `<span class="block text-[9px] text-brand-grayText font-normal">${escHtml(c.operating_area)}</span>` : ''}
+                                            </div>
                                         </div>
-                                        <span>KW-1011 (Parv Dua)</span>
-                                    </div>
-                                    <span class="text-[10px] text-emerald-700 font-mono">76 kg pending</span>
-                                </button>
-                                <button onclick="document.getElementById('inp-kid').value='KW-1012'; searchCollector();" 
-                                    class="w-full text-left bg-brand-bg hover:bg-emerald-50 border border-brand-border p-2.5 rounded-xl flex items-center justify-between text-xs font-bold text-brand-dark transition-colors">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs">
-                                            <i class="ph-bold ph-user"></i>
-                                        </div>
-                                        <span>KW-1012 (Amogh)</span>
-                                    </div>
-                                    <span class="text-[10px] text-gray-400 font-mono">Patiala</span>
-                                </button>
+                                        ${badge}
+                                    </button>
+                                    `;
+                                }).join('') || '<p class="text-xs text-brand-grayText py-2 text-center">No active collectors registered.</p>'}
                             </div>
                         </div>
                     </div>
