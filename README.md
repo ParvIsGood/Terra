@@ -26,13 +26,13 @@
 
 ---
 
-## 🌐 Live Demo Portals (For Judges)
+## 🌐 Live Demo Portals
 
 | Portal | Role & Purpose | Live Access |
 | :--- | :--- | :--- |
-| 📱 **Customer Web App** | Household scrap booking, Terra AI camera scanner, wallet, dual households | [**Launch Customer App**](https://chess-richards-hugh-engineer.trycloudflare.com/) |
-| 🎛️ **Admin Master Dashboard** | Live pickups, collectors dispatch, volunteer hub manager, weight audits | [**Open Admin Panel**](https://chess-richards-hugh-engineer.trycloudflare.com/admin) *(Key: `circular-admin-2024`)* |
-| 🏭 **Segregation Hub Floor** | Weighbridge floor terminal, dual-scale audit logs, 10 material silos | [**Open Hub Terminal**](https://chess-richards-hugh-engineer.trycloudflare.com/hub) |
+| 📱 **Customer Web App** | Household scrap booking, Terra AI camera scanner, wallet, dual households | [**circularbyterra.tech**](https://circularbyterra.tech) |
+| 🎛️ **Admin Master Dashboard** | Live pickups, collectors dispatch, volunteer hub manager, weight audits | [**circularbyterra.tech/admin**](https://circularbyterra.tech/admin) *(Key: `circular-admin-2024`)* |
+| 🏭 **Segregation Hub Floor** | Weighbridge floor terminal, dual-scale audit logs, 10 material silos | [**circularbyterra.tech/hub**](https://circularbyterra.tech/hub) |
 | 💬 **WhatsApp Field Bot** | Native Baileys WebSocket bot for collectors & citizens | **`+91 76578 64774`** |
 | 📞 **Dedicated Support Helpline**| 24/7 Citizen & Collector telephone + WhatsApp helpline | **`+91 78147 76666`** |
 

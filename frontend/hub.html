@@ -123,7 +123,7 @@
 </div>
 
 <script>
-    const CLOUDFLARE_BACKEND = 'https://chess-richards-hugh-engineer.trycloudflare.com/api';
+    const CLOUDFLARE_BACKEND = 'https://circularbyterra.tech/api';
     let   API_BASE = window.location.protocol.startsWith('http') 
         ? `${window.location.origin}/api` 
         : 'http://localhost:3001/api';
@@ -132,7 +132,7 @@
     if (window.location.protocol.startsWith('http') && 
         window.location.hostname !== 'localhost' && 
         window.location.hostname !== '127.0.0.1' &&
-        !window.location.hostname.includes('trycloudflare.com')) {
+        !window.location.hostname.includes('circularbyterra.tech')) {
         fetch(`${API_BASE}/health`).then(res => {
             if (!res.ok) API_BASE = CLOUDFLARE_BACKEND;
         }).catch(() => {
